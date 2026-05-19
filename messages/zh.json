@@ -1,0 +1,102 @@
+{
+  "site": {
+    "name": "GoalCoin 2026",
+    "tagline": "2026世界杯竞猜平台",
+    "description": "预测比赛结果，赢取GoalCoin，畅玩2026世界杯竞猜游戏。"
+  },
+  "nav": {
+    "home": "首页",
+    "matches": "赛事",
+    "predict": "竞猜",
+    "forum": "论坛",
+    "leaderboard": "排行榜",
+    "my": "我的",
+    "login": "登录",
+    "register": "注册",
+    "logout": "退出"
+  },
+  "hero": {
+    "countdown_title": "2026世界杯开赛倒计时",
+    "days": "天",
+    "hours": "时",
+    "minutes": "分",
+    "seconds": "秒",
+    "cta_predict": "立即竞猜",
+    "cta_schedule": "查看赛程",
+    "register_bonus": "立即注册，免费获得20,000,000 GC！"
+  },
+  "gc": {
+    "balance": "GC余额",
+    "recharge": "获取更多GC",
+    "free_daily": "每日免费GC",
+    "claim": "立即领取"
+  },
+  "predict": {
+    "title": "我要竞猜",
+    "win": "赢",
+    "draw": "平",
+    "odds": "赔率",
+    "pool": "奖池",
+    "confirm": "确认竞猜",
+    "cancel": "取消",
+    "deadline": "截止时间",
+    "min_bet": "最低100 GC",
+    "all_in": "全押"
+  },
+  "match": {
+    "vs": "VS",
+    "live": "直播中",
+    "finished": "已结束",
+    "upcoming": "即将开赛",
+    "postponed": "已延期",
+    "group": "小组赛",
+    "round16": "16强",
+    "quarter": "8强",
+    "semi": "4强",
+    "final": "决赛"
+  },
+  "levels": {
+    "common": "平民",
+    "prosper": "小康",
+    "wealthy": "富裕",
+    "noble": "豪绅",
+    "tycoon": "富豪",
+    "magnate": "财阀",
+    "elite": "巨富",
+    "imperial": "财尊",
+    "supreme": "至尊"
+  },
+  "forum": {
+    "hot": "热门话题",
+    "matches": "赛事讨论",
+    "teams": "球队专区",
+    "predict_talk": "竞猜交流",
+    "fan_plaza": "球迷广场",
+    "announcements": "官方公告",
+    "reply": "回复",
+    "like": "点赞",
+    "tip": "打赏GC",
+    "translate": "显示翻译"
+  },
+  "auth": {
+    "email": "邮箱",
+    "password": "密码",
+    "nickname": "昵称",
+    "country": "国家",
+    "login_title": "欢迎回来",
+    "register_title": "加入GoalCoin 2026",
+    "google_login": "使用Google登录",
+    "facebook_login": "使用Facebook登录",
+    "forgot_password": "忘记密码？",
+    "age_confirm": "我确认我已年满18周岁",
+    "register_bonus": "注册即送20,000,000 GC！",
+    "have_account": "已有账号？",
+    "no_account": "还没有账号？"
+  },
+  "footer": {
+    "disclaimer": "GoalCoin仅为娱乐用途的虚拟货币，不可提现或兑换真实货币。",
+    "rights": "保留所有权利",
+    "terms": "服务条款",
+    "privacy": "隐私政策"
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "site": {
+    "name": "GoalCoin 2026",
+    "tagline": "2026 World Cup Prediction Platform",
+    "description": "Predict match results and win GoalCoins in the ultimate 2026 World Cup prediction game."
+  },
+  "nav": {
+    "home": "Home",
+    "matches": "Matches",
+    "predict": "Predict",
+    "forum": "Forum",
+    "leaderboard": "Leaderboard",
+    "my": "My Account",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout"
+  },
+  "hero": {
+    "countdown_title": "2026 World Cup Starts In",
+    "days": "Days",
+    "hours": "Hours",
+    "minutes": "Minutes",
+    "seconds": "Seconds",
+    "cta_predict": "Start Predicting",
+    "cta_schedule": "View Schedule",
+    "register_bonus": "Register now and get 20,000,000 GC free!"
+  },
+  "gc": {
+    "balance": "GC Balance",
+    "recharge": "Get More GC",
+    "free_daily": "Daily Free GC",
+    "claim": "Claim Now"
+  },
+  "predict": {
+    "title": "Make Your Prediction",
+    "win": "Win",
+    "draw": "Draw",
+    "odds": "Odds",
+    "pool": "Prize Pool",
+    "confirm": "Confirm Prediction",
+    "cancel": "Cancel",
+    "deadline": "Predictions close",
+    "min_bet": "Minimum 100 GC",
+    "all_in": "All In"
+  },
+  "match": {
+    "vs": "VS",
+    "live": "LIVE",
+    "finished": "Finished",
+    "upcoming": "Upcoming",
+    "postponed": "Postponed",
+    "group": "Group Stage",
+    "round16": "Round of 16",
+    "quarter": "Quarterfinal",
+    "semi": "Semifinal",
+    "final": "Final"
+  },
+  "levels": {
+    "common": "Common",
+    "prosper": "Prosper",
+    "wealthy": "Wealthy",
+    "noble": "Noble",
+    "tycoon": "Tycoon",
+    "magnate": "Magnate",
+    "elite": "Elite",
+    "imperial": "Imperial",
+    "supreme": "Supreme"
+  },
+  "forum": {
+    "hot": "Hot Topics",
+    "matches": "Match Discussion",
+    "teams": "Team Zone",
+    "predict_talk": "Prediction Talk",
+    "fan_plaza": "Fan Plaza",
+    "announcements": "Announcements",
+    "reply": "Reply",
+    "like": "Like",
+    "tip": "Tip GC",
+    "translate": "Show Translation"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "nickname": "Nickname",
+    "country": "Country",
+    "login_title": "Welcome Back",
+    "register_title": "Join GoalCoin 2026",
+    "google_login": "Continue with Google",
+    "facebook_login": "Continue with Facebook",
+    "forgot_password": "Forgot Password?",
+    "age_confirm": "I confirm I am 18 years or older",
+    "register_bonus": "Get 20,000,000 GC on registration!",
+    "have_account": "Already have an account?",
+    "no_account": "Don't have an account?"
+  },
+  "footer": {
+    "disclaimer": "GoalCoin is a virtual currency for entertainment purposes only. GC cannot be withdrawn or exchanged for real money.",
+    "rights": "All rights reserved",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy"
+  }
+}
