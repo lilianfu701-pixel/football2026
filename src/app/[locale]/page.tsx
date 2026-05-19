@@ -41,9 +41,7 @@ export default async function HomePage({ params }: HomePageProps) {
 
           {/* Main Title */}
           <h1 className="text-5xl sm:text-7xl font-black text-white mb-4 leading-tight">
-            Goal<span className="text-[#FFD700]">Coin</span>
-            <br />
-            <span className="text-4xl sm:text-5xl text-gray-300">2026</span>
+            <span className="text-[#FFD700]">Football</span>2026
           </h1>
 
           <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-8">
@@ -170,7 +168,7 @@ export default async function HomePage({ params }: HomePageProps) {
           <Link href={`/${locale}/terms`} className="hover:text-gray-400">Terms of Service</Link>
           <Link href={`/${locale}/privacy`} className="hover:text-gray-400">Privacy Policy</Link>
         </div>
-        <p className="mt-3 text-xs text-gray-700">© 2026 GoalCoin 2026. All rights reserved.</p>
+        <p className="mt-3 text-xs text-gray-700">© 2026 Football2026. All rights reserved.</p>
       </footer>
     </main>
   );

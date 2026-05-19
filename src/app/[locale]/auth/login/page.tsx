@@ -4,7 +4,8 @@ import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { signIn, signInWithGoogle, signInWithFacebook } from "../actions";
+import { signIn } from "../actions";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const t = useTranslations("auth");
@@ -15,6 +16,7 @@ export default function LoginPage() {
     searchParams.get("error") ? t("error_generic") : null
   );
   const [isPending, startTransition] = useTransition();
+  const [oauthLoading, setOauthLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -31,15 +33,37 @@ export default function LoginPage() {
   }
 
   async function handleGoogle() {
-    startTransition(async () => {
-      await signInWithGoogle(locale);
+    setOauthLoading(true);
+    setError(null);
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?locale=${locale}&next=/`,
+      },
     });
+    if (error) {
+      setError(error.message);
+      setOauthLoading(false);
+    } else {
+      console.log("Redirecting to:", data?.url);
+    }
   }
 
   async function handleFacebook() {
-    startTransition(async () => {
-      await signInWithFacebook(locale);
+    setOauthLoading(true);
+    setError(null);
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "facebook",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?locale=${locale}&next=/`,
+      },
     });
+    if (error) {
+      setError(error.message);
+      setOauthLoading(false);
+    }
   }
 
   return (
@@ -48,7 +72,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href={`/${locale}`} className="inline-block">
-            <h1 className="text-3xl font-bold text-[#FFD700]">⚽ GoalCoin 2026</h1>
+            <h1 className="text-3xl font-bold text-[#FFD700]">⚽ Football2026</h1>
           </Link>
           <p className="text-gray-400 mt-2 text-sm">{t("login_subtitle")}</p>
         </div>
@@ -61,7 +85,7 @@ export default function LoginPage() {
           <div className="space-y-3 mb-6">
             <button
               onClick={handleGoogle}
-              disabled={isPending}
+              disabled={oauthLoading}
               className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 font-semibold py-3 px-4 rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-50"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -75,7 +99,7 @@ export default function LoginPage() {
 
             <button
               onClick={handleFacebook}
-              disabled={isPending}
+              disabled={oauthLoading}
               className="w-full flex items-center justify-center gap-3 bg-[#1877F2] text-white font-semibold py-3 px-4 rounded-xl hover:bg-[#166FE5] transition-colors disabled:opacity-50"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

@@ -46,20 +46,22 @@ export default async function LocaleLayout({
 
   // Get GC balance if logged in
   let gcBalance: number | undefined;
+  let nickname: string | undefined;
   if (user) {
     const { data: profile } = await supabase
       .from("users")
-      .select("gc_balance")
+      .select("gc_balance, nickname")
       .eq("id", user.id)
       .single();
     gcBalance = profile?.gc_balance;
+    nickname = profile?.nickname;
   }
 
   return (
     <html lang={locale} dir={isRtl ? "rtl" : "ltr"}>
       <body className={geist.className}>
         <NextIntlClientProvider messages={messages}>
-          <Navbar user={user} gcBalance={gcBalance} />
+          <Navbar user={user} gcBalance={gcBalance} nickname={nickname} />
           <div className="pt-16">{children}</div>
         </NextIntlClientProvider>
       </body>

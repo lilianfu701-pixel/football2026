@@ -1,8 +1,8 @@
 {
   "site": {
-    "name": "GoalCoin 2026",
+    "name": "Football2026",
     "tagline": "2026世界杯竞猜平台",
-    "description": "预测比赛结果，赢取GoalCoin，畅玩2026世界杯竞猜游戏。"
+    "description": "在Football2026预测比赛结果，赢取GoalCoin，畅玩2026世界杯竞猜游戏。"
   },
   "nav": {
     "home": "首页",
@@ -90,8 +90,8 @@
     "search_country": "搜索国家...",
     "no_countries_found": "未找到相关国家",
     "login_title": "欢迎回来",
-    "login_subtitle": "登录您的GoalCoin账号",
-    "register_title": "加入GoalCoin 2026",
+    "login_subtitle": "登录您的Football2026账号",
+    "register_title": "加入Football2026",
     "register_subtitle": "创建您的免费竞猜账号",
     "continue_with_google": "使用Google登录",
     "continue_with_facebook": "使用Facebook登录",
@@ -122,7 +122,7 @@
     "terms_notice": "创建账号即表示您同意我们的服务条款和隐私政策。"
   },
   "footer": {
-    "disclaimer": "GoalCoin仅为娱乐用途的虚拟货币，不可提现或兑换真实货币。",
+    "disclaimer": "GoalCoin（GC）是Football2026平台专属娱乐虚拟货币，不可提现或兑换真实货币。",
     "rights": "保留所有权利",
     "terms": "服务条款",
     "privacy": "隐私政策"

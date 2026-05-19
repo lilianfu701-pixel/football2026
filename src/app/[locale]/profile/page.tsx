@@ -67,12 +67,12 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     .order("created_at", { ascending: false })
     .limit(10);
 
-  const wealthLevel = getWealthLevel(profile.gc_balance);
+  const wealthLevel = getWealthLevel(profile.gc_balance ?? 0);
   const honorLevel = getHonorLevel(profile.honor_points ?? 0);
-  const nextWealthLevel = getNextWealthLevel(profile.gc_balance);
-  const wealthProgress = getWealthProgress(profile.gc_balance);
+  const nextWealthLevel = getNextWealthLevel(profile.gc_balance ?? 0);
+  const wealthProgress = getWealthProgress(profile.gc_balance ?? 0);
   const honorProgress = getHonorProgress(profile.honor_points ?? 0);
-  const country = profile.country_code ? getCountryByCode(profile.country_code) : null;
+  const country = profile.country_code ? getCountryByCode(profile.country_code.trim()) : null;
 
   // Calculate daily GC with streak bonus
   const currentStreak = todayCheckin?.streak ?? 0;
@@ -110,7 +110,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                   />
                 ) : (
                   <span className="text-4xl font-black text-[#FFD700]">
-                    {profile.username?.[0]?.toUpperCase() ?? "?"}
+                    {profile.nickname?.[0]?.toUpperCase() ?? "?"}
                   </span>
                 )}
               </div>
@@ -127,7 +127,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-2xl font-black text-white truncate">
-                  {profile.username}
+                  {profile.nickname}
                 </h1>
                 {country && (
                   <span className="text-xl" title={country.name}>

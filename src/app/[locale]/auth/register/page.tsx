@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { countries } from "@/lib/countries";
-import { signUp, signInWithGoogle, signInWithFacebook } from "../actions";
+import { signUp } from "../actions";
+import { createClient } from "@/lib/supabase/client";
 
 export default function RegisterPage() {
   const t = useTranslations("auth");
@@ -59,14 +60,22 @@ export default function RegisterPage() {
   }
 
   async function handleGoogle() {
-    startTransition(async () => {
-      await signInWithGoogle(locale);
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?locale=${locale}&next=/`,
+      },
     });
   }
 
   async function handleFacebook() {
-    startTransition(async () => {
-      await signInWithFacebook(locale);
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: "facebook",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?locale=${locale}&next=/`,
+      },
     });
   }
 
@@ -94,7 +103,7 @@ export default function RegisterPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href={`/${locale}`} className="inline-block">
-            <h1 className="text-3xl font-bold text-[#FFD700]">⚽ GoalCoin 2026</h1>
+            <h1 className="text-3xl font-bold text-[#FFD700]">⚽ Football2026</h1>
           </Link>
           <p className="text-gray-400 mt-2 text-sm">{t("register_subtitle")}</p>
         </div>

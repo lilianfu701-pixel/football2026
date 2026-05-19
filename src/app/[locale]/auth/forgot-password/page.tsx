@@ -56,7 +56,7 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href={`/${locale}`} className="inline-block">
-            <h1 className="text-3xl font-bold text-[#FFD700]">⚽ GoalCoin 2026</h1>
+            <h1 className="text-3xl font-bold text-[#FFD700]">⚽ Football2026</h1>
           </Link>
         </div>
 

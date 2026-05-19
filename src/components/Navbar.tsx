@@ -11,9 +11,10 @@ import type { User } from "@supabase/supabase-js";
 interface NavbarProps {
   user: User | null;
   gcBalance?: number;
+  nickname?: string;
 }
 
-export default function Navbar({ user, gcBalance }: NavbarProps) {
+export default function Navbar({ user, gcBalance, nickname }: NavbarProps) {
   const t = useTranslations("nav");
   const params = useParams();
   const pathname = usePathname();
@@ -61,7 +62,7 @@ export default function Navbar({ user, gcBalance }: NavbarProps) {
           >
             <span className="text-2xl">⚽</span>
             <span className="text-[#FFD700] font-bold text-lg hidden sm:block">
-              GoalCoin 2026
+              Football2026
             </span>
           </Link>
 
@@ -141,7 +142,7 @@ export default function Navbar({ user, gcBalance }: NavbarProps) {
                   className="hidden sm:flex items-center gap-1.5 text-sm text-gray-300 hover:text-white transition-colors"
                 >
                   <div className="w-8 h-8 bg-[#FFD700] rounded-full flex items-center justify-center text-[#0A1628] font-bold text-sm">
-                    {user.email?.[0].toUpperCase() || "U"}
+                    {(nickname ?? user.email ?? "U")[0].toUpperCase()}
                   </div>
                 </Link>
                 <button

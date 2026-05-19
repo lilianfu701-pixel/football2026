@@ -11,7 +11,7 @@ export async function signUp(formData: FormData) {
 
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
-  const username = formData.get("username") as string;
+  const nickname = formData.get("username") as string;
   const country_code = formData.get("country_code") as string;
   const locale = (formData.get("locale") as string) || "en";
 
@@ -22,7 +22,7 @@ export async function signUp(formData: FormData) {
     options: {
       emailRedirectTo: `${origin}/auth/callback?locale=${locale}&next=/`,
       data: {
-        username,
+        username: nickname,
         country_code,
       },
     },
@@ -32,17 +32,18 @@ export async function signUp(formData: FormData) {
     return { error: authError.message };
   }
 
-  // 2. Create user profile in our users table
+  // 2. Create user profile in our users table (trigger handles OAuth, this handles email signups)
   if (authData.user) {
     const { error: profileError } = await supabase.from("users").insert({
       id: authData.user.id,
       email,
-      username,
-      country_code,
-      gc_balance: 100000000, // 1亿 GC welcome gift
+      nickname,
+      country_code: country_code.slice(0, 2),
+      gc_balance: 100000000,
+      gc_total: 100000000,
       honor_points: 0,
-      wealth_level: "Common",
-      honor_level: "Rookie",
+      wealth_level: 1,
+      honor_level: 1,
     });
 
     if (profileError) {

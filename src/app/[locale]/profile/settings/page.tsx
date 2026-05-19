@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { countries } from "@/lib/countries";
 
 interface ProfileData {
-  username: string;
+  nickname: string;
   country_code: string;
   avatar_url: string | null;
 }
@@ -36,13 +36,13 @@ export default function SettingsPage() {
 
       const { data } = await supabase
         .from("users")
-        .select("username, country_code, avatar_url")
+        .select("nickname, country_code, avatar_url")
         .eq("id", user.id)
         .single();
 
       if (data) {
         setProfile(data);
-        setUsername(data.username ?? "");
+        setUsername(data.nickname ?? "");
         if (data.country_code) {
           const c = countries.find(c => c.code === data.country_code);
           if (c) setSelectedCountry(c);
@@ -110,8 +110,8 @@ export default function SettingsPage() {
       const { error: updateError } = await supabase
         .from("users")
         .update({
-          username,
-          country_code: selectedCountry?.code ?? profile?.country_code,
+          nickname: username,
+          country_code: (selectedCountry?.code ?? profile?.country_code ?? "US").slice(0, 2),
           avatar_url: avatarUrl,
         })
         .eq("id", user.id);

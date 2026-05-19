@@ -16,7 +16,7 @@ export async function POST() {
   // Get user profile
   const { data: profile, error: profileError } = await supabase
     .from("users")
-    .select("id, gc_balance, wealth_level")
+    .select("id, gc_balance, gc_total, wealth_level")
     .eq("id", user.id)
     .single();
 
@@ -51,7 +51,7 @@ export async function POST() {
 
   const streak = yesterdayCheckin ? (yesterdayCheckin.streak + 1) : 1;
 
-  // Get daily GC amount based on wealth level
+  // Get daily GC amount based on wealth level (stored as rank integer 1-9)
   const wealthLevel = getWealthLevel(profile.gc_balance);
   let dailyGc = wealthLevel.dailyFreeGc;
 
@@ -79,8 +79,8 @@ export async function POST() {
     .from("users")
     .update({
       gc_balance: newBalance,
-      wealth_level: newWealthLevel.name,
-      last_checkin: new Date().toISOString(),
+      gc_total: (profile.gc_total ?? profile.gc_balance) + dailyGc,
+      wealth_level: newWealthLevel.rank,
     })
     .eq("id", user.id);
 
