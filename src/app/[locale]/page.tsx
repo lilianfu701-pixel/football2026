@@ -157,6 +157,21 @@ export default async function HomePage({ params }: HomePageProps) {
         </div>
       </section>
 
+      {/* SEO Text Block */}
+      <section className="max-w-4xl mx-auto px-4 pb-12 text-center">
+        <h2 className="text-gray-700 text-sm font-medium mb-3">
+          Football2026 — World Cup 2026 Soccer Prediction Game
+        </h2>
+        <p className="text-gray-700 text-xs leading-relaxed">
+          Football2026 is your ultimate destination for the 2026 World Cup soccer prediction experience.
+          Predict football 2026 match results, compete with fans worldwide, and earn GoalCoins.
+          The best free-to-play soccer worldcup 2026 prediction platform covering all 48 matches.
+          From group stage to the final, make your world cup 2026 football predictions and rise to the top.
+          Join millions of soccer fans in the most exciting worldcup 2026 prediction game online.
+          Football 2026 | Soccer 2026 | WorldCup 2026 | World Cup Prediction | Football Prediction Game
+        </p>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-[#1E3A5F] py-8 px-4 text-center">
         <p className="text-xs text-gray-600 max-w-2xl mx-auto">
