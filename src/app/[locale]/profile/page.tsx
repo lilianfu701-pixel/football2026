@@ -52,8 +52,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const { data: recentBets } = await supabase
     .from("bets")
     .select(`
-      id, amount, potential_win, outcome, created_at,
-      matches(home_team, away_team, match_date)
+      id, gc_amount, potential_payout, status, created_at,
+      matches(home_team, away_team, kickoff_time)
     `)
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
@@ -83,13 +83,13 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   // Bet stats
   const { data: betStats } = await supabase
     .from("bets")
-    .select("outcome, amount")
+    .select("status, gc_amount")
     .eq("user_id", user.id);
 
   const totalBets = betStats?.length ?? 0;
-  const wonBets = betStats?.filter((b) => b.outcome === "win").length ?? 0;
+  const wonBets = betStats?.filter((b) => b.status === "won").length ?? 0;
   const winRate = totalBets > 0 ? Math.round((wonBets / totalBets) * 100) : 0;
-  const totalWagered = betStats?.reduce((sum, b) => sum + (b.amount ?? 0), 0) ?? 0;
+  const totalWagered = betStats?.reduce((sum, b) => sum + (b.gc_amount ?? 0), 0) ?? 0;
 
   return (
     <div className="min-h-screen bg-[#0A1628] text-white pb-16">
@@ -336,7 +336,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           {recentBets && recentBets.length > 0 ? (
             <div className="space-y-2">
               {recentBets.map((bet) => {
-                const match = bet.matches as unknown as { home_team: string; away_team: string; match_date: string } | null;
+                const match = bet.matches as unknown as { home_team: string; away_team: string; kickoff_time: string } | null;
                 return (
                   <div
                     key={bet.id}
@@ -347,21 +347,21 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                         {match ? `${match.home_team} vs ${match.away_team}` : "Match"}
                       </p>
                       <p className="text-xs text-gray-500">
-                        Wagered: {formatGc(bet.amount)} GC
+                        Wagered: {formatGc(bet.gc_amount)} GC
                       </p>
                     </div>
                     <span
                       className={`text-xs font-bold px-2 py-1 rounded-full ${
-                        bet.outcome === "win"
+                        bet.status === "won"
                           ? "bg-green-500/20 text-green-400"
-                          : bet.outcome === "loss"
+                          : bet.status === "lost"
                           ? "bg-red-500/20 text-red-400"
-                          : bet.outcome === "refund"
+                          : bet.status === "refunded"
                           ? "bg-gray-500/20 text-gray-400"
                           : "bg-[#FFD700]/20 text-[#FFD700]"
                       }`}
                     >
-                      {bet.outcome ?? "Pending"}
+                      {bet.status === "pending" ? "Pending" : bet.status === "won" ? "Won" : bet.status === "lost" ? "Lost" : "Refunded"}
                     </span>
                   </div>
                 );
