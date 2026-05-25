@@ -65,7 +65,7 @@ export async function createPayPalOrder(
 /** Capture an approved PayPal Order, return capture status */
 export async function capturePayPalOrder(
   orderID: string
-): Promise<{ status: string; captureId: string }> {
+): Promise<{ status: string; captureId: string; currency: string; value: number }> {
   const token = await getPayPalToken();
   const res   = await fetch(`${BASE}/v2/checkout/orders/${orderID}/capture`, {
     method:  "POST",
@@ -79,6 +79,9 @@ export async function capturePayPalOrder(
     throw new Error(`PayPal capture error: ${res.status} ${err}`);
   }
   const data      = await res.json();
-  const captureId = data.purchase_units?.[0]?.payments?.captures?.[0]?.id ?? "";
-  return { status: data.status as string, captureId };
+  const capture   = data.purchase_units?.[0]?.payments?.captures?.[0];
+  const captureId = capture?.id ?? "";
+  const currency  = capture?.amount?.currency_code ?? "";
+  const value     = Number(capture?.amount?.value ?? 0);
+  return { status: data.status as string, captureId, currency, value };
 }

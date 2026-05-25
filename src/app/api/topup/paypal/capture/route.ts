@@ -19,9 +19,12 @@ export async function POST(req: NextRequest) {
     if (!pkg) return NextResponse.json({ error: "Invalid package" }, { status: 400 });
 
     // ── Capture the PayPal payment ────────────────────────────────────────
-    const { status, captureId } = await capturePayPalOrder(orderID);
+    const { status, captureId, currency, value } = await capturePayPalOrder(orderID);
     if (status !== "COMPLETED") {
       return NextResponse.json({ error: `Payment not completed: ${status}` }, { status: 400 });
+    }
+    if (currency !== "CNY" || Math.round(value * 100) !== pkg.priceCny * 100) {
+      return NextResponse.json({ error: "Payment amount mismatch" }, { status: 400 });
     }
 
     const service  = createServiceClient();
