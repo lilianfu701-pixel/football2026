@@ -3,8 +3,10 @@ import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import Image from "next/image";
 import { Suspense } from "react";
-import { getFlagUrl, isTBD } from "@/lib/flags";
+import { getFlagUrl, isTBD, getTeamDisplayName } from "@/lib/flags";
+import { getH2H } from "@/data/h2h";
 import TeamFilter from "./TeamFilter";
+import MatchFollowButton from "@/components/matches/MatchFollowButton";
 
 interface MatchesPageProps {
   params: Promise<{ locale: string }>;
@@ -24,6 +26,9 @@ type Match = {
   venue: string | null;
   city: string | null;
   match_number: string | null;
+  odds_home: number | null;
+  odds_draw: number | null;
+  odds_away: number | null;
 };
 
 // City → country abbreviation
@@ -32,8 +37,42 @@ const CITY_COUNTRY: Record<string, string> = {
   "New York": "USA", "Los Angeles": "USA", "Dallas": "USA",
   "Houston": "USA", "Atlanta": "USA", "Seattle": "USA",
   "Philadelphia": "USA", "Miami": "USA", "Kansas City": "USA",
-  "Santa Clara": "USA", "Boston": "USA",
+  "Santa Clara": "USA", "San Francisco": "USA", "Boston": "USA",
   "Toronto": "CAN", "Vancouver": "CAN",
+};
+
+// Country abbreviation → localized label
+const COUNTRY_LABEL: Record<string, Record<string, string>> = {
+  zh: { "USA": "美国", "MEX": "墨西哥", "CAN": "加拿大" },
+  en: { "USA": "USA", "MEX": "MEX", "CAN": "CAN" },
+};
+
+// City → Chinese name
+const CITY_ZH: Record<string, string> = {
+  "Mexico City": "墨西哥城", "Guadalajara": "瓜达拉哈拉", "Monterrey": "蒙特雷",
+  "New York": "纽约", "Los Angeles": "洛杉矶", "Dallas": "达拉斯",
+  "Houston": "休斯顿", "Atlanta": "亚特兰大", "Seattle": "西雅图",
+  "Philadelphia": "费城", "Miami": "迈阿密", "Kansas City": "堪萨斯城",
+  "Santa Clara": "圣克拉拉", "San Francisco": "旧金山", "Boston": "波士顿",
+  "Toronto": "多伦多", "Vancouver": "温哥华",
+};
+
+// Venue → Chinese name
+const VENUE_ZH: Record<string, string> = {
+  "Estadio Azteca":     "阿兹特克体育场",
+  "SoFi Stadium":       "苏菲体育场",
+  "MetLife Stadium":    "大都会人寿体育场",
+  "AT&T Stadium":       "AT&T球场",
+  "Rose Bowl":          "玫瑰碗体育场",
+  "BMO Field":          "BMO球场",
+  "Hard Rock Stadium":  "硬石体育场",
+  "Arrowhead Stadium":  "箭头体育场",
+  "Gillette Stadium":   "吉列体育场",
+  "Levi's Stadium":     "李维斯体育场",
+  "Lincoln Financial":  "林肯金融球场",
+  "BC Place":           "BC广场",
+  "Estadio Akron":      "阿克伦体育场",
+  "Estadio BBVA":       "BBVA体育场",
 };
 
 function getCountdown(kickoffStr: string, locale: string): string {
@@ -52,12 +91,26 @@ function getCountdown(kickoffStr: string, locale: string): string {
   return locale === "zh" ? "即将开赛" : "Soon";
 }
 
+
 function formatMatchDate(dateStr: string, locale: string) {
-  const d = new Date(dateStr);
+  const d    = new Date(dateStr);
   const lang = locale === "zh" ? "zh-CN" : "en-US";
+  const hh   = String(d.getHours()).padStart(2, "0");
+  const mm   = String(d.getMinutes()).padStart(2, "0");
+
+  let cardLabel: string;
+  if (locale === "zh") {
+    const ZH_DAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+    cardLabel = `当地时间 ${d.getMonth() + 1}月${d.getDate()}日${ZH_DAYS[d.getDay()]} ${hh}:${mm}`;
+  } else {
+    const EN_MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const EN_DAYS   = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    cardLabel = `Local ${EN_MONTHS[d.getMonth()]} ${d.getDate()} ${EN_DAYS[d.getDay()]} ${hh}:${mm}`;
+  }
+
   return {
     dateLabel: d.toLocaleDateString(lang, { weekday: "long", month: "long", day: "numeric" }),
-    time: d.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit", timeZoneName: "short" }),
+    time: cardLabel,
   };
 }
 
@@ -129,25 +182,11 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
     matchesByDate[dateKey].push(m);
   });
 
-  const { data: predCounts } = await supabase.from("bets").select("match_id");
-  const totalPredictions = predCounts?.length ?? 0;
-
-  const { data: upcomingMatches } = await supabase
-    .from("matches")
-    .select("id, home_team, away_team, kickoff_time, group_name, stage, match_number")
-    .eq("status", "upcoming")
-    .order("kickoff_time", { ascending: true })
-    .limit(4);
-
   const stages = ["group", "round32", "round16", "quarter", "semi", "third", "final"];
 
   return (
     <div className="min-h-screen bg-[#0A1628] text-white pb-16">
-      <div className="max-w-7xl mx-auto px-4 pt-8">
-        <div className="flex gap-6">
-
-          {/* ── Main Content ── */}
-          <div className="flex-1 min-w-0">
+      <div className="pt-8">
 
             {/* Header */}
             <div className="mb-5">
@@ -156,23 +195,26 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
             </div>
 
             {/* Stage Tabs + Team Filter */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
-              {stages.map((s) => (
-                <Link
-                  key={s}
-                  href={`/${locale}/matches?stage=${s}`}
-                  className={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                    stage === s
-                      ? "bg-[#FFD700] text-[#0A1628]"
-                      : "bg-[#0F2040] border border-[#1E3A5F] text-gray-400 hover:text-white"
-                  }`}
-                >
-                  {STAGE_LABELS[s]}
-                </Link>
-              ))}
+            <div className="flex items-center gap-2 mb-4">
+              {/* Scrollable stage tabs */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-0 scrollbar-hide flex-1 min-w-0">
+                {stages.map((s) => (
+                  <Link
+                    key={s}
+                    href={`/${locale}/matches?stage=${s}`}
+                    className={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                      stage === s
+                        ? "bg-[#FFD700] text-[#0A1628]"
+                        : "bg-[#0F2040] border border-[#1E3A5F] text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    {STAGE_LABELS[s]}
+                  </Link>
+                ))}
+              </div>
               {/* Divider */}
               <div className="h-6 w-px bg-[#1E3A5F] shrink-0 mx-1" />
-              {/* Team Filter — always visible after Final tab */}
+              {/* Team Filter — outside overflow container so dropdown is never clipped */}
               <Suspense fallback={<div className="h-10 w-40 bg-[#0F2040] rounded-xl animate-pulse shrink-0" />}>
                 <TeamFilter
                   teams={allTeams}
@@ -187,8 +229,8 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
               <div className="mb-2">
                 <span className="text-xs text-orange-400 bg-orange-400/10 px-3 py-1.5 rounded-lg font-medium">
                   {locale === "zh"
-                    ? `正在显示：${selectedTeams.join("、")} 的赛事`
-                    : `Showing: ${selectedTeams.join(", ")} matches`}
+                    ? `正在显示：${selectedTeams.map((t) => getTeamDisplayName(t, locale)).join("、")} 的赛事`
+                    : `Showing: ${selectedTeams.map((t) => getTeamDisplayName(t, locale)).join(", ")} matches`}
                 </span>
               </div>
             )}
@@ -242,12 +284,16 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
                         const isFinished = match.status === "finished";
                         const isLive = match.status === "live";
                         const countdown = !isFinished && !isLive ? getCountdown(match.kickoff_time, locale) : "";
-                        const countryCode = match.city ? CITY_COUNTRY[match.city] : null;
+                        const h2h = (!isTBD(match.home_team) && !isTBD(match.away_team))
+                          ? getH2H(match.home_team, match.away_team)
+                          : null;
 
                         return (
                           <Link
                             key={match.id}
                             href={`/${locale}/matches/${match.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="block bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-4 hover:border-[#FFD700]/40 transition-all group"
                           >
                             {/* Top row */}
@@ -287,11 +333,11 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
                                     <Image src={getFlagUrl(match.home_team, 80)} alt={match.home_team} fill className="object-cover" unoptimized />
                                   </div>
                                 )}
-                                <p className="text-white font-bold text-sm text-center leading-tight">{match.home_team}</p>
+                                <p className="text-white font-bold text-sm text-center leading-tight">{getTeamDisplayName(match.home_team, locale)}</p>
                               </div>
 
-                              {/* Center */}
-                              <div className="px-2 text-center shrink-0 min-w-[80px]">
+                              {/* Center — vs / score · location */}
+                              <div className="px-2 text-center shrink-0 flex flex-col items-center justify-center gap-1">
                                 {isFinished || isLive ? (
                                   <div className="flex items-center gap-2 justify-center">
                                     <span className="text-2xl font-black text-white">{match.home_score ?? 0}</span>
@@ -299,13 +345,28 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
                                     <span className="text-2xl font-black text-white">{match.away_score ?? 0}</span>
                                   </div>
                                 ) : (
-                                  <div>
-                                    <p className="text-[#FFD700] font-black text-xl">{tMatch("vs")}</p>
-                                    {/* City \ Country */}
-                                    <p className="text-gray-600 text-xs mt-0.5">
-                                      {match.city}{countryCode ? ` \\ ${countryCode}` : ""}
-                                    </p>
-                                  </div>
+                                  <>
+                                    <p className="text-[#FFD700] font-black text-lg tracking-wider leading-none">VS</p>
+                                    {/* City \ country */}
+                                    {match.city && (
+                                      <p className="text-xs leading-snug text-center whitespace-nowrap">
+                                        <span className="text-gray-200 font-semibold">
+                                          {locale === "zh" ? (CITY_ZH[match.city] ?? match.city) : match.city}
+                                        </span>
+                                        {match.city && CITY_COUNTRY[match.city] && (
+                                          <span className="text-gray-500 font-normal">
+                                            {" "}\{" "}{COUNTRY_LABEL[locale]?.[CITY_COUNTRY[match.city]] ?? CITY_COUNTRY[match.city]}
+                                          </span>
+                                        )}
+                                      </p>
+                                    )}
+                                    {/* Venue */}
+                                    {match.venue && (
+                                      <p className="text-[11px] text-[#5B8DB8] font-normal leading-tight text-center whitespace-nowrap">
+                                        {locale === "zh" ? (VENUE_ZH[match.venue] ?? match.venue) : match.venue}
+                                      </p>
+                                    )}
+                                  </>
                                 )}
                               </div>
 
@@ -320,26 +381,65 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
                                     <Image src={getFlagUrl(match.away_team, 80)} alt={match.away_team} fill className="object-cover" unoptimized />
                                   </div>
                                 )}
-                                <p className="text-white font-bold text-sm text-center leading-tight">{match.away_team}</p>
+                                <p className="text-white font-bold text-sm text-center leading-tight">{getTeamDisplayName(match.away_team, locale)}</p>
                               </div>
                             </div>
 
-                            {/* Bottom row */}
-                            {!isFinished && (
-                              <div className="mt-3 pt-3 border-t border-[#1E3A5F] flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  {match.venue && (
-                                    <p className="text-xs text-gray-600 truncate">📍 {match.venue}</p>
-                                  )}
-                                  {countdown && (
-                                    <span className="text-xs text-orange-400/80 font-medium shrink-0">⏱ {countdown}</span>
-                                  )}
-                                </div>
-                                <span className="text-xs text-[#FFD700] font-semibold shrink-0 group-hover:underline">
-                                  {t("predict_cta")}
+                            {/* ── H2H row — below teams ── */}
+                            {!isFinished && !isLive && !isTBD(match.home_team) && !isTBD(match.away_team) && h2h && h2h.total > 0 && (
+                              <div className="relative flex items-center justify-between gap-2 mt-2">
+                                {/* Label: absolute so it doesn't affect flex column widths */}
+                                <span className="absolute left-3 text-[10px] text-gray-500 font-medium whitespace-nowrap">
+                                  ⚔ {locale === "zh" ? "交战历史" : "H2H"}
                                 </span>
+                                {/* Home wins: flex-1 — same width as home team column */}
+                                <div className="flex-1 text-center">
+                                  <span className="text-xs font-black text-[#FFD700]">
+                                    {h2h.homeWins}{locale === "zh" ? "胜" : "W"}
+                                  </span>
+                                </div>
+                                {/* Draws: px-10 widens center col to match VS+city column */}
+                                <div className="px-10 shrink-0 text-center">
+                                  <span className="text-xs font-black text-gray-400">
+                                    {h2h.draws}{locale === "zh" ? "平" : "D"}
+                                  </span>
+                                </div>
+                                {/* Away wins: flex-1 — same width as away team column */}
+                                <div className="flex-1 text-center">
+                                  <span className="text-xs font-black text-purple-400">
+                                    {h2h.awayWins}{locale === "zh" ? "胜" : "W"}
+                                  </span>
+                                </div>
                               </div>
                             )}
+
+                            {/* Bottom row */}
+                            <div className="mt-2 pt-1.5 border-t border-[#1E3A5F] flex items-center justify-between gap-2">
+                              {/* Left: countdown */}
+                              <div className="flex items-center gap-2 min-w-0 flex-1">
+                                {countdown && (
+                                  <span className="text-xs text-orange-400/80 font-medium shrink-0">⏱ {countdown}</span>
+                                )}
+                                {isFinished && (
+                                  <span className="text-xs text-gray-500 font-medium">
+                                    {locale === "zh" ? "已结束" : "Full Time"}
+                                  </span>
+                                )}
+                              </div>
+                              {/* Right: buttons */}
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className="text-xs text-[#FFD700] font-semibold group-hover:underline">
+                                  {locale === "zh" ? "比赛详情 →" : "Details →"}
+                                </span>
+                                <MatchFollowButton
+                                  matchId={match.id}
+                                  initialFollowing={false}
+                                  homeTeam={getTeamDisplayName(match.home_team, locale)}
+                                  awayTeam={getTeamDisplayName(match.away_team, locale)}
+                                  zh={locale === "zh"}
+                                />
+                              </div>
+                            </div>
                           </Link>
                         );
                       })}
@@ -348,109 +448,6 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
                 ))}
               </div>
             )}
-          </div>
-
-          {/* ── Right Sidebar ── */}
-          <div className="hidden lg:flex flex-col gap-4 w-72 shrink-0">
-
-            {/* World Cup Info */}
-            <div className="bg-gradient-to-br from-[#FFD700]/20 to-[#FF6B00]/10 border border-[#FFD700]/30 rounded-2xl p-5">
-              <p className="text-xs text-[#FFD700] font-bold uppercase tracking-widest mb-2">FIFA World Cup 2026</p>
-              <p className="text-white font-black text-lg leading-tight">{t("wc_dates")}</p>
-              <p className="text-gray-400 text-xs mt-1">{t("wc_hosts")}</p>
-              <div className="mt-3 flex items-center gap-2">
-                <span className="text-2xl">🏆</span>
-                <div>
-                  <p className="text-white font-bold text-sm">{t("teams_count")}</p>
-                  <p className="text-gray-500 text-xs">{t("matches_total")}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Platform Stats */}
-            <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5">
-              <h3 className="text-sm font-bold text-white mb-3">📊 {t("platform_stats")}</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-400">{t("total_predictions")}</span>
-                  <span className="text-sm font-black text-[#FFD700]">{totalPredictions.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-400">{t("matches_available")}</span>
-                  <span className="text-sm font-black text-white">72</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-400">{t("groups_label")}</span>
-                  <span className="text-sm font-black text-white">A – L</span>
-                </div>
-              </div>
-              <Link
-                href={`/${locale}/matches`}
-                className="mt-4 block w-full text-center bg-[#FFD700] text-[#0A1628] font-bold py-2.5 rounded-xl text-sm hover:bg-[#FFC200] transition-colors"
-              >
-                {t("start_predicting")}
-              </Link>
-            </div>
-
-            {/* Next Matches */}
-            {upcomingMatches && upcomingMatches.length > 0 && (
-              <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5">
-                <h3 className="text-sm font-bold text-white mb-3">📅 {t("next_matches")}</h3>
-                <div className="space-y-3">
-                  {upcomingMatches.map((m) => {
-                    const d = new Date(m.kickoff_time);
-                    const lang = locale === "zh" ? "zh-CN" : "en-US";
-                    const dateStr = d.toLocaleDateString(lang, { month: "short", day: "numeric" });
-                    return (
-                      <Link key={m.id} href={`/${locale}/matches/${m.id}`} className="block">
-                        <div className="flex items-center justify-between gap-2 hover:opacity-80 transition-opacity">
-                          <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                            {!isTBD(m.home_team) && (
-                              <div className="w-6 h-4 relative overflow-hidden rounded-sm shrink-0">
-                                <Image src={getFlagUrl(m.home_team, 40)} alt={m.home_team} fill className="object-cover" unoptimized />
-                              </div>
-                            )}
-                            <span className="text-xs text-gray-300 font-medium truncate">{m.home_team}</span>
-                          </div>
-                          <span className="text-xs text-gray-600 shrink-0 px-1">vs</span>
-                          <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-end">
-                            <span className="text-xs text-gray-300 font-medium truncate text-right">{m.away_team}</span>
-                            {!isTBD(m.away_team) && (
-                              <div className="w-6 h-4 relative overflow-hidden rounded-sm shrink-0">
-                                <Image src={getFlagUrl(m.away_team, 40)} alt={m.away_team} fill className="object-cover" unoptimized />
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-600 mt-0.5 text-center">
-                          {m.match_number && <span className="mr-1">{m.match_number}</span>}
-                          {dateStr}
-                        </p>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Groups Quick Nav */}
-            <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5">
-              <h3 className="text-sm font-bold text-white mb-3">🗂 {t("groups_nav")}</h3>
-              <div className="grid grid-cols-4 gap-1.5">
-                {["A","B","C","D","E","F","G","H","I","J","K","L"].map((g) => (
-                  <Link
-                    key={g}
-                    href={`/${locale}/matches?stage=group&group=${g.toLowerCase()}`}
-                    className="flex items-center justify-center h-8 rounded-lg bg-[#0A1628] border border-[#1E3A5F] text-xs font-bold text-gray-400 hover:border-[#FFD700]/50 hover:text-[#FFD700] transition-colors"
-                  >
-                    {g}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-          </div>
-        </div>
       </div>
     </div>
   );

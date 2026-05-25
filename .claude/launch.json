@@ -4,7 +4,7 @@
     {
       "name": "goalcoin-dev",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["dev"],
+      "runtimeArgs": ["--dir", "C:\\Users\\zexim\\goalcoin2026", "dev"],
       "port": 3000
     }
   ]

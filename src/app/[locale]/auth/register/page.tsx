@@ -2,8 +2,9 @@
 
 import { useState, useTransition, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { countries } from "@/lib/countries";
 import { signUp } from "../actions";
 import { createClient } from "@/lib/supabase/client";
@@ -11,7 +12,9 @@ import { createClient } from "@/lib/supabase/client";
 export default function RegisterPage() {
   const t = useTranslations("auth");
   const params = useParams();
+  const searchParams = useSearchParams();
   const locale = (params.locale as string) || "en";
+  const refCode = searchParams.get("ref") ?? "";
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -48,6 +51,7 @@ export default function RegisterPage() {
     const formData = new FormData(e.currentTarget);
     formData.set("locale", locale);
     formData.set("country_code", selectedCountry.code);
+    if (refCode) formData.set("ref", refCode);
 
     startTransition(async () => {
       const result = await signUp(formData);
@@ -103,10 +107,30 @@ export default function RegisterPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href={`/${locale}`} className="inline-block">
-            <h1 className="text-3xl font-bold text-[#FFD700]">⚽ Football2026</h1>
+            <h1 className="flex items-center justify-center gap-3 text-3xl font-bold text-[#FFD700]">
+              <Image src="/icons/levels/logo.png" alt="Football2026" width={40} height={40} className="rounded-xl" />
+              Football2026
+            </h1>
           </Link>
           <p className="text-gray-400 mt-2 text-sm">{t("register_subtitle")}</p>
         </div>
+
+        {/* Referral Banner (shown when ?ref= present) */}
+        {refCode && (
+          <div className="bg-gradient-to-r from-green-500/15 to-emerald-500/10 border border-green-500/30 rounded-xl p-3 mb-4 flex items-center gap-2.5">
+            <span className="text-xl shrink-0">🤝</span>
+            <div>
+              <p className="text-green-400 text-sm font-bold">
+                {locale === "zh" ? "邀请人" : "Invited by"}: @{refCode}
+              </p>
+              <p className="text-green-300/70 text-xs">
+                {locale === "zh"
+                  ? "你和好友各得 +20,000,000 GC！"
+                  : "You & your friend both get +20,000,000 GC!"}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Welcome Gift Banner */}
         <div className="bg-gradient-to-r from-[#FFD700]/20 to-[#FFA500]/10 border border-[#FFD700]/30 rounded-xl p-3 mb-6 text-center">

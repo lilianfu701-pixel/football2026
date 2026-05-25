@@ -128,3 +128,129 @@
     @apply font-sans;
   }
 }
+
+/* ── Tiptap editor ───────────────────────────────────────────────────────── */
+.rich-editor .ProseMirror {
+  outline: none;
+  min-height: 220px;
+  caret-color: #FFD700;
+}
+.rich-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #4B5563;
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
+.rich-editor .ProseMirror > * { margin-bottom: 0.5rem; }
+.rich-editor .ProseMirror h2 { font-size: 1.35rem; font-weight: 800; color: #F9FAFB; margin-top: 1rem; }
+.rich-editor .ProseMirror h3 { font-size: 1.1rem;  font-weight: 700; color: #F3F4F6; margin-top: 0.75rem; }
+.rich-editor .ProseMirror blockquote {
+  border-left: 3px solid #FFD70060;
+  padding-left: 1rem;
+  color: #9CA3AF;
+  font-style: italic;
+}
+.rich-editor .ProseMirror code {
+  background: #0A1628;
+  border: 1px solid #1E3A5F;
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+  font-size: 0.85em;
+  color: #6EE7B7;
+}
+.rich-editor .ProseMirror pre {
+  background: #0A1628;
+  border: 1px solid #1E3A5F;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+}
+.rich-editor .ProseMirror ul { list-style: disc;    padding-left: 1.5rem; }
+.rich-editor .ProseMirror ol { list-style: decimal; padding-left: 1.5rem; }
+.rich-editor .ProseMirror li { margin-bottom: 0.25rem; }
+.rich-editor .ProseMirror hr { border-color: #1E3A5F; margin: 1rem 0; }
+.rich-editor .ProseMirror a  { color: #60A5FA; text-decoration: underline; }
+.rich-editor .ProseMirror img { max-width: 100%; border-radius: 0.5rem; border: 1px solid #1E3A5F; }
+.rich-editor .ProseMirror iframe {
+  width: 100%; aspect-ratio: 16/9;
+  border-radius: 0.75rem;
+  border: 1px solid #1E3A5F;
+}
+.rich-editor .ProseMirror .youtube-wrapper {
+  width: 100%;
+  aspect-ratio: 16/9;
+  position: relative;
+}
+
+/* ── Rich content display (post/reply rendering) ─────────────────────────── */
+.rich-content { color: #E5E7EB; font-size: 0.875rem; line-height: 1.75; }
+.rich-content > * { margin-bottom: 0.6rem; }
+.rich-content h2 { font-size: 1.3rem; font-weight: 800; color: #F9FAFB; margin-top: 1.25rem; }
+.rich-content h3 { font-size: 1.05rem; font-weight: 700; color: #F3F4F6; margin-top: 1rem; }
+.rich-content blockquote {
+  border-left: 3px solid #FFD70060;
+  padding-left: 1rem;
+  color: #9CA3AF;
+  font-style: italic;
+  margin: 0.75rem 0;
+}
+.rich-content code {
+  background: #0A1628;
+  border: 1px solid #1E3A5F;
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+  font-size: 0.82em;
+  color: #6EE7B7;
+  font-family: monospace;
+}
+.rich-content pre {
+  background: #0A1628;
+  border: 1px solid #1E3A5F;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+  font-size: 0.8rem;
+  color: #6EE7B7;
+  font-family: monospace;
+  margin: 0.75rem 0;
+}
+.rich-content ul { list-style: disc;    padding-left: 1.5rem; }
+.rich-content ol { list-style: decimal; padding-left: 1.5rem; }
+.rich-content li { margin-bottom: 0.2rem; }
+.rich-content hr { border-color: #1E3A5F; margin: 1rem 0; }
+.rich-content a  { color: #60A5FA; text-decoration: underline; }
+.rich-content a:hover { color: #93C5FD; }
+.rich-content img {
+  max-width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid #1E3A5F;
+  margin: 0.5rem 0;
+}
+.rich-content iframe {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 0.75rem;
+  border: 1px solid #1E3A5F;
+  margin: 0.75rem 0;
+}
+.rich-content p { margin-bottom: 0.5rem; }
+.rich-content strong, .rich-content b { font-weight: 700; color: #F9FAFB; }
+.rich-content table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; }
+.rich-content th, .rich-content td {
+  border: 1px solid #1E3A5F;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+}
+.rich-content th { background: #0F2040; font-weight: 700; color: #F3F4F6; }
+
+/* ── @mention styles ── */
+.mention {
+  color: #60A5FA;
+  background: rgba(96, 165, 250, 0.1);
+  border-radius: 4px;
+  padding: 0 3px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.mention:hover { background: rgba(96, 165, 250, 0.2); }

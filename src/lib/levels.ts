@@ -8,20 +8,34 @@ export interface LevelInfo {
   color: string;
   bgColor: string;
   icon: string;
+  iconUrl: string;
   rank: number;
 }
 
 export const WEALTH_LEVELS: LevelInfo[] = [
   {
+    rank: 0,
+    name: "Beggar",
+    nameZh: "乞丐",
+    minGc: -Infinity,
+    maxGc: 0,
+    dailyFreeGc: 10_000_000,
+    color: "#A16207",
+    bgColor: "#292524",
+    icon: "🪣",
+    iconUrl: "/icons/levels/badge_lv_0.png",
+  },
+  {
     rank: 1,
     name: "Common",
     nameZh: "平民",
-    minGc: 0,
+    minGc: 1,
     maxGc: 999_999_999,
     dailyFreeGc: 29_900_000,
     color: "#9CA3AF",
     bgColor: "#374151",
     icon: "🥉",
+    iconUrl: "/icons/levels/badge_lv_1.png",
   },
   {
     rank: 2,
@@ -33,6 +47,7 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     color: "#6EE7B7",
     bgColor: "#064E3B",
     icon: "🌱",
+    iconUrl: "/icons/levels/badge_lv_2.png",
   },
   {
     rank: 3,
@@ -44,6 +59,7 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     color: "#34D399",
     bgColor: "#065F46",
     icon: "💰",
+    iconUrl: "/icons/levels/badge_lv_3.png",
   },
   {
     rank: 4,
@@ -55,6 +71,7 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     color: "#60A5FA",
     bgColor: "#1E3A8A",
     icon: "👑",
+    iconUrl: "/icons/levels/badge_lv_4.png",
   },
   {
     rank: 5,
@@ -66,6 +83,7 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     color: "#818CF8",
     bgColor: "#312E81",
     icon: "🏰",
+    iconUrl: "/icons/levels/badge_lv_5.png",
   },
   {
     rank: 6,
@@ -77,6 +95,7 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     color: "#C084FC",
     bgColor: "#4C1D95",
     icon: "💎",
+    iconUrl: "/icons/levels/badge_lv_6.png",
   },
   {
     rank: 7,
@@ -88,6 +107,7 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     color: "#F472B6",
     bgColor: "#831843",
     icon: "🔱",
+    iconUrl: "/icons/levels/badge_lv_7.png",
   },
   {
     rank: 8,
@@ -99,6 +119,7 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     color: "#FB923C",
     bgColor: "#7C2D12",
     icon: "⚜️",
+    iconUrl: "/icons/levels/badge_lv_8.png",
   },
   {
     rank: 9,
@@ -110,6 +131,7 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     color: "#FFD700",
     bgColor: "#78350F",
     icon: "🌟",
+    iconUrl: "/icons/levels/badge_lv_9.png",
   },
 ];
 
@@ -122,27 +144,30 @@ export interface HonorLevelInfo {
   maxPoints: number | null;
   color: string;
   icon: string;
+  iconUrl: string;
 }
 
 export const HONOR_LEVELS: HonorLevelInfo[] = [
-  { rank: 1, name: "Rookie",    nameZh: "新人",   minPoints: 0,    maxPoints: 99,   color: "#9CA3AF", icon: "⚽" },
-  { rank: 2, name: "Fan",       nameZh: "球迷",   minPoints: 100,  maxPoints: 499,  color: "#6EE7B7", icon: "🏅" },
-  { rank: 3, name: "Analyst",   nameZh: "分析师", minPoints: 500,  maxPoints: 1999, color: "#34D399", icon: "📊" },
-  { rank: 4, name: "Expert",    nameZh: "专家",   minPoints: 2000, maxPoints: 4999, color: "#60A5FA", icon: "🔍" },
-  { rank: 5, name: "Prophet",   nameZh: "先知",   minPoints: 5000, maxPoints: 9999, color: "#818CF8", icon: "🔮" },
-  { rank: 6, name: "Oracle",    nameZh: "神谕",   minPoints: 10000,maxPoints: 24999,color: "#C084FC", icon: "🌙" },
-  { rank: 7, name: "Legend",    nameZh: "传奇",   minPoints: 25000,maxPoints: 49999,color: "#F472B6", icon: "⭐" },
-  { rank: 8, name: "Champion",  nameZh: "冠军",   minPoints: 50000,maxPoints: 149999,color:"#FB923C", icon: "🏆" },
-  { rank: 9, name: "GOAT",      nameZh: "球神",   minPoints: 150000,maxPoints: null, color: "#FFD700", icon: "🐐" },
+  { rank: 1, name: "Rookie",   nameZh: "新人",   minPoints: 0,     maxPoints: 99,    color: "#9CA3AF", icon: "⚽", iconUrl: "/icons/levels/1.jpg" },
+  { rank: 2, name: "Fan",      nameZh: "球迷",   minPoints: 100,   maxPoints: 499,   color: "#6EE7B7", icon: "🏅", iconUrl: "/icons/levels/2.jpg" },
+  { rank: 3, name: "Analyst",  nameZh: "分析师", minPoints: 500,   maxPoints: 1999,  color: "#34D399", icon: "📊", iconUrl: "/icons/levels/3.jpg" },
+  { rank: 4, name: "Expert",   nameZh: "专家",   minPoints: 2000,  maxPoints: 4999,  color: "#60A5FA", icon: "🔍", iconUrl: "/icons/levels/4.jpg" },
+  { rank: 5, name: "Prophet",  nameZh: "先知",   minPoints: 5000,  maxPoints: 9999,  color: "#818CF8", icon: "🔮", iconUrl: "/icons/levels/5.jpg" },
+  { rank: 6, name: "Oracle",   nameZh: "神谕",   minPoints: 10000, maxPoints: 24999, color: "#C084FC", icon: "🌙", iconUrl: "/icons/levels/6.jpg" },
+  { rank: 7, name: "Legend",   nameZh: "传奇",   minPoints: 25000, maxPoints: 49999, color: "#F472B6", icon: "⭐", iconUrl: "/icons/levels/7.jpg" },
+  { rank: 8, name: "Champion", nameZh: "冠军",   minPoints: 50000, maxPoints: 149999,color: "#FB923C", icon: "🏆", iconUrl: "/icons/levels/8.jpg" },
+  { rank: 9, name: "GOAT",     nameZh: "球神",   minPoints: 150000,maxPoints: null,  color: "#FFD700", icon: "🐐", iconUrl: "/icons/levels/9.jpg" },
 ];
 
 export function getWealthLevel(gcBalance: number): LevelInfo {
-  for (let i = WEALTH_LEVELS.length - 1; i >= 0; i--) {
+  // rank 0 (Beggar) covers 0 and all negative values
+  if (gcBalance <= 0) return WEALTH_LEVELS[0];
+  for (let i = WEALTH_LEVELS.length - 1; i >= 1; i--) {
     if (gcBalance >= WEALTH_LEVELS[i].minGc) {
       return WEALTH_LEVELS[i];
     }
   }
-  return WEALTH_LEVELS[0];
+  return WEALTH_LEVELS[1]; // Common fallback for positive GC < 1B
 }
 
 export function getHonorLevel(points: number): HonorLevelInfo {
@@ -156,12 +181,18 @@ export function getHonorLevel(points: number): HonorLevelInfo {
 
 export function getNextWealthLevel(gcBalance: number): LevelInfo | null {
   const current = getWealthLevel(gcBalance);
+  // Beggar (rank 0) → next is Common (rank 1)
   const next = WEALTH_LEVELS.find((l) => l.rank === current.rank + 1);
   return next ?? null;
 }
 
 export function getWealthProgress(gcBalance: number): number {
   const current = getWealthLevel(gcBalance);
+  // Beggar: show progress toward 1 GC (reaching Common), capped 0–100
+  if (current.rank === 0) {
+    if (gcBalance >= 0) return Math.min(100, gcBalance * 100); // 0 GC = 0%
+    return 0; // negative balance = 0%
+  }
   if (!current.maxGc) return 100;
   const progress =
     ((gcBalance - current.minGc) / (current.maxGc - current.minGc)) * 100;

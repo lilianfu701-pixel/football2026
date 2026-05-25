@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { signIn } from "../actions";
 import { createClient } from "@/lib/supabase/client";
 
@@ -72,7 +73,10 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href={`/${locale}`} className="inline-block">
-            <h1 className="text-3xl font-bold text-[#FFD700]">⚽ Football2026</h1>
+            <h1 className="flex items-center justify-center gap-3 text-3xl font-bold text-[#FFD700]">
+              <Image src="/icons/levels/logo.png" alt="Football2026" width={40} height={40} className="rounded-xl" />
+              Football2026
+            </h1>
           </Link>
           <p className="text-gray-400 mt-2 text-sm">{t("login_subtitle")}</p>
         </div>

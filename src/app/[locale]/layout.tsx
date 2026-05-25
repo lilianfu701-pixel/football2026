@@ -6,6 +6,10 @@ import { notFound } from "next/navigation";
 import { routing, rtlLocales } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/server";
 import Navbar from "@/components/Navbar";
+import SidebarLayout from "@/components/SidebarLayout";
+import GlobalSidebar from "@/components/GlobalSidebar";
+import { GcBalanceProvider } from "@/context/GcBalance";
+import MobilePwaRegister from "@/components/mobile/MobilePwaRegister";
 import "../globals.css";
 
 const geist = Geist({ subsets: ["latin"] });
@@ -87,6 +91,10 @@ export async function generateMetadata({
     creator: "Football2026",
     publisher: "Football2026",
     metadataBase: new URL("https://football2026.net"),
+    icons: {
+      icon:     { url: "/icons/levels/favicon.png", type: "image/png", sizes: "32x32" },
+      shortcut: { url: "/icons/levels/favicon.png" },
+    },
     alternates: {
       canonical: `https://football2026.net/${locale === "en" ? "" : locale}`,
       languages: {
@@ -162,19 +170,43 @@ export default async function LocaleLayout({
 
   let gcBalance: number | undefined;
   let nickname: string | undefined;
+  let unreadMessages = 0;
   if (user) {
-    const { data: profile } = await supabase
-      .from("users")
-      .select("gc_balance, nickname")
-      .eq("id", user.id)
-      .single();
-    gcBalance = profile?.gc_balance;
-    nickname = profile?.nickname;
+    const [profileRes, unreadRes] = await Promise.all([
+      supabase.from("users").select("gc_balance, nickname").eq("id", user.id).single(),
+      supabase.from("messages").select("id", { count: "exact", head: true })
+        .eq("receiver_id", user.id).eq("is_read", false),
+    ]);
+    gcBalance      = profileRes.data?.gc_balance;
+    nickname       = profileRes.data?.nickname;
+    unreadMessages = unreadRes.count ?? 0;
+
+    // OAuth / trigger sign-ups may have gc_balance = NULL (trigger skips initial grant).
+    // Initialise to 100 M GC on first load so the betting UI works immediately.
+    if (gcBalance == null) {
+      const INITIAL_GC = 100_000_000;
+      await supabase
+        .from("users")
+        .update({ gc_balance: INITIAL_GC, gc_total: INITIAL_GC })
+        .eq("id", user.id);
+      gcBalance = INITIAL_GC;
+    }
   }
 
   return (
     <html lang={locale} dir={isRtl ? "rtl" : "ltr"}>
       <head>
+        {/* Favicon — fallback for browsers that don't read Next.js metadata */}
+        <link rel="icon"          href="/icons/levels/favicon.png" type="image/png" sizes="32x32" />
+        <link rel="shortcut icon" href="/icons/levels/favicon.png" type="image/png" />
+        <link rel="manifest" href={`/${locale}/manifest.webmanifest`} />
+        <link rel="apple-touch-icon" href="/icons/levels/logo.png" />
+        <meta name="theme-color" content="#0A1628" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="Football2026" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
         {/* Extra SEO: structured data */}
         <script
           type="application/ld+json"
@@ -195,10 +227,17 @@ export default async function LocaleLayout({
           }}
         />
       </head>
-      <body className={geist.className}>
+      <body className={`${geist.className} bg-[#0A1628]`}>
         <NextIntlClientProvider messages={messages}>
-          <Navbar user={user} gcBalance={gcBalance} nickname={nickname} />
-          <div className="pt-16">{children}</div>
+          <GcBalanceProvider initial={gcBalance ?? 0}>
+            <MobilePwaRegister />
+            <Navbar user={user} gcBalance={gcBalance} nickname={nickname} unreadMessages={unreadMessages} />
+            <div className="pt-16">
+              <SidebarLayout locale={locale} sidebar={<GlobalSidebar locale={locale} />}>
+                {children}
+              </SidebarLayout>
+            </div>
+          </GcBalanceProvider>
         </NextIntlClientProvider>
       </body>
     </html>

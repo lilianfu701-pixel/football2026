@@ -1,26 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useParams, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { localeNames } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import NotificationBell from "@/components/NotificationBell";
+import { useGcBalance } from "@/context/GcBalance";
 
 interface NavbarProps {
   user: User | null;
   gcBalance?: number;
   nickname?: string;
+  unreadMessages?: number;
 }
 
-export default function Navbar({ user, gcBalance, nickname }: NavbarProps) {
+export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unreadMessages = 0 }: NavbarProps) {
   const t = useTranslations("nav");
   const params = useParams();
   const pathname = usePathname();
   const locale = (params.locale as string) || "en";
   const [menuOpen, setMenuOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  const { balance: gcBalance } = useGcBalance();
+  const langRef = useRef<HTMLDivElement>(null);
+  const isMobileInstallPage = pathname === `/${locale}/m`;
+
+  // Close language dropdown when clicking outside
+  useEffect(() => {
+    if (!langOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) {
+        setLangOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [langOpen]);
+
+  if (isMobileInstallPage) return null;
 
   const supabase = createClient();
 
@@ -48,7 +69,9 @@ export default function Navbar({ user, gcBalance, nickname }: NavbarProps) {
     { href: `/${locale}/matches`, label: t("matches") },
     { href: `/${locale}/predict`, label: t("predict") },
     { href: `/${locale}/leaderboard`, label: t("leaderboard") },
+    { href: `/${locale}/invite`, label: t("invite") },
     { href: `/${locale}/forum`, label: t("forum") },
+    ...(user ? [{ href: `/${locale}/messages`, label: t("messages"), badge: unreadMessages }] : []),
   ];
 
   return (
@@ -60,7 +83,14 @@ export default function Navbar({ user, gcBalance, nickname }: NavbarProps) {
             href={`/${locale}`}
             className="flex items-center gap-2 shrink-0"
           >
-            <span className="text-2xl">⚽</span>
+            <Image
+              src="/icons/levels/logo.png"
+              alt="Football2026"
+              width={44}
+              height={44}
+              className="rounded-xl"
+              priority
+            />
             <span className="text-[#FFD700] font-bold text-lg hidden sm:block">
               Football2026
             </span>
@@ -72,9 +102,14 @@ export default function Navbar({ user, gcBalance, nickname }: NavbarProps) {
               <Link
                 key={link.href}
                 href={link.href}
-                className="px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#1E3A5F] rounded-lg transition-colors"
+                className="relative px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#1E3A5F] rounded-lg transition-colors"
               >
                 {link.label}
+                {"badge" in link && (link.badge ?? 0) > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center px-1">
+                    {(link.badge ?? 0) > 99 ? "99+" : link.badge}
+                  </span>
+                )}
               </Link>
             ))}
           </div>
@@ -99,29 +134,32 @@ export default function Navbar({ user, gcBalance, nickname }: NavbarProps) {
               </Link>
             )}
 
+            {/* Notification Bell — logged-in users only */}
+            {user && <NotificationBell locale={locale} />}
+
             {/* Language Switcher */}
-            <div className="relative">
+            <div className="relative" ref={langRef}>
               <button
                 onClick={() => setLangOpen(!langOpen)}
                 className="flex items-center gap-1 px-2 py-1.5 text-sm text-gray-300 hover:text-white hover:bg-[#1E3A5F] rounded-lg transition-colors"
               >
                 <span>🌐</span>
-                <span className="hidden sm:block uppercase text-xs font-medium">
-                  {locale}
+                <span className="hidden sm:block text-xs font-medium">
+                  {localeNames[locale] ?? locale}
                 </span>
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className={`w-3 h-3 transition-transform ${langOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
 
               {langOpen && (
-                <div className="absolute right-0 mt-1 w-44 bg-[#0F2040] border border-[#1E3A5F] rounded-xl shadow-2xl overflow-hidden z-50 max-h-80 overflow-y-auto">
+                <div className="absolute right-0 mt-1 w-44 bg-[#0F2040] border border-[#1E3A5F] rounded-xl shadow-2xl overflow-hidden z-50">
                   {Object.entries(localeNames).map(([code, name]) => (
                     <Link
                       key={code}
                       href={switchLocalePath(code)}
                       onClick={() => setLangOpen(false)}
-                      className={`block px-4 py-2.5 text-sm transition-colors ${
+                      className={`block px-4 py-2 text-sm transition-colors ${
                         code === locale
                           ? "text-[#FFD700] bg-[#FFD700]/10"
                           : "text-gray-300 hover:text-white hover:bg-[#1E3A5F]"

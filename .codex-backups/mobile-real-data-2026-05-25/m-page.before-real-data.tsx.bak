@@ -1,0 +1,34 @@
+import MobileHome from "@/components/mobile/MobileHome";
+import { createClient } from "@/lib/supabase/server";
+
+interface MobileHomePageProps {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ preview?: string }>;
+}
+
+function formatDaysLeft() {
+  const kickoff = new Date("2026-06-11T19:00:00Z");
+  return Math.max(0, Math.ceil((kickoff.getTime() - Date.now()) / 86_400_000))
+    .toString()
+    .padStart(2, "0");
+}
+
+export default async function MobileHomePage({ params, searchParams }: MobileHomePageProps) {
+  const { locale } = await params;
+  const { preview } = await searchParams;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const previewEmail = preview === "app" ? "zeximail@gmail.com" : undefined;
+  const userEmail = user?.email ?? previewEmail;
+
+  return (
+    <MobileHome
+      locale={locale}
+      isLoggedIn={Boolean(userEmail)}
+      userEmail={userEmail}
+      daysLeft={formatDaysLeft()}
+    />
+  );
+}

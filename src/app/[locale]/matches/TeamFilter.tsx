@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { getFlagUrl } from "@/lib/flags";
+import { getFlagUrl, getTeamDisplayName } from "@/lib/flags";
 import { useState, useRef, useEffect } from "react";
 
 interface TeamFilterProps {
@@ -140,7 +140,7 @@ export default function TeamFilter({ teams, selectedTeams, locale }: TeamFilterP
                   ) : (
                     <div className="w-6 h-4 rounded-sm bg-[#1E3A5F] shrink-0" />
                   )}
-                  <span className="flex-1 text-left leading-tight">{team}</span>
+                  <span className="flex-1 text-left leading-tight">{getTeamDisplayName(team, locale)}</span>
                   <Checkbox checked={isSelected} />
                 </button>
               );

@@ -1,0 +1,113 @@
+﻿ M .claude/launch.json
+ M messages/en.json
+ M messages/zh.json
+ M next.config.ts
+ M package.json
+ M pnpm-lock.yaml
+ M src/app/[locale]/auth/actions.ts
+ M src/app/[locale]/auth/login/page.tsx
+ M src/app/[locale]/auth/register/page.tsx
+ M src/app/[locale]/layout.tsx
+ M src/app/[locale]/matches/TeamFilter.tsx
+ M src/app/[locale]/matches/[id]/PredictionPanel.tsx
+ M src/app/[locale]/matches/[id]/page.tsx
+ M src/app/[locale]/matches/page.tsx
+ M src/app/[locale]/page.tsx
+ M src/app/[locale]/profile/page.tsx
+ M src/app/[locale]/profile/settings/page.tsx
+ M src/app/api/bets/route.ts
+ M src/app/api/checkin/route.ts
+ M src/app/globals.css
+ M src/components/Navbar.tsx
+ M src/lib/flags.ts
+ M src/lib/levels.ts
+?? .codex-backups/
+?? public/countries-110m.json
+?? public/icons/
+?? scripts/
+?? src/app/[locale]/admin/
+?? src/app/[locale]/awards/
+?? src/app/[locale]/forum/
+?? src/app/[locale]/invite/
+?? src/app/[locale]/leaderboard/
+?? src/app/[locale]/matches/AwardSidebarCard.tsx
+?? src/app/[locale]/matches/FavoritesCard.tsx
+?? src/app/[locale]/matches/FollowButton.tsx
+?? src/app/[locale]/matches/InviteCard.tsx
+?? src/app/[locale]/matches/ShareBetModal.tsx
+?? src/app/[locale]/matches/[id]/ScorePredictionPanel.tsx
+?? src/app/[locale]/messages/
+?? src/app/[locale]/predict/
+?? src/app/[locale]/profile/[userId]/
+?? src/app/[locale]/profile/topup/
+?? src/app/[locale]/share/
+?? src/app/api/admin/
+?? src/app/api/forum/
+?? src/app/api/gc-balance/
+?? src/app/api/match-follow/
+?? src/app/api/match-props/
+?? src/app/api/match-vote/
+?? src/app/api/match-votes-by-country/
+?? src/app/api/messages/
+?? src/app/api/notifications/
+?? src/app/api/og/
+?? src/app/api/profile/
+?? src/app/api/score-bets/
+?? src/app/api/share/
+?? src/app/api/topup/
+?? src/app/api/webhooks/
+?? src/components/GlobalSidebar.tsx
+?? src/components/NotificationBell.tsx
+?? src/components/ProfileCompletion.tsx
+?? src/components/SidebarGcBalance.tsx
+?? src/components/SidebarLayout.tsx
+?? src/components/forum/
+?? src/components/matches/
+?? src/context/
+?? src/data/
+?? src/lib/aiModels.ts
+?? src/lib/awardPhase.ts
+?? src/lib/countryCentroids.ts
+?? src/lib/forum/
+?? src/lib/forumRewards.ts
+?? src/lib/h2h.ts
+?? src/lib/inviteMilestones.ts
+?? src/lib/languages.ts
+?? src/lib/paypal.ts
+?? src/lib/profileRewards.ts
+?? src/lib/scoreOdds.ts
+?? src/lib/stripe.ts
+?? src/lib/supabase/service.ts
+?? src/lib/teamColors.ts
+?? src/lib/tron.ts
+?? src/types/
+?? supabase/.temp/
+?? supabase/migrations/004_award_bets.sql
+?? supabase/migrations/005_referrals.sql
+?? supabase/migrations/006_forum.sql
+?? supabase/migrations/007_forum_stages.sql
+?? supabase/migrations/008_match_thread_fn.sql
+?? supabase/migrations/009_forum_storage.sql
+?? supabase/migrations/010_forum_ratings.sql
+?? supabase/migrations/011_forum_translate.sql
+?? supabase/migrations/012_forum_categories.sql
+?? supabase/migrations/013_remove_community.sql
+?? supabase/migrations/014_fix_user_fk.sql
+?? supabase/migrations/015_force_public_user_fk.sql
+?? supabase/migrations/016_ratings_reply_support.sql
+?? supabase/migrations/017_admin_and_rls.sql
+?? supabase/migrations/018_category_no_new_posts.sql
+?? supabase/migrations/019_title_translations.sql
+?? supabase/migrations/020_forum_translations.sql
+?? supabase/migrations/021_notifications.sql
+?? supabase/migrations/022_edited_at.sql
+?? supabase/migrations/023_profile_fields.sql
+?? supabase/migrations/024_seed_group_threads.sql
+?? supabase/migrations/025_match_votes.sql
+?? supabase/migrations/026_featured_checkin_bookmarks_reports_tags.sql
+?? supabase/migrations/027_match_follows.sql
+?? supabase/migrations/028_ai_predictions.sql
+?? supabase/migrations/029_parimutuel.sql
+?? supabase/migrations/030_fix_award_bets_fk.sql
+?? supabase/migrations/031_score_bets.sql
+?? supabase/migrations/032_gc_transactions.sql

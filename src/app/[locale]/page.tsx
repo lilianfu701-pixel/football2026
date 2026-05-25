@@ -1,190 +1,663 @@
-import { useTranslations } from "next-intl";
-import { getTranslations } from "next-intl/server";
-import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+"use server";
 
+import Link from "next/link";
+import Image from "next/image";
+import { createClient } from "@/lib/supabase/server";
+import { getFlagUrl } from "@/lib/flags";
+import { computeGroupStandings } from "@/lib/groupStandings";
+import CountdownHero from "@/components/home/CountdownHero";
+
+/* ─── Phase detection ────────────────────────────────────────────────────── */
+const WC_START = new Date("2026-06-11T20:00:00+00:00");
+const WC_END   = new Date("2026-07-19T23:59:59+00:00");
+
+function getPhase(): "pre" | "during" | "post" {
+  const now = new Date();
+  if (now < WC_START) return "pre";
+  if (now <= WC_END)  return "during";
+  return "post";
+}
+
+/* ─── Types ──────────────────────────────────────────────────────────────── */
+interface AiPredictions {
+  chatgpt?:  { home: number; away: number };
+  claude?:   { home: number; away: number };
+  gemini?:   { home: number; away: number };
+  deepseek?: { home: number; away: number };
+  qwen?:     { home: number; away: number };
+}
+
+interface MatchRow {
+  id: number;
+  home_team: string;
+  away_team: string;
+  home_score: number | null;
+  away_score: number | null;
+  kickoff_time: string;
+  venue: string | null;
+  status: string;
+  group_name: string | null;
+  stage: string | null;
+  ai_predictions: AiPredictions | null;
+}
+
+interface Scorer {
+  id: number;
+  player_name: string;
+  player_name_zh: string | null;
+  team: string;
+  photo_url: string | null;
+  goals: number;
+  assists: number;
+  matches_played: number;
+}
+
+interface LeaderUser {
+  user_id: string;
+  username: string;
+  avatar_url: string | null;
+  gc_balance: number;
+  rank: number;
+}
+
+/* ─── Sub-components ─────────────────────────────────────────────────────── */
+function SectionTitle({ en, zh, locale }: { en: string; zh: string; locale: string }) {
+  return (
+    <h2 className="text-2xl sm:text-3xl font-black text-white mb-6">
+      {locale === "zh" ? zh : en}
+    </h2>
+  );
+}
+
+function MatchCard({ match, locale }: { match: MatchRow; locale: string }) {
+  const zh = locale === "zh";
+  const dt = new Date(match.kickoff_time);
+  const dateStr = dt.toLocaleDateString(zh ? "zh-CN" : "en-US", {
+    month: "short", day: "numeric", timeZone: "UTC",
+  });
+  const timeStr = dt.toLocaleTimeString(zh ? "zh-CN" : "en-US", {
+    hour: "2-digit", minute: "2-digit", timeZone: "UTC",
+  });
+  const isFinished = match.status === "finished";
+
+  return (
+    <Link href={`/${locale}/matches/${match.id}`}
+      className="block rounded-2xl border border-white/10 bg-[#0A1628] hover:border-[#FFD700]/30 hover:bg-[#0d1e36] transition-all p-4">
+      <div className="flex items-center justify-between text-[11px] text-gray-500 mb-3 uppercase tracking-wider">
+        <span>{match.group_name ? (zh ? `小组 ${match.group_name}` : `Group ${match.group_name}`) : (match.stage ?? "")}</span>
+        <span>{dateStr} {timeStr}</span>
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        {/* Home */}
+        <div className="flex flex-col items-center gap-1.5 flex-1">
+          <img src={getFlagUrl(match.home_team)} alt={match.home_team}
+            className="w-10 h-7 rounded object-cover" />
+          <span className="text-xs font-bold text-white text-center leading-tight">{match.home_team}</span>
+        </div>
+        {/* Score / VS */}
+        <div className="flex flex-col items-center gap-1">
+          {isFinished && match.home_score !== null && match.away_score !== null ? (
+            <span className="text-2xl font-black text-[#FFD700]">
+              {match.home_score} – {match.away_score}
+            </span>
+          ) : (
+            <span className="text-base font-black text-gray-500">VS</span>
+          )}
+          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+            match.status === "live"     ? "bg-red-500/20 text-red-400" :
+            match.status === "finished" ? "bg-gray-700 text-gray-400" :
+                                          "bg-[#FFD700]/10 text-[#FFD700]"
+          }`}>
+            {match.status === "live"     ? (zh ? "直播中" : "LIVE") :
+             match.status === "finished" ? (zh ? "已结束" : "FT") :
+                                           (zh ? "即将开赛" : "Upcoming")}
+          </span>
+        </div>
+        {/* Away */}
+        <div className="flex flex-col items-center gap-1.5 flex-1">
+          <img src={getFlagUrl(match.away_team)} alt={match.away_team}
+            className="w-10 h-7 rounded object-cover" />
+          <span className="text-xs font-bold text-white text-center leading-tight">{match.away_team}</span>
+        </div>
+      </div>
+      {match.venue && (
+        <p className="text-center text-[10px] text-gray-600 mt-3">📍 {match.venue}</p>
+      )}
+    </Link>
+  );
+}
+
+function MatchCardSkeleton() {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-[#0A1628] p-4 animate-pulse">
+      <div className="flex items-center justify-between mb-3">
+        <div className="h-2.5 w-16 rounded bg-white/10" />
+        <div className="h-2.5 w-20 rounded bg-white/10" />
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col items-center gap-2 flex-1">
+          <div className="w-10 h-7 rounded bg-white/10" />
+          <div className="h-2.5 w-14 rounded bg-white/10" />
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <div className="h-4 w-8 rounded bg-white/10" />
+          <div className="h-4 w-14 rounded bg-white/10" />
+        </div>
+        <div className="flex flex-col items-center gap-2 flex-1">
+          <div className="w-10 h-7 rounded bg-white/10" />
+          <div className="h-2.5 w-14 rounded bg-white/10" />
+        </div>
+      </div>
+      <div className="mt-3 h-2 w-24 rounded bg-white/10 mx-auto" />
+    </div>
+  );
+}
+
+function ScorerRowSkeleton({ rank }: { rank: number }) {
+  return (
+    <div className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-3 px-4 py-3.5 border-b border-white/5 last:border-0 items-center animate-pulse">
+      <span className={`w-6 text-sm font-black ${
+        rank === 1 ? "text-[#FFD700]/30" : rank === 2 ? "text-gray-700" : rank === 3 ? "text-amber-900" : "text-gray-800"
+      }`}>{rank}</span>
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-full bg-white/10 flex-shrink-0" />
+        <div className="space-y-1.5">
+          <div className="h-3 w-24 rounded bg-white/10" />
+          <div className="h-2.5 w-16 rounded bg-white/10" />
+        </div>
+      </div>
+      <div className="w-12 flex justify-center"><div className="h-5 w-5 rounded bg-white/10" /></div>
+      <div className="w-12 flex justify-center"><div className="h-4 w-4 rounded bg-white/10" /></div>
+      <div className="w-16 flex justify-center"><div className="h-3 w-4 rounded bg-white/10" /></div>
+    </div>
+  );
+}
+
+function aiPcts(preds: AiPredictions | null): { home: number; draw: number; away: number } {
+  if (!preds) return { home: 40, draw: 20, away: 40 };
+  const entries = Object.values(preds).filter(Boolean) as { home: number; away: number }[];
+  if (entries.length === 0) return { home: 40, draw: 20, away: 40 };
+  let homeW = 0, drawW = 0, awayW = 0;
+  for (const e of entries) {
+    if (e.home > e.away)       homeW++;
+    else if (e.home < e.away)  awayW++;
+    else                       drawW++;
+  }
+  const total = entries.length;
+  return {
+    home: Math.round((homeW / total) * 100),
+    draw: Math.round((drawW / total) * 100),
+    away: Math.round((awayW / total) * 100),
+  };
+}
+
+function AiPredictionCard({ match, locale }: { match: MatchRow; locale: string }) {
+  const zh = locale === "zh";
+  const { home, draw, away } = aiPcts(match.ai_predictions);
+
+  return (
+    <div className="rounded-2xl border border-[#FFD700]/15 bg-[#0A1628] p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-[#FFD700] text-xs font-bold uppercase tracking-widest">
+          🤖 {zh ? "AI 预测" : "AI Prediction"}
+        </span>
+      </div>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col items-center gap-1">
+          <img src={getFlagUrl(match.home_team)} alt={match.home_team} className="w-10 h-7 rounded object-cover" />
+          <span className="text-xs font-bold text-white">{match.home_team}</span>
+        </div>
+        <span className="text-gray-600 font-black text-sm">VS</span>
+        <div className="flex flex-col items-center gap-1">
+          <img src={getFlagUrl(match.away_team)} alt={match.away_team} className="w-10 h-7 rounded object-cover" />
+          <span className="text-xs font-bold text-white">{match.away_team}</span>
+        </div>
+      </div>
+      {/* Probability bar */}
+      <div className="flex rounded-full overflow-hidden h-3 mb-2">
+        <div className="bg-[#2B6CFF] transition-all" style={{ width: `${home}%` }} />
+        <div className="bg-gray-600 transition-all" style={{ width: `${draw}%` }} />
+        <div className="bg-[#0E9F6E] transition-all" style={{ width: `${away}%` }} />
+      </div>
+      <div className="flex justify-between text-[11px] text-gray-400">
+        <span className="text-[#2B6CFF] font-bold">{home}% {zh ? "主胜" : "Home"}</span>
+        <span className="text-gray-500">{draw}% {zh ? "平" : "Draw"}</span>
+        <span className="text-[#0E9F6E] font-bold">{away}% {zh ? "客胜" : "Away"}</span>
+      </div>
+    </div>
+  );
+}
+
+function DuringLeaderboard({
+  title, users, locale,
+}: { title: string; users: LeaderUser[]; locale: string }) {
+  function formatGC(n: number) {
+    if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1) + "B";
+    if (n >= 1_000_000)     return (n / 1_000_000).toFixed(1) + "M";
+    if (n >= 1_000)         return (n / 1_000).toFixed(0) + "K";
+    return String(n);
+  }
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-[#0A1628] p-5">
+      <h3 className="text-base font-black text-white mb-4">{title}</h3>
+      <div className="space-y-2">
+        {users.slice(0, 5).map((u, i) => (
+          <div key={u.user_id} className="flex items-center gap-3">
+            <span className={`text-xs font-black w-5 text-center ${
+              i === 0 ? "text-[#FFD700]" : i === 1 ? "text-gray-400" : i === 2 ? "text-amber-600" : "text-gray-600"
+            }`}>{i + 1}</span>
+            <div className="w-7 h-7 rounded-full overflow-hidden bg-[#FFD700]/10 flex-shrink-0">
+              {u.avatar_url
+                ? <img src={u.avatar_url} alt={u.username} className="w-full h-full object-cover" />
+                : <div className="w-full h-full flex items-center justify-center text-[10px] font-black text-[#FFD700]">
+                    {u.username?.[0]?.toUpperCase() ?? "?"}
+                  </div>
+              }
+            </div>
+            <span className="flex-1 text-xs font-semibold text-white truncate">{u.username}</span>
+            <span className="text-xs font-black text-[#FFD700]">{formatGC(u.gc_balance)} GC</span>
+          </div>
+        ))}
+        {users.length === 0 && (
+          <p className="text-xs text-gray-600 text-center py-4">
+            {locale === "zh" ? "暂无数据" : "No data yet"}
+          </p>
+        )}
+      </div>
+      <Link href={`/${locale}/leaderboard`}
+        className="block text-center text-xs text-[#FFD700]/70 hover:text-[#FFD700] mt-4 transition-colors">
+        {locale === "zh" ? "查看完整排行榜 →" : "View full leaderboard →"}
+      </Link>
+    </div>
+  );
+}
+
+/* ─── Page ───────────────────────────────────────────────────────────────── */
 interface HomePageProps {
   params: Promise<{ locale: string }>;
 }
 
 export default async function HomePage({ params }: HomePageProps) {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "hero" });
-  const tGc = await getTranslations({ locale, namespace: "gc" });
-  const tAuth = await getTranslations({ locale, namespace: "auth" });
+  const zh = locale === "zh";
+  const phase = getPhase();
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  // World Cup 2026 start date: June 11, 2026
-  const wcDate = new Date("2026-06-11T16:00:00Z");
-  const now = new Date();
-  const msLeft = wcDate.getTime() - now.getTime();
-  const daysLeft = Math.max(0, Math.floor(msLeft / (1000 * 60 * 60 * 24)));
+  /* ── Parallel data fetches ── */
+  const [
+    upcomingResult,
+    featuredResult,
+    aiResult,
+    scorersResult,
+    groupMatchesResult,
+    wealthResult,
+  ] = await Promise.all([
+    // 1. Upcoming 4 matches
+    supabase
+      .from("matches")
+      .select("id,home_team,away_team,home_score,away_score,kickoff_time,venue,status,group_name,stage,ai_predictions")
+      .in("status", ["upcoming", "live"])
+      .order("kickoff_time", { ascending: true })
+      .limit(4),
+
+    // 2. Featured matches — hardcoded 4 marquee games until admin panel is wired up
+    supabase
+      .from("matches")
+      .select("id,home_team,away_team,home_score,away_score,kickoff_time,venue,status,group_name,stage,ai_predictions")
+      .or(
+        "and(home_team.eq.Argentina,away_team.eq.Mexico)," +
+        "and(home_team.eq.England,away_team.eq.USA)," +
+        "and(home_team.eq.Spain,away_team.eq.Germany)," +
+        "and(home_team.eq.Brazil,away_team.eq.Serbia)"
+      )
+      .order("kickoff_time", { ascending: true })
+      .limit(4),
+
+    // 3. AI prediction matches (upcoming with ai data)
+    supabase
+      .from("matches")
+      .select("id,home_team,away_team,home_score,away_score,kickoff_time,venue,status,group_name,stage,ai_predictions")
+      .in("status", ["upcoming", "live"])
+      .not("ai_predictions", "is", null)
+      .order("kickoff_time", { ascending: true })
+      .limit(3),
+
+    // 4. Top scorers
+    supabase
+      .from("top_scorers")
+      .select("id,player_name,player_name_zh,team,photo_url,goals,assists,matches_played")
+      .eq("is_visible", true)
+      .order("sort_order", { ascending: true })
+      .limit(5),
+
+    // 5. All group-stage matches for standings
+    supabase
+      .from("matches")
+      .select("home_team,away_team,home_score,away_score,group_name,status")
+      .not("group_name", "is", null),
+
+    // 6. Wealth leaderboard (during phase)
+    supabase
+      .from("profiles")
+      .select("id,username,avatar_url,gc_balance")
+      .order("gc_balance", { ascending: false })
+      .limit(5),
+  ]);
+
+  const upcomingMatches: MatchRow[] = (upcomingResult.data ?? []) as MatchRow[];
+  const featuredMatches: MatchRow[] = (featuredResult.data ?? []) as MatchRow[];
+  const aiMatches: MatchRow[] = (aiResult.data ?? []) as MatchRow[];
+  const scorers: Scorer[] = (scorersResult.data ?? []) as Scorer[];
+  const groupMatches = (groupMatchesResult.data ?? []) as any[];
+  const groupStandings = computeGroupStandings(groupMatches, locale);
+
+  const wealthUsers: LeaderUser[] = ((wealthResult.data ?? []) as any[]).map((u, i) => ({
+    user_id: u.id,
+    username: u.username ?? "—",
+    avatar_url: u.avatar_url,
+    gc_balance: u.gc_balance ?? 0,
+    rank: i + 1,
+  }));
+
+  const totalMatches = upcomingMatches.length + featuredMatches.length;
 
   return (
-    <main className="min-h-screen bg-[#0A1628] text-white">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0F2040] to-[#0A1628]" />
-        <div className="absolute inset-0 bg-[url('/hero-bg.svg')] opacity-5" />
+    <main className="min-h-screen bg-[#050D1E] text-white">
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-20 pb-24 text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-[#FFD700]/10 border border-[#FFD700]/30 text-[#FFD700] text-sm px-4 py-1.5 rounded-full mb-6">
-            <span>⚡</span>
-            <span>WorldCup2026 Official Prediction Game</span>
-          </div>
+      {/* ── Hero ────────────────────────────────────────────────────────── */}
+      {phase === "pre" && (
+        <CountdownHero
+          locale={locale}
+          zh={zh}
+          isLoggedIn={!!user}
+          totalMatches={totalMatches}
+        />
+      )}
 
-          {/* Main Title */}
-          <h1 className="text-5xl sm:text-7xl font-black text-white mb-4 leading-tight">
-            <span className="text-[#FFD700]">Football</span>2026
-          </h1>
-
-          <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-8">
-            Predict match outcomes, earn GoalCoins, climb the leaderboard.
-            The ultimate WorldCup2026 prediction experience.
-          </p>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            {user ? (
-              <Link
-                href={`/${locale}/matches`}
-                className="inline-flex items-center gap-2 bg-[#FFD700] text-[#0A1628] font-bold px-8 py-4 rounded-2xl text-lg hover:bg-[#FFC200] transition-all hover:scale-105 shadow-lg shadow-[#FFD700]/20"
-              >
-                ⚽ {t("cta_predict")}
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href={`/${locale}/auth/register`}
-                  className="inline-flex items-center gap-2 bg-[#FFD700] text-[#0A1628] font-bold px-8 py-4 rounded-2xl text-lg hover:bg-[#FFC200] transition-all hover:scale-105 shadow-lg shadow-[#FFD700]/20"
-                >
-                  🚀 {tAuth("create_account")}
-                </Link>
-                <Link
-                  href={`/${locale}/matches`}
-                  className="inline-flex items-center gap-2 border border-[#1E3A5F] text-gray-300 px-8 py-4 rounded-2xl text-lg hover:border-[#FFD700]/50 hover:text-white transition-all"
-                >
-                  📅 {t("cta_schedule")}
-                </Link>
-              </>
-            )}
-          </div>
-
-          {/* Welcome gift banner for guests */}
-          {!user && (
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-[#FFD700]/20 to-[#FFA500]/10 border border-[#FFD700]/30 text-[#FFD700] text-sm sm:text-base px-6 py-3 rounded-xl mb-12">
-              🎁 {tAuth("register_bonus")}
+      {phase === "during" && (
+        <section className="bg-[#050D1E] border-b border-[#FFD700]/20">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
+              <span className="text-xl font-black text-white">
+                🏆 {zh ? "世界杯正在进行中！" : "World Cup is LIVE!"}
+              </span>
             </div>
+            <Link href={`/${locale}/matches`}
+              className="bg-[#FFD700] text-[#0A1628] font-black px-5 py-2.5 rounded-xl text-sm hover:bg-[#FFC200] transition-all">
+              ⚽ {zh ? "立即竞猜" : "Predict Now"}
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {phase === "post" && (
+        <section className="bg-[#050D1E] border-b border-[#FFD700]/20 py-8 text-center">
+          <p className="text-4xl font-black text-[#FFD700]">🏆 {zh ? "感谢参与 2026 世界杯竞猜！" : "Thanks for playing Football 2026!"}</p>
+          <p className="text-gray-400 mt-2 text-lg">{zh ? "决赛已结束，查看最终排行榜" : "The final is over — check the final standings"}</p>
+          <Link href={`/${locale}/leaderboard`}
+            className="inline-block mt-5 bg-[#FFD700] text-[#0A1628] font-black px-8 py-3 rounded-2xl hover:bg-[#FFC200] transition-all">
+            {zh ? "查看排行榜" : "View Leaderboard"}
+          </Link>
+        </section>
+      )}
+
+      {/* ── During-phase leaderboards ─────────────────────────────────── */}
+      {phase === "during" && wealthUsers.length > 0 && (
+        <section className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+          <div className="flex items-center justify-between mb-6">
+            <SectionTitle en="Live Leaderboard" zh="实时排行榜" locale={locale} />
+            <Link href={`/${locale}/leaderboard`}
+              className="text-xs text-[#FFD700] hover:underline">
+              {zh ? "完整榜单 →" : "Full board →"}
+            </Link>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-4">
+            <DuringLeaderboard
+              title={zh ? "💰 财富榜 Top 5" : "💰 Wealth Top 5"}
+              users={wealthUsers}
+              locale={locale}
+            />
+            <DuringLeaderboard
+              title={zh ? "🏅 荣誉榜 Top 5" : "🏅 Honor Top 5"}
+              users={wealthUsers} // same data as fallback
+              locale={locale}
+            />
+            <DuringLeaderboard
+              title={zh ? "🌍 国家榜 Top 5" : "🌍 Country Top 5"}
+              users={wealthUsers} // same data as fallback
+              locale={locale}
+            />
+          </div>
+        </section>
+      )}
+
+      {/* ── Section 1: Upcoming Matches ──────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+        <div className="flex items-center justify-between mb-6">
+          <SectionTitle en="⚽ Upcoming Matches" zh="⚽ 即将开赛" locale={locale} />
+          <Link href={`/${locale}/matches`}
+            className="text-xs text-[#FFD700] hover:underline">
+            {zh ? "全部赛程 →" : "All matches →"}
+          </Link>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) =>
+            upcomingMatches[i]
+              ? <MatchCard key={upcomingMatches[i].id} match={upcomingMatches[i]} locale={locale} />
+              : <MatchCardSkeleton key={`upcoming-sk-${i}`} />
           )}
+        </div>
+      </section>
 
-          {/* Countdown */}
-          <div className="mb-12">
-            <p className="text-gray-500 text-sm mb-4 uppercase tracking-widest">
-              {t("countdown_title")}
-            </p>
-            <div className="flex justify-center gap-3 sm:gap-6">
-              {[
-                { value: daysLeft, label: t("days") },
-                { value: "00", label: t("hours") },
-                { value: "00", label: t("minutes") },
-                { value: "00", label: t("seconds") },
-              ].map((item, i) => (
-                <div key={i} className="text-center">
-                  <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl w-16 sm:w-20 h-16 sm:h-20 flex items-center justify-center">
-                    <span className="text-2xl sm:text-3xl font-black text-[#FFD700]">
-                      {String(item.value).padStart(2, "0")}
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1.5 uppercase">
-                    {item.label}
-                  </p>
-                </div>
-              ))}
+      {/* Divider */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+        <div className="border-t border-white/5" />
+      </div>
+
+      {/* ── Section 2: Featured Matches ──────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+        <div className="mb-6">
+          <SectionTitle en="🔥 Featured Matches" zh="🔥 焦点对决" locale={locale} />
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) =>
+            featuredMatches[i]
+              ? <MatchCard key={featuredMatches[i].id} match={featuredMatches[i]} locale={locale} />
+              : <MatchCardSkeleton key={`featured-sk-${i}`} />
+          )}
+        </div>
+      </section>
+
+      {/* Divider */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+        <div className="border-t border-white/5" />
+      </div>
+
+      {/* ── Section 3: AI Predictions ────────────────────────────────── */}
+      {aiMatches.length > 0 && (
+        <section className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+          <div className="flex items-center justify-between mb-2">
+            <SectionTitle en="🤖 AI Predictions" zh="🤖 AI 预测对比" locale={locale} />
+          </div>
+          <p className="text-sm text-gray-500 mb-6 -mt-2">
+            {zh
+              ? "基于历史数据和当前阵容的 AI 胜负概率分析"
+              : "AI win-probability based on historical data and current lineups"}
+          </p>
+          <div className="grid sm:grid-cols-3 gap-4">
+            {aiMatches.map((m) => (
+              <AiPredictionCard key={m.id} match={m} locale={locale} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Divider */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+        <div className="border-t border-white/5" />
+      </div>
+
+      {/* ── Section 4: Top Scorers ────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+        <SectionTitle en="⚽ Top Scorers" zh="⚽ 射手榜 Top 5" locale={locale} />
+        {scorers.length === 0 ? (
+          <div className="rounded-2xl border border-white/10 bg-[#0A1628] overflow-hidden">
+            {/* Table header skeleton */}
+            <div className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-3 px-4 py-3 border-b border-white/10 text-[11px] text-gray-500 uppercase tracking-wider">
+              <span className="w-6">#</span>
+              <span>{zh ? "球员" : "Player"}</span>
+              <span className="w-12 text-center">{zh ? "进球" : "Goals"}</span>
+              <span className="w-12 text-center">{zh ? "助攻" : "Assists"}</span>
+              <span className="w-16 text-center">{zh ? "出场" : "Apps"}</span>
+            </div>
+            {[1, 2, 3, 4, 5].map((r) => <ScorerRowSkeleton key={r} rank={r} />)}
+            <div className="px-4 py-3 text-center">
+              <span className="text-[11px] text-gray-700 tracking-wide">
+                {zh ? "赛事开始后自动更新" : "Updates automatically after matches begin"}
+              </span>
             </div>
           </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto">
-            {[
-              { value: "48", label: "Matches" },
-              { value: "32", label: "Teams" },
-              { value: "∞", label: "Predictions" },
-            ].map((stat, i) => (
-              <div key={i} className="text-center">
-                <div className="text-3xl font-black text-white">{stat.value}</div>
-                <div className="text-xs text-gray-500 uppercase tracking-wide">{stat.label}</div>
+        ) : (
+          <div className="rounded-2xl border border-white/10 bg-[#0A1628] overflow-hidden">
+            {/* Header */}
+            <div className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-3 px-4 py-3 border-b border-white/10 text-[11px] text-gray-500 uppercase tracking-wider">
+              <span className="w-6">#</span>
+              <span>{zh ? "球员" : "Player"}</span>
+              <span className="w-12 text-center">{zh ? "进球" : "Goals"}</span>
+              <span className="w-12 text-center">{zh ? "助攻" : "Assists"}</span>
+              <span className="w-16 text-center">{zh ? "出场" : "Apps"}</span>
+            </div>
+            {scorers.map((s, i) => (
+              <div key={s.id}
+                className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-3 px-4 py-3.5 border-b border-white/5 last:border-0 items-center hover:bg-white/[0.02] transition-colors">
+                {/* Rank */}
+                <span className={`w-6 text-sm font-black ${
+                  i === 0 ? "text-[#FFD700]" : i === 1 ? "text-gray-400" : i === 2 ? "text-amber-600" : "text-gray-600"
+                }`}>{i + 1}</span>
+                {/* Player info */}
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-full overflow-hidden bg-[#FFD700]/10 flex-shrink-0 relative">
+                    {s.photo_url
+                      ? <img src={s.photo_url} alt={s.player_name} className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center text-sm font-black text-[#FFD700]">
+                          {s.player_name[0]}
+                        </div>
+                    }
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-white truncate">
+                      {zh && s.player_name_zh ? s.player_name_zh : s.player_name}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <img src={getFlagUrl(s.team)} alt={s.team} className="w-5 h-3.5 rounded-sm object-cover" />
+                      <span className="text-[11px] text-gray-500 truncate">{s.team}</span>
+                    </div>
+                  </div>
+                </div>
+                {/* Goals */}
+                <span className="w-12 text-center text-base font-black text-[#FFD700]">{s.goals}</span>
+                {/* Assists */}
+                <span className="w-12 text-center text-sm font-semibold text-gray-400">{s.assists}</span>
+                {/* Appearances */}
+                <span className="w-16 text-center text-xs text-gray-600">{s.matches_played}</span>
               </div>
             ))}
           </div>
-        </div>
+        )}
       </section>
 
-      {/* Features Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {[
-            {
-              icon: "🪙",
-              title: "GoalCoin Economy",
-              desc: "Earn GC by predicting correctly. Daily check-in bonuses. Tip friends on the forum.",
-            },
-            {
-              icon: "🏆",
-              title: "Wealth Levels",
-              desc: "Rise from Common to Supreme. 9 wealth levels based on your GC balance.",
-            },
-            {
-              icon: "🤖",
-              title: "AI Predictions",
-              desc: "Get AI-powered match analysis to inform your predictions. Beat the algorithm!",
-            },
-          ].map((feat, i) => (
-            <div
-              key={i}
-              className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-6 hover:border-[#FFD700]/30 transition-colors"
-            >
-              <div className="text-4xl mb-4">{feat.icon}</div>
-              <h3 className="text-lg font-bold text-white mb-2">{feat.title}</h3>
-              <p className="text-sm text-gray-400">{feat.desc}</p>
-            </div>
-          ))}
-        </div>
+      {/* Divider */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+        <div className="border-t border-white/5" />
+      </div>
+
+      {/* ── Section 5: Group Standings ───────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 py-10 pb-16">
+        <SectionTitle en="📊 Group Standings" zh="📊 小组积分榜" locale={locale} />
+        {groupStandings.length === 0 ? (
+          <div className="rounded-2xl border border-white/10 bg-[#0A1628] p-8 text-center">
+            <p className="text-gray-600 text-sm">
+              {zh ? "积分榜将在小组赛开始后更新" : "Group standings will appear after group stage matches begin"}
+            </p>
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {groupStandings.map(({ group, teams }) => (
+              <div key={group} className="rounded-2xl border border-white/10 bg-[#0A1628] overflow-hidden">
+                {/* Group header */}
+                <div className="bg-[#FFD700]/10 border-b border-[#FFD700]/15 px-4 py-2.5 flex items-center justify-between">
+                  <span className="text-sm font-black text-[#FFD700]">
+                    {zh ? `小组 ${group}` : `Group ${group}`}
+                  </span>
+                  <div className="flex gap-4 text-[10px] text-gray-500 uppercase tracking-wider">
+                    <span className="w-5 text-center">{zh ? "积" : "Pts"}</span>
+                    <span className="w-5 text-center">{zh ? "赛" : "P"}</span>
+                    <span className="w-5 text-center">{zh ? "差" : "GD"}</span>
+                  </div>
+                </div>
+                {/* Teams */}
+                {teams.map((t, i) => (
+                  <div key={t.team}
+                    className={`flex items-center px-4 py-2.5 border-b border-white/5 last:border-0 ${
+                      i < 2 ? "bg-[#FFD700]/[0.02]" : ""
+                    }`}>
+                    {/* Rank dot */}
+                    <span className={`w-1.5 h-1.5 rounded-full mr-2.5 flex-shrink-0 ${
+                      i === 0 ? "bg-[#FFD700]" :
+                      i === 1 ? "bg-[#FFD700]/50" :
+                      "bg-gray-700"
+                    }`} />
+                    {/* Flag + name */}
+                    <img src={getFlagUrl(t.team)} alt={t.team} className="w-6 h-4 rounded-sm object-cover mr-2 flex-shrink-0" />
+                    <span className="flex-1 text-xs font-semibold text-white truncate">{t.team}</span>
+                    {/* Stats */}
+                    <div className="flex gap-4 text-xs">
+                      <span className="w-5 text-center font-black text-[#FFD700]">{t.pts}</span>
+                      <span className="w-5 text-center text-gray-500">{t.played}</span>
+                      <span className={`w-5 text-center font-bold ${t.gd > 0 ? "text-green-400" : t.gd < 0 ? "text-red-400" : "text-gray-500"}`}>
+                        {t.gd > 0 ? `+${t.gd}` : t.gd}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
-      {/* SEO Text Block */}
-      <section className="max-w-4xl mx-auto px-4 pb-12 text-center">
-        <h2 className="text-gray-700 text-sm font-medium mb-3">
-          Football2026 — World Cup 2026 Soccer Prediction Game
-        </h2>
-        <p className="text-gray-700 text-xs leading-relaxed">
-          Football2026 is your ultimate destination for the 2026 World Cup soccer prediction experience.
-          Predict football 2026 match results, compete with fans worldwide, and earn GoalCoins.
-          The best free-to-play soccer worldcup 2026 prediction platform covering all 48 matches.
-          From group stage to the final, make your world cup 2026 football predictions and rise to the top.
-          Join millions of soccer fans in the most exciting worldcup 2026 prediction game online.
-          Football 2026 | Soccer 2026 | WorldCup 2026 | World Cup Prediction | Football Prediction Game
-        </p>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-[#1E3A5F] py-8 px-4 text-center">
-        <p className="text-xs text-gray-600 max-w-2xl mx-auto">
-          GoalCoin (GC) is a virtual entertainment currency. GC has no monetary value
-          and cannot be exchanged for real money or prizes. This platform is for
-          entertainment purposes only. 18+
-        </p>
-        <div className="mt-4 flex justify-center gap-4 text-xs text-gray-600">
-          <Link href={`/${locale}/terms`} className="hover:text-gray-400">Terms of Service</Link>
-          <Link href={`/${locale}/privacy`} className="hover:text-gray-400">Privacy Policy</Link>
+      {/* ── Footer ──────────────────────────────────────────────────────── */}
+      <footer className="border-t border-white/10 bg-[#030912] px-4 py-10 text-center">
+        <div className="max-w-3xl mx-auto">
+          <p className="text-xs leading-6 text-gray-600">
+            {zh
+              ? "GoalCoin (GC) 是 Football2026 平台内的娱乐虚拟积分，不可提现或兑换真实货币。平台仅供娱乐，18+。"
+              : "GoalCoin (GC) is a virtual entertainment currency on Football2026. It cannot be withdrawn or exchanged for real money. Entertainment only. 18+."}
+          </p>
+          <p className="text-xs text-gray-700 mt-3">
+            © 2026 Football2026. All rights reserved. · FIFA World Cup 2026™ is a trademark of FIFA.
+          </p>
+          <div className="flex justify-center gap-6 mt-5 text-xs text-gray-600">
+            <Link href={`/${locale}/matches`} className="hover:text-gray-400 transition-colors">
+              {zh ? "赛程" : "Matches"}
+            </Link>
+            <Link href={`/${locale}/leaderboard`} className="hover:text-gray-400 transition-colors">
+              {zh ? "排行榜" : "Leaderboard"}
+            </Link>
+            <Link href={`/${locale}/forum`} className="hover:text-gray-400 transition-colors">
+              {zh ? "论坛" : "Forum"}
+            </Link>
+            <Link href={`/${locale}/profile`} className="hover:text-gray-400 transition-colors">
+              {zh ? "个人中心" : "Profile"}
+            </Link>
+          </div>
         </div>
-        <p className="mt-3 text-xs text-gray-700">© 2026 Football2026. All rights reserved.</p>
       </footer>
+
     </main>
   );
 }

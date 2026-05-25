@@ -1,0 +1,384 @@
+import {
+  ArrowRight,
+  BarChart3,
+  CalendarDays,
+  CheckCircle2,
+  CircleDollarSign,
+  Clock3,
+  Crown,
+  Flame,
+  Gift,
+  MessageCircle,
+  Sparkles,
+  Trophy,
+  UsersRound,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+
+interface HomePageProps {
+  params: Promise<{ locale: string }>;
+}
+
+const copy = {
+  zh: {
+    badge: "2026 世界杯竞猜站",
+    headline: "用判断力赢下世界杯每一晚",
+    subhead: "预测比分、胜平负和冠军归属，赢取 GoalCoin，和全球球迷一起冲击排行榜。",
+    primaryGuest: "注册领取 GC",
+    primaryUser: "进入竞猜",
+    secondary: "查看赛程",
+    countdown: "距离 2026 世界杯开赛",
+    days: "天",
+    gift: "新用户注册即送 100,000,000 GC",
+    liveCardTitle: "今日竞猜面板",
+    liveCardSubtitle: "小组赛 · 倒计时开放",
+    pool: "预测奖池",
+    votes: "参与预测",
+    confidence: "AI 热度",
+    choose: "选择阵营",
+    home: "主胜",
+    draw: "平局",
+    away: "客胜",
+    statsTitle: "为世界杯竞猜而设计",
+    statsSub: "不只是点一下结果，而是完整的球迷竞技体验。",
+    matches: "104 场",
+    matchesLabel: "全部世界杯赛程",
+    teams: "48 队",
+    teamsLabel: "美国 · 加拿大 · 墨西哥",
+    coins: "GC",
+    coinsLabel: "虚拟娱乐积分经济",
+    featuresTitle: "主页要让用户马上知道怎么玩",
+    feature1: "赛前预测",
+    feature1Desc: "胜平负、比分、冠军和金靴竞猜入口集中呈现。",
+    feature2: "GoalCoin 激励",
+    feature2Desc: "注册奖励、签到、邀请和论坛互动都能增加 GC。",
+    feature3: "排行榜竞争",
+    feature3Desc: "用预测命中率和财富等级驱动用户持续回访。",
+    feature4: "社区讨论",
+    feature4Desc: "每场比赛都有讨论区，预测前先看看球迷观点。",
+    flow1: "注册账号",
+    flow1Desc: "领取初始 GC，选择支持的国家或地区。",
+    flow2: "选择比赛",
+    flow2Desc: "查看赛程、AI 分析、赔率和实时奖池。",
+    flow3: "提交预测",
+    flow3Desc: "比赛开始前下注，赛后自动结算排行。",
+    rankTitle: "财富等级",
+    rankDesc: "GC 越多，身份徽章越醒目。让排行榜不只是数字。",
+    communityTitle: "赛前讨论，赛后复盘",
+    communityDesc: "竞猜之外，论坛把每场比赛、球队专区和热门话题连在一起，让用户有地方表达判断。",
+    communityCta: "进入论坛",
+    finalTitle: "准备好开赛了吗？",
+    finalDesc: "先领 GC，再挑一场你最有把握的比赛。",
+    legal: "GoalCoin (GC) 是 Football2026 平台内的娱乐虚拟积分，不可提现或兑换真实货币。平台仅供娱乐，18+。",
+  },
+  en: {
+    badge: "2026 World Cup Prediction Hub",
+    headline: "Turn every match night into a prediction contest",
+    subhead: "Predict scores, match winners, and tournament awards. Win GoalCoin and climb the global leaderboard.",
+    primaryGuest: "Claim GC Bonus",
+    primaryUser: "Start Predicting",
+    secondary: "View Schedule",
+    countdown: "World Cup 2026 starts in",
+    days: "days",
+    gift: "New accounts receive 100,000,000 GC",
+    liveCardTitle: "Match Prediction Panel",
+    liveCardSubtitle: "Group stage · Opens soon",
+    pool: "Prize Pool",
+    votes: "Predictions",
+    confidence: "AI Heat",
+    choose: "Choose Side",
+    home: "Home",
+    draw: "Draw",
+    away: "Away",
+    statsTitle: "Built for World Cup prediction",
+    statsSub: "A full fan competition experience, not just a single pick.",
+    matches: "104",
+    matchesLabel: "World Cup matches",
+    teams: "48",
+    teamsLabel: "USA · Canada · Mexico",
+    coins: "GC",
+    coinsLabel: "Virtual entertainment economy",
+    featuresTitle: "Everything a fan needs on match day",
+    feature1: "Pre-match picks",
+    feature1Desc: "Winner, scoreline, champion, and award markets are easy to reach.",
+    feature2: "GoalCoin rewards",
+    feature2Desc: "Registration, check-ins, invites, and forum activity keep GC moving.",
+    feature3: "Leaderboard chase",
+    feature3Desc: "Accuracy and wealth levels give fans a reason to return.",
+    feature4: "Community debate",
+    feature4Desc: "Every match connects to discussion, reactions, and fan analysis.",
+    flow1: "Create account",
+    flow1Desc: "Claim starter GC and choose your country or region.",
+    flow2: "Pick a match",
+    flow2Desc: "Review schedule, AI notes, odds, and prize pools.",
+    flow3: "Submit prediction",
+    flow3Desc: "Lock your pick before kickoff and settle after full time.",
+    rankTitle: "Wealth levels",
+    rankDesc: "More GC means stronger status badges. The leaderboard feels alive.",
+    communityTitle: "Debate before kickoff, review after full time",
+    communityDesc: "The forum connects match threads, team zones, and hot topics so fans can share their read before predicting.",
+    communityCta: "Open Forum",
+    finalTitle: "Ready for kickoff?",
+    finalDesc: "Claim your GC, then choose the match you trust most.",
+    legal: "GoalCoin (GC) is a virtual entertainment currency on Football2026. It cannot be withdrawn or exchanged for real money. Entertainment only. 18+.",
+  },
+};
+
+function getCopy(locale: string) {
+  return locale === "zh" ? copy.zh : copy.en;
+}
+
+function formatDaysLeft() {
+  const kickoff = new Date("2026-06-11T19:00:00Z");
+  return Math.max(0, Math.ceil((kickoff.getTime() - Date.now()) / 86_400_000))
+    .toString()
+    .padStart(2, "0");
+}
+
+export default async function HomePage({ params }: HomePageProps) {
+  const { locale } = await params;
+  const c = getCopy(locale);
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const daysLeft = formatDaysLeft();
+
+  return (
+    <main className="min-h-screen overflow-hidden bg-[#081120] text-white">
+      <section className="relative min-h-[calc(100vh-4rem)] border-b border-white/10 bg-[radial-gradient(circle_at_18%_18%,rgba(255,215,0,0.18),transparent_28%),linear-gradient(135deg,#081120_0%,#0d2643_52%,#124030_100%)]">
+        <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#081120] to-transparent" />
+        <div className="relative mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 pb-16 pt-10 sm:px-6 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:pt-16">
+          <div className="max-w-3xl">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#FFD700]/40 bg-[#FFD700]/12 px-4 py-2 text-sm font-semibold text-[#FFD700]">
+              <Trophy className="h-4 w-4" />
+              {c.badge}
+            </div>
+            <h1 className="max-w-4xl text-4xl font-black leading-[1.05] text-white sm:text-6xl lg:text-7xl">
+              {c.headline}
+            </h1>
+            <p className="mt-6 max-w-2xl text-base leading-8 text-slate-300 sm:text-xl">{c.subhead}</p>
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href={user ? `/${locale}/matches` : `/${locale}/auth/register`}
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#FFD700] px-6 py-3 text-sm font-black text-[#081120] shadow-[0_18px_45px_rgba(255,215,0,0.22)] transition hover:bg-[#FFC928]"
+              >
+                {user ? c.primaryUser : c.primaryGuest}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href={`/${locale}/matches`}
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/8 px-6 py-3 text-sm font-bold text-white backdrop-blur transition hover:border-[#FFD700]/50 hover:bg-white/12"
+              >
+                <CalendarDays className="h-4 w-4" />
+                {c.secondary}
+              </Link>
+            </div>
+
+            {!user && (
+              <div className="mt-6 flex max-w-xl items-center gap-3 rounded-lg border border-emerald-300/25 bg-emerald-300/10 px-4 py-3 text-sm font-semibold text-emerald-100">
+                <Gift className="h-5 w-5 shrink-0 text-[#FFD700]" />
+                {c.gift}
+              </div>
+            )}
+
+            <div className="mt-10 grid max-w-2xl grid-cols-3 gap-3">
+              {[
+                { value: c.matches, label: c.matchesLabel },
+                { value: c.teams, label: c.teamsLabel },
+                { value: c.coins, label: c.coinsLabel },
+              ].map((stat) => (
+                <div key={stat.label} className="border-l border-white/15 pl-4">
+                  <div className="text-2xl font-black text-white sm:text-3xl">{stat.value}</div>
+                  <div className="mt-1 text-xs leading-5 text-slate-400">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative mx-auto w-full max-w-xl">
+            <div className="relative rounded-2xl border border-white/15 bg-[#07111f]/78 p-4 shadow-2xl shadow-black/30 backdrop-blur-xl sm:p-5">
+              <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
+                <div>
+                  <p className="text-sm font-semibold text-[#FFD700]">{c.liveCardSubtitle}</p>
+                  <h2 className="mt-1 text-xl font-black">{c.liveCardTitle}</h2>
+                </div>
+                <div className="relative h-14 w-14 overflow-hidden rounded-lg bg-[#FFD700]/10">
+                  <Image src="/icons/levels/logo.png" alt="Football2026" fill className="object-cover" priority />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 py-6">
+                <TeamBlock code="USA" name="United States" tone="bg-[#2B6CFF]" />
+                <div className="rounded-full border border-white/15 px-3 py-1 text-xs font-black text-slate-300">VS</div>
+                <TeamBlock code="MEX" name="Mexico" tone="bg-[#0E9F6E]" align="right" />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { label: c.pool, value: "18.6M GC", icon: CircleDollarSign },
+                  { label: c.votes, value: "42,809", icon: UsersRound },
+                  { label: c.confidence, value: "71%", icon: BarChart3 },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-lg border border-white/10 bg-white/[0.06] p-3">
+                    <item.icon className="mb-3 h-4 w-4 text-[#FFD700]" />
+                    <div className="text-sm font-black text-white">{item.value}</div>
+                    <div className="mt-1 text-[11px] text-slate-400">{item.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 rounded-lg border border-[#FFD700]/25 bg-[#FFD700]/10 p-3">
+                <div className="mb-3 flex items-center justify-between text-xs">
+                  <span className="font-bold text-[#FFD700]">{c.choose}</span>
+                  <span className="inline-flex items-center gap-1 text-slate-300">
+                    <Clock3 className="h-3.5 w-3.5" />
+                    {daysLeft}d
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[c.home, c.draw, c.away].map((label, index) => (
+                    <button
+                      key={label}
+                      className={`min-h-11 rounded-lg border px-3 text-sm font-black transition ${
+                        index === 0
+                          ? "border-[#FFD700] bg-[#FFD700] text-[#081120]"
+                          : "border-white/10 bg-white/[0.06] text-white hover:border-[#FFD700]/50"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
+        <div className="mb-8 max-w-3xl">
+          <p className="text-sm font-black uppercase tracking-[0.18em] text-[#FFD700]">{c.statsTitle}</p>
+          <h2 className="mt-3 text-3xl font-black sm:text-4xl">{c.featuresTitle}</h2>
+          <p className="mt-3 text-slate-400">{c.statsSub}</p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-4">
+          {[
+            { icon: CheckCircle2, title: c.feature1, desc: c.feature1Desc },
+            { icon: CircleDollarSign, title: c.feature2, desc: c.feature2Desc },
+            { icon: Crown, title: c.feature3, desc: c.feature3Desc },
+            { icon: MessageCircle, title: c.feature4, desc: c.feature4Desc },
+          ].map((feature) => (
+            <div key={feature.title} className="rounded-lg border border-white/10 bg-white/[0.045] p-5">
+              <feature.icon className="h-6 w-6 text-[#FFD700]" />
+              <h3 className="mt-5 text-lg font-black">{feature.title}</h3>
+              <p className="mt-3 text-sm leading-6 text-slate-400">{feature.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="border-y border-white/10 bg-[#0B1B31]">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+          <div>
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-[#FFD700]">{c.countdown}</p>
+            <div className="mt-4 flex items-end gap-3">
+              <span className="text-7xl font-black leading-none text-white sm:text-8xl">{daysLeft}</span>
+              <span className="pb-2 text-xl font-black text-slate-300">{c.days}</span>
+            </div>
+            <div className="mt-8 grid gap-3">
+              {[
+                { title: c.flow1, desc: c.flow1Desc },
+                { title: c.flow2, desc: c.flow2Desc },
+                { title: c.flow3, desc: c.flow3Desc },
+              ].map((step, index) => (
+                <div key={step.title} className="flex gap-4 rounded-lg border border-white/10 bg-white/[0.04] p-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#FFD700] text-sm font-black text-[#081120]">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <h3 className="font-black">{step.title}</h3>
+                    <p className="mt-1 text-sm leading-6 text-slate-400">{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-lg border border-white/10 bg-[#081120] p-5">
+              <div className="relative mb-5 aspect-square max-h-52 overflow-hidden rounded-lg bg-[#FFD700]/10">
+                <Image src="/icons/levels/GC.png" alt="GoalCoin" fill className="object-cover" />
+              </div>
+              <h3 className="text-xl font-black">{c.finalTitle}</h3>
+              <p className="mt-3 text-sm leading-6 text-slate-400">{c.finalDesc}</p>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-[#081120] p-5">
+              <div className="mb-5 grid grid-cols-3 gap-2">
+                {[7, 8, 9].map((level) => (
+                  <div key={level} className="relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-white/5">
+                    <Image src={`/icons/levels/badge_lv_${level}.png`} alt={`Level ${level}`} fill className="object-cover" />
+                  </div>
+                ))}
+              </div>
+              <h3 className="text-xl font-black">{c.rankTitle}</h3>
+              <p className="mt-3 text-sm leading-6 text-slate-400">{c.rankDesc}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div>
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-red-500/10 px-3 py-1 text-sm font-bold text-red-200">
+            <Flame className="h-4 w-4" />
+            Forum
+          </div>
+          <h2 className="text-3xl font-black sm:text-4xl">{c.communityTitle}</h2>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-400">{c.communityDesc}</p>
+        </div>
+        <Link
+          href={`/${locale}/forum`}
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/[0.06] px-6 py-3 text-sm font-black text-white transition hover:border-[#FFD700]/50"
+        >
+          <Sparkles className="h-4 w-4 text-[#FFD700]" />
+          {c.communityCta}
+        </Link>
+      </section>
+
+      <footer className="border-t border-white/10 px-4 py-8 text-center text-xs leading-6 text-slate-500">
+        <p className="mx-auto max-w-3xl">{c.legal}</p>
+        <p className="mt-3">© 2026 Football2026. All rights reserved.</p>
+      </footer>
+    </main>
+  );
+}
+
+function TeamBlock({
+  code,
+  name,
+  tone,
+  align = "left",
+}: {
+  code: string;
+  name: string;
+  tone: string;
+  align?: "left" | "right";
+}) {
+  return (
+    <div className={`flex items-center gap-3 ${align === "right" ? "flex-row-reverse text-right" : ""}`}>
+      <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${tone} text-xs font-black text-white`}>
+        {code}
+      </div>
+      <div>
+        <div className="text-sm font-black text-white">{name}</div>
+        <div className="mt-1 text-xs text-slate-400">2026</div>
+      </div>
+    </div>
+  );
+}

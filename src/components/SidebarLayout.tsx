@@ -1,0 +1,32 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import type { ReactNode } from "react";
+
+interface SidebarLayoutProps {
+  children: ReactNode;
+  sidebar: ReactNode;
+  locale: string;
+}
+
+export default function SidebarLayout({ children, sidebar, locale }: SidebarLayoutProps) {
+  const pathname = usePathname();
+
+  // No sidebar on home page or auth pages
+  const isHome = pathname === `/${locale}` || pathname === "/" || pathname === `/${locale}/m`;
+  const isAuth = pathname.includes("/auth/");
+
+  if (isHome || isAuth) return <>{children}</>;
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 flex items-start gap-6">
+      {/* Main content */}
+      <div className="flex-1 min-w-0">{children}</div>
+
+      {/* Right sidebar — desktop only, scrolls with page */}
+      <aside className="hidden lg:flex flex-col gap-4 w-60 shrink-0 py-6">
+        {sidebar}
+      </aside>
+    </div>
+  );
+}

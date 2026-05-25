@@ -1,0 +1,316 @@
+"use client";
+
+import {
+  CalendarDays,
+  CheckCircle2,
+  ChevronRight,
+  CircleDollarSign,
+  Flame,
+  Gift,
+  Home,
+  MessageCircle,
+  Sparkles,
+  Trophy,
+  UserRound,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+import { useGcBalance } from "@/context/GcBalance";
+import MobileInstallPrompt from "@/components/mobile/MobileInstallPrompt";
+
+interface MobileHomeProps {
+  locale: string;
+  isLoggedIn: boolean;
+  daysLeft: string;
+}
+
+const copy = {
+  zh: {
+    appTitle: "Football2026",
+    badge: "手机竞猜操作台",
+    title: "世界杯竞猜，从这里开始",
+    subtitle: "少看介绍，多做操作：选比赛、下预测、领 GC、看排行。",
+    register: "注册领 100M GC",
+    predict: "马上竞猜",
+    login: "登录",
+    balance: "GC 余额",
+    guestBalance: "新用户礼包",
+    todayMatch: "最近可竞猜",
+    group: "小组赛",
+    prizePool: "奖池",
+    aiHeat: "AI 热度",
+    kickoff: "开赛倒计时",
+    days: "天",
+    quick: "快捷功能",
+    install: "桌面快捷方式",
+    checkin: "每日签到",
+    checking: "领取中",
+    checked: "今日已领",
+    checkinDone: "签到成功，GC 已到账",
+    checkinAgain: "今天已经领取过",
+    checkinLogin: "登录后领取",
+    matches: "赛程",
+    myBets: "我的竞猜",
+    leaderboard: "排行榜",
+    forum: "论坛",
+    invite: "邀请",
+    awards: "冠军竞猜",
+    bottomHome: "首页",
+    bottomMatches: "赛程",
+    bottomPredict: "竞猜",
+    bottomForum: "论坛",
+    bottomMine: "我的",
+  },
+  en: {
+    appTitle: "Football2026",
+    badge: "Mobile Prediction Hub",
+    title: "World Cup predictions start here",
+    subtitle: "Less browsing, more action: pick matches, predict, claim GC, and track ranks.",
+    register: "Claim 100M GC",
+    predict: "Predict Now",
+    login: "Login",
+    balance: "GC Balance",
+    guestBalance: "New user gift",
+    todayMatch: "Next prediction",
+    group: "Group stage",
+    prizePool: "Prize pool",
+    aiHeat: "AI Heat",
+    kickoff: "Kickoff in",
+    days: "days",
+    quick: "Quick actions",
+    install: "Home screen shortcut",
+    checkin: "Daily Check-in",
+    checking: "Claiming",
+    checked: "Claimed",
+    checkinDone: "Check-in complete. GC added.",
+    checkinAgain: "Already claimed today",
+    checkinLogin: "Login to claim",
+    matches: "Matches",
+    myBets: "My Bets",
+    leaderboard: "Leaderboard",
+    forum: "Forum",
+    invite: "Invite",
+    awards: "Awards",
+    bottomHome: "Home",
+    bottomMatches: "Matches",
+    bottomPredict: "Predict",
+    bottomForum: "Forum",
+    bottomMine: "Me",
+  },
+};
+
+function getCopy(locale: string) {
+  return locale === "zh" ? copy.zh : copy.en;
+}
+
+function formatBalance(balance: number) {
+  if (balance >= 1_000_000_000) return `${(balance / 1_000_000_000).toFixed(1)}B`;
+  if (balance >= 1_000_000) return `${Math.round(balance / 1_000_000)}M`;
+  return balance.toLocaleString();
+}
+
+export default function MobileHome({ locale, isLoggedIn, daysLeft }: MobileHomeProps) {
+  const t = getCopy(locale);
+  const { balance, refresh } = useGcBalance();
+  const [checkinState, setCheckinState] = useState<"idle" | "loading" | "done" | "already" | "error">("idle");
+
+  async function claimDaily() {
+    if (!isLoggedIn || checkinState === "loading" || checkinState === "done") return;
+    setCheckinState("loading");
+    try {
+      const res = await fetch("/api/checkin", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setCheckinState("done");
+        await refresh();
+        return;
+      }
+      setCheckinState(data.error === "already_claimed" ? "already" : "error");
+    } catch {
+      setCheckinState("error");
+    }
+  }
+
+  const checkinLabel =
+    checkinState === "loading" ? t.checking :
+    checkinState === "done" || checkinState === "already" ? t.checked :
+    isLoggedIn ? t.checkin : t.checkinLogin;
+
+  return (
+    <main className="min-h-screen bg-[#081120] pb-20 text-white">
+      <section className="relative overflow-hidden border-b border-white/10 bg-[linear-gradient(145deg,#07111f_0%,#10345b_56%,#14533b_100%)] px-4 pb-4 pt-4">
+        <div className="absolute right-[-70px] top-[-70px] h-44 w-44 rounded-full border border-[#FFD700]/20" />
+        <div className="relative">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-[#FFD700]/30 bg-[#FFD700]/10 px-2.5 py-1 text-[11px] font-black text-[#FFD700]">
+              <Sparkles className="h-3.5 w-3.5" />
+              {t.badge}
+            </div>
+            <div className="relative h-9 w-9 overflow-hidden rounded-lg border border-white/10 bg-white/10">
+              <Image src="/icons/levels/logo.png" alt={t.appTitle} fill className="object-cover" priority />
+            </div>
+          </div>
+
+          <h1 className="max-w-sm text-2xl font-black leading-tight">{t.title}</h1>
+          <p className="mt-2 max-w-md text-xs leading-5 text-slate-300">{t.subtitle}</p>
+
+          <div className="mt-4 grid grid-cols-[1fr_auto] gap-2.5">
+            <Link
+              href={isLoggedIn ? `/${locale}/matches` : `/${locale}/auth/register`}
+              className="flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-[#FFD700] px-4 text-sm font-black text-[#081120]"
+            >
+              {isLoggedIn ? t.predict : t.register}
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+            {!isLoggedIn && (
+              <Link
+                href={`/${locale}/auth/login`}
+                className="flex min-h-10 items-center justify-center rounded-lg border border-white/15 bg-white/10 px-3 text-sm font-bold text-white"
+              >
+                {t.login}
+              </Link>
+            )}
+          </div>
+
+          <div className="mt-3">
+            <MobileInstallPrompt locale={locale} />
+          </div>
+
+          <div className="mt-3 rounded-xl border border-white/12 bg-[#07111f]/70 p-3 shadow-xl shadow-black/20 backdrop-blur">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="relative h-8 w-8 overflow-hidden rounded-full bg-[#FFD700]/10">
+                  <Image src="/icons/levels/GC.png" alt="GoalCoin" fill className="object-cover" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">{isLoggedIn ? t.balance : t.guestBalance}</p>
+                  <p className="text-lg font-black text-[#FFD700]">
+                    {isLoggedIn ? `${formatBalance(balance)} GC` : "100M GC"}
+                  </p>
+                </div>
+              </div>
+              {isLoggedIn ? (
+                <button
+                  type="button"
+                  onClick={claimDaily}
+                  disabled={checkinState === "loading" || checkinState === "done"}
+                  className="rounded-lg bg-emerald-400/15 px-2.5 py-1.5 text-[11px] font-black text-emerald-100 disabled:opacity-70"
+                >
+                  {checkinLabel}
+                </button>
+              ) : (
+                <Link href={`/${locale}/auth/register`} className="rounded-lg bg-emerald-400/15 px-2.5 py-1.5 text-[11px] font-black text-emerald-100">
+                  {t.checkinLogin}
+                </Link>
+              )}
+            </div>
+            {(checkinState === "done" || checkinState === "already" || checkinState === "error") && (
+              <p className={`mt-3 text-xs ${checkinState === "error" ? "text-red-300" : "text-emerald-200"}`}>
+                {checkinState === "done" ? t.checkinDone : checkinState === "already" ? t.checkinAgain : "Please try again later."}
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-3 px-4 py-3">
+        <div className="rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FFD700]">{t.todayMatch}</p>
+              <h2 className="mt-1 text-base font-black">USA vs MEX</h2>
+            </div>
+            <span className="rounded-full bg-white/8 px-2.5 py-1 text-[11px] font-bold text-slate-300">{t.group}</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <InfoBox label={t.prizePool} value="18.6M GC" />
+            <InfoBox label={t.aiHeat} value="71%" />
+            <InfoBox label={t.kickoff} value={`${daysLeft} ${t.days}`} />
+          </div>
+
+          <Link
+            href={`/${locale}/matches`}
+            className="mt-3 flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#FFD700]/35 bg-[#FFD700]/12 text-sm font-black text-[#FFD700]"
+          >
+            <Flame className="h-4 w-4" />
+            {t.predict}
+          </Link>
+        </div>
+
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-base font-black">{t.quick}</h2>
+            <span className="text-xs text-slate-500">{t.install}</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2.5">
+            <ActionTile href={`/${locale}/matches`} icon={CalendarDays} label={t.matches} />
+            <ActionTile href={`/${locale}/predict`} icon={CheckCircle2} label={t.myBets} />
+            <ActionTile href={`/${locale}/leaderboard`} icon={Trophy} label={t.leaderboard} />
+            <ActionTile href={`/${locale}/forum`} icon={MessageCircle} label={t.forum} />
+            <ActionTile href={`/${locale}/invite`} icon={Gift} label={t.invite} />
+            <ActionTile href={`/${locale}/awards`} icon={CircleDollarSign} label={t.awards} />
+          </div>
+        </div>
+      </section>
+
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#081120]/95 px-3 py-1.5 backdrop-blur">
+        <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
+          <BottomItem href={`/${locale}`} icon={Home} label={t.bottomHome} active />
+          <BottomItem href={`/${locale}/matches`} icon={CalendarDays} label={t.bottomMatches} />
+          <BottomItem href={`/${locale}/predict`} icon={CheckCircle2} label={t.bottomPredict} />
+          <BottomItem href={`/${locale}/forum`} icon={MessageCircle} label={t.bottomForum} />
+          <BottomItem href={`/${locale}/profile`} icon={UserRound} label={t.bottomMine} />
+        </div>
+      </nav>
+    </main>
+  );
+}
+
+function InfoBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.045] p-2.5">
+      <p className="text-[11px] leading-4 text-slate-500">{label}</p>
+      <p className="mt-1 text-sm font-black text-white">{value}</p>
+    </div>
+  );
+}
+
+function ActionTile({
+  href,
+  icon: Icon,
+  label,
+}: {
+  href: string;
+  icon: typeof CalendarDays;
+  label: string;
+}) {
+  return (
+    <Link href={href} className="flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-[#0d1a2b] p-2.5 text-center">
+      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FFD700]/12 text-[#FFD700]">
+        <Icon className="h-4.5 w-4.5" />
+      </span>
+      <span className="text-xs font-black leading-4 text-white">{label}</span>
+    </Link>
+  );
+}
+
+function BottomItem({
+  href,
+  icon: Icon,
+  label,
+  active = false,
+}: {
+  href: string;
+  icon: typeof Home;
+  label: string;
+  active?: boolean;
+}) {
+  return (
+    <Link href={href} className={`flex flex-col items-center gap-0.5 rounded-lg px-1 py-1 text-[10px] font-bold ${active ? "text-[#FFD700]" : "text-slate-500"}`}>
+      <Icon className="h-4.5 w-4.5" />
+      <span>{label}</span>
+    </Link>
+  );
+}

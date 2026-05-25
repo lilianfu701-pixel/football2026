@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+// ── Column name mapping ──────────────────────────────────────────────────────
+// Actual DB columns:  choice, amount_gc, bet_type, odds_at_bet, payout_gc
+// API surface names:  prediction, gc_amount, (hidden), odds, potential_payout
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
 
-    // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -14,7 +17,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { match_id, prediction, gc_amount } = body;
 
-    // Validate inputs
     if (!match_id || !prediction || !gc_amount) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
@@ -26,33 +28,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
     }
 
-    // Fetch match (validate it exists + not finished)
+    const numericMatchId = parseInt(String(match_id), 10);
+    if (isNaN(numericMatchId)) {
+      return NextResponse.json({ error: "Invalid match_id" }, { status: 400 });
+    }
+
+    // Validate match exists + not started
     const { data: match, error: matchError } = await supabase
       .from("matches")
-      .select("id, status, odds_home, odds_draw, odds_away")
-      .eq("id", match_id)
+      .select("id, status")
+      .eq("id", numericMatchId)
       .single();
 
     if (matchError || !match) {
+      console.error("[bets] match lookup failed:", matchError?.message, "id:", numericMatchId);
       return NextResponse.json({ error: "Match not found" }, { status: 404 });
     }
     if (match.status === "finished" || match.status === "live") {
       return NextResponse.json({ error: "Predictions are closed for this match" }, { status: 400 });
     }
 
-    // Check if user already has a bet on this match
+    // Check duplicate bet
     const { data: existingBet } = await supabase
       .from("bets")
       .select("id")
       .eq("user_id", user.id)
-      .eq("match_id", match_id)
+      .eq("match_id", numericMatchId)
       .single();
 
     if (existingBet) {
       return NextResponse.json({ error: "You already predicted this match" }, { status: 409 });
     }
 
-    // Fetch user GC balance
+    // Check GC balance
     const { data: profile, error: profileError } = await supabase
       .from("users")
       .select("gc_balance")
@@ -62,61 +70,130 @@ export async function POST(request: NextRequest) {
     if (profileError || !profile) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
-    if (profile.gc_balance < amount) {
+
+    // Handle NULL gc_balance: initialise to 100 M GC (OAuth / trigger sign-ups)
+    let currentBalance: number = profile.gc_balance ?? 0;
+    if (profile.gc_balance == null) {
+      const INITIAL_GC = 100_000_000;
+      await supabase.from("users")
+        .update({ gc_balance: INITIAL_GC, gc_total: INITIAL_GC })
+        .eq("id", user.id);
+      currentBalance = INITIAL_GC;
+    }
+
+    if (currentBalance < amount) {
       return NextResponse.json({ error: "Insufficient GoalCoins" }, { status: 400 });
     }
 
-    // Get odds for selected prediction
-    const odds =
-      prediction === "home" ? (match.odds_home ?? 2.00) :
-      prediction === "draw" ? (match.odds_draw ?? 3.20) :
-      (match.odds_away ?? 2.80);
-
-    // Deduct GC from user balance
+    // Deduct GC
     const { error: updateError } = await supabase
       .from("users")
-      .update({ gc_balance: profile.gc_balance - amount })
+      .update({ gc_balance: currentBalance - amount })
       .eq("id", user.id);
 
     if (updateError) {
       return NextResponse.json({ error: "Failed to deduct GoalCoins" }, { status: 500 });
     }
 
-    // Insert bet
-    const { data: bet, error: betError } = await supabase
-      .from("bets")
-      .insert({
-        user_id: user.id,
-        match_id,
-        prediction,
-        gc_amount: amount,
-        odds,
-        status: "pending",
-      })
-      .select()
-      .single();
+    // Insert via RPC function — bypasses PostgREST schema cache column validation
+    const { data: betId, error: betError } = await supabase
+      .rpc("place_match_bet", {
+        p_user_id:    user.id,
+        p_match_id:   numericMatchId,
+        p_prediction: prediction,
+        p_amount:     amount,
+      });
 
     if (betError) {
-      // Rollback GC deduction
+      console.error("[bets] insert error:", betError.message, betError.details, betError.hint);
+      // Rollback GC
       await supabase
         .from("users")
-        .update({ gc_balance: profile.gc_balance })
+        .update({ gc_balance: currentBalance })
         .eq("id", user.id);
-      return NextResponse.json({ error: "Failed to save prediction" }, { status: 500 });
+      return NextResponse.json({ error: "Failed to save prediction", detail: betError.message }, { status: 500 });
     }
 
-    return NextResponse.json({
-      success: true,
-      bet: {
-        id: bet.id,
-        prediction: bet.prediction,
-        gc_amount: bet.gc_amount,
-        odds: bet.odds,
-        potential_payout: Math.round(amount * odds),
-      },
-    });
+    // Best-effort: increment pool column
+    const poolField =
+      prediction === "home" ? "pool_home" :
+      prediction === "draw" ? "pool_draw" : "pool_away";
+
+    const { data: poolRow } = await supabase
+      .from("matches").select(poolField).eq("id", numericMatchId).single();
+    const currentPool = poolRow ? ((poolRow as Record<string, number>)[poolField] ?? 0) : 0;
+    await supabase
+      .from("matches")
+      .update({ [poolField]: currentPool + amount })
+      .eq("id", numericMatchId);
+
+    return NextResponse.json({ success: true, bet_id: betId });
   } catch (err) {
     console.error("Bets API error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: authErr } = await supabase.auth.getUser();
+    if (authErr || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const body = await request.json();
+    const { bet_id } = body;
+    if (!bet_id) return NextResponse.json({ error: "bet_id required" }, { status: 400 });
+
+    // select("*") bypasses PostgREST schema cache column validation
+    const { data: bet } = await supabase
+      .from("bets")
+      .select("*")
+      .eq("id", bet_id)
+      .eq("user_id", user.id)
+      .single();
+
+    if (!bet) return NextResponse.json({ error: "Bet not found" }, { status: 404 });
+    if (bet.status !== "pending") return NextResponse.json({ error: "Cannot cancel a settled bet" }, { status: 400 });
+
+    const { data: match } = await supabase
+      .from("matches")
+      .select("kickoff_time")
+      .eq("id", bet.match_id)
+      .single();
+
+    if (!match?.kickoff_time) return NextResponse.json({ error: "Match not found" }, { status: 404 });
+
+    const kickoff = new Date(match.kickoff_time).getTime();
+    if (kickoff - Date.now() < 60 * 60 * 1000) {
+      return NextResponse.json({ error: "Cancel window closed (within 1 hour of kickoff)" }, { status: 400 });
+    }
+
+    const { error: deleteErr } = await supabase
+      .from("bets")
+      .delete()
+      .eq("id", bet_id)
+      .eq("user_id", user.id);
+
+    if (deleteErr) return NextResponse.json({ error: "Delete failed" }, { status: 500 });
+
+    // Refund GC
+    const { data: profile } = await supabase
+      .from("users")
+      .select("gc_balance")
+      .eq("id", user.id)
+      .single();
+
+    const refundAmount = Number((bet as Record<string, unknown>).amount_gc ?? 0);
+    if (profile) {
+      await supabase
+        .from("users")
+        .update({ gc_balance: profile.gc_balance + refundAmount })
+        .eq("id", user.id);
+    }
+
+    return NextResponse.json({ ok: true, refunded: refundAmount });
+  } catch (err) {
+    console.error("Bets DELETE error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -134,7 +211,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from("bets")
-      .select("id, match_id, prediction, gc_amount, odds, potential_payout, status, created_at")
+      .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
@@ -147,7 +224,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Failed to fetch bets" }, { status: 500 });
     }
 
-    return NextResponse.json({ bets });
+    return NextResponse.json({ bets: bets ?? [] });
   } catch (err) {
     console.error("Bets GET error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -1,0 +1,116 @@
+import { type NextRequest, NextResponse } from "next/server";
+import createIntlMiddleware from "next-intl/middleware";
+import { createServerClient } from "@supabase/ssr";
+import { routing } from "./i18n/routing";
+
+const intlMiddleware = createIntlMiddleware(routing);
+
+function isMobileUserAgent(userAgent: string) {
+  return /Android|iPhone|iPad|iPod|Mobile|Windows Phone|Opera Mini|IEMobile/i.test(userAgent);
+}
+
+function isProductionHost(hostname: string) {
+  return hostname === "football2026.net" || hostname === "www.football2026.net" || hostname === "m.football2026.net";
+}
+
+function splitLocalePath(pathname: string) {
+  const parts = pathname.split("/").filter(Boolean);
+  const maybeLocale = parts[0];
+  const locale = routing.locales.includes(maybeLocale as (typeof routing.locales)[number])
+    ? maybeLocale
+    : routing.defaultLocale;
+  const rest = routing.locales.includes(maybeLocale as (typeof routing.locales)[number])
+    ? parts.slice(1)
+    : parts;
+
+  return { locale, rest };
+}
+
+function getDeviceResponse(request: NextRequest) {
+  const { nextUrl } = request;
+  const hostname = nextUrl.hostname;
+  const host = request.headers.get("host") ?? "";
+  const userAgent = request.headers.get("user-agent") ?? "";
+  const viewPreference = request.cookies.get("site_view")?.value;
+  const mobile = isMobileUserAgent(userAgent);
+
+  if (!isProductionHost(hostname)) {
+    return null;
+  }
+
+  const { locale, rest } = splitLocalePath(nextUrl.pathname);
+
+  if (hostname === "m.football2026.net") {
+    if (rest[0] === "m") return null;
+
+    const rewriteUrl = nextUrl.clone();
+    rewriteUrl.pathname = `/${locale}/m`;
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
+  if (mobile && viewPreference !== "desktop") {
+    const redirectUrl = nextUrl.clone();
+    redirectUrl.protocol = "https:";
+    redirectUrl.host = host.startsWith("www.") ? "m.football2026.net" : "m.football2026.net";
+    redirectUrl.pathname = rest[0] === "m" ? `/${locale}` : nextUrl.pathname;
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  return null;
+}
+
+function mergeSupabaseCookies(response: NextResponse, supabaseResponse: NextResponse) {
+  supabaseResponse.cookies.getAll().forEach((cookie) => {
+    response.cookies.set(cookie.name, cookie.value, cookie);
+  });
+}
+
+export async function proxy(request: NextRequest) {
+  // Refresh Supabase auth session
+  let supabaseResponse = NextResponse.next({ request });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  // Refresh session (important for Server Components)
+  await supabase.auth.getUser();
+
+  const deviceResponse = getDeviceResponse(request);
+  if (deviceResponse) {
+    mergeSupabaseCookies(deviceResponse, supabaseResponse);
+    return deviceResponse;
+  }
+
+  // Run intl middleware
+  const intlResponse = intlMiddleware(request);
+
+  // Merge cookies from both responses
+  if (intlResponse) {
+    mergeSupabaseCookies(intlResponse, supabaseResponse);
+    return intlResponse;
+  }
+
+  return supabaseResponse;
+}
+
+export const config = {
+  matcher: "/((?!api|auth/callback|_next|_vercel|.*\\..*).*)",
+};
