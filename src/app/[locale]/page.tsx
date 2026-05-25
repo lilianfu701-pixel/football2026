@@ -288,33 +288,19 @@ export default async function HomePage({ params }: HomePageProps) {
 
   /* ── Parallel data fetches ── */
   const [
-    upcomingResult,
-    featuredResult,
+    allUpcomingResult,
     aiResult,
     scorersResult,
     groupMatchesResult,
     wealthResult,
   ] = await Promise.all([
-    // 1. Upcoming 4 matches
+    // 1. Upcoming 8 matches — first 4 go to "Upcoming", next 4 go to "Featured"
     supabase
       .from("matches")
       .select("id,home_team,away_team,home_score,away_score,kickoff_time,venue,status,group_name,stage,ai_predictions")
       .in("status", ["upcoming", "live"])
       .order("kickoff_time", { ascending: true })
-      .limit(4),
-
-    // 2. Featured matches — hardcoded 4 marquee games until admin panel is wired up
-    supabase
-      .from("matches")
-      .select("id,home_team,away_team,home_score,away_score,kickoff_time,venue,status,group_name,stage,ai_predictions")
-      .or(
-        "and(home_team.eq.Argentina,away_team.eq.Mexico)," +
-        "and(home_team.eq.England,away_team.eq.USA)," +
-        "and(home_team.eq.Spain,away_team.eq.Germany)," +
-        "and(home_team.eq.Brazil,away_team.eq.Serbia)"
-      )
-      .order("kickoff_time", { ascending: true })
-      .limit(4),
+      .limit(8),
 
     // 3. AI prediction matches (upcoming with ai data)
     supabase
@@ -339,16 +325,17 @@ export default async function HomePage({ params }: HomePageProps) {
       .select("home_team,away_team,home_score,away_score,group_name,status")
       .not("group_name", "is", null),
 
-    // 6. Wealth leaderboard (during phase)
+    // 5. Wealth leaderboard (during phase)
     supabase
-      .from("profiles")
-      .select("id,username,avatar_url,gc_balance")
+      .from("users")
+      .select("id,nickname,avatar_url,gc_balance")
       .order("gc_balance", { ascending: false })
       .limit(5),
   ]);
 
-  const upcomingMatches: MatchRow[] = (upcomingResult.data ?? []) as MatchRow[];
-  const featuredMatches: MatchRow[] = (featuredResult.data ?? []) as MatchRow[];
+  const allUpcoming: MatchRow[] = (allUpcomingResult.data ?? []) as MatchRow[];
+  const upcomingMatches: MatchRow[] = allUpcoming.slice(0, 4);
+  const featuredMatches: MatchRow[] = allUpcoming.slice(4, 8);
   const aiMatches: MatchRow[] = (aiResult.data ?? []) as MatchRow[];
   const scorers: Scorer[] = (scorersResult.data ?? []) as Scorer[];
   const groupMatches = (groupMatchesResult.data ?? []) as any[];
@@ -356,13 +343,13 @@ export default async function HomePage({ params }: HomePageProps) {
 
   const wealthUsers: LeaderUser[] = ((wealthResult.data ?? []) as any[]).map((u, i) => ({
     user_id: u.id,
-    username: u.username ?? "—",
+    username: u.nickname ?? "—",
     avatar_url: u.avatar_url,
     gc_balance: u.gc_balance ?? 0,
     rank: i + 1,
   }));
 
-  const totalMatches = upcomingMatches.length + featuredMatches.length;
+  const totalMatches = allUpcoming.length;
 
   return (
     <main className="min-h-screen bg-[#050D1E] text-white">
