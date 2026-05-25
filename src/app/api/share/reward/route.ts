@@ -21,17 +21,21 @@ export async function POST(req: Request) {
     shareUrl = typeof body?.shareUrl === "string" ? body.shareUrl.slice(0, 200) : "";
   } catch { /* ignore parse errors */ }
 
-  // Count share_reward transactions in the past 24 h
+  // Atomically: check rate limit + award GC + log tx
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const { count } = await supabase
-    .from("transactions")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .eq("type", "share_reward")
-    .gte("created_at", since);
+  const { data: remaining, error: rewardErr } = await supabase.rpc("share_reward_atomic", {
+    p_user_id:     user.id,
+    p_gc_amount:   SHARE_GC,
+    p_max_per_day: MAX_PER_DAY,
+    p_since:       since,
+    p_desc:        `Share reward${shareUrl ? `: ${shareUrl}` : ""}`,
+  });
 
-  const todayCount = count ?? 0;
-  if (todayCount >= MAX_PER_DAY) {
+  if (rewardErr) {
+    return NextResponse.json({ error: rewardErr.message }, { status: 500 });
+  }
+
+  if (remaining === -1) {
     return NextResponse.json({
       awarded: 0,
       remaining: 0,
@@ -39,36 +43,8 @@ export async function POST(req: Request) {
     });
   }
 
-  // Award GC
-  const { data: profile, error: fetchErr } = await supabase
-    .from("users")
-    .select("gc_balance")
-    .eq("id", user.id)
-    .single();
-
-  if (fetchErr || !profile) {
-    return NextResponse.json({ error: "Profile not found" }, { status: 404 });
-  }
-
-  const { error: updateErr } = await supabase
-    .from("users")
-    .update({ gc_balance: (profile.gc_balance ?? 0) + SHARE_GC })
-    .eq("id", user.id);
-
-  if (updateErr) {
-    return NextResponse.json({ error: updateErr.message }, { status: 500 });
-  }
-
-  // Log transaction
-  await supabase.from("transactions").insert({
-    user_id:     user.id,
-    type:        "share_reward",
-    amount:      SHARE_GC,
-    description: `Share reward${shareUrl ? `: ${shareUrl}` : ""}`,
-  });
-
   return NextResponse.json({
     awarded:   SHARE_GC,
-    remaining: MAX_PER_DAY - todayCount - 1,
+    remaining: remaining as number,
   });
 }

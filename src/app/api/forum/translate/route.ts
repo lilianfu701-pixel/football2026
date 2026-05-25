@@ -72,9 +72,17 @@ async function translate(
   throw new Error("NO_PROVIDER: set DEEPL_API_KEY or GOOGLE_TRANSLATE_KEY in .env.local");
 }
 
+const TRANSLATE_DAILY_LIMIT = 50; // max uncached API calls per user per day
+
 // ── Route handler ─────────────────────────────────────────────────────────────
 export async function POST(req: Request) {
   const supabase = await createClient();
+
+  // ── 0. Auth required ───────────────────────────────────────────────────────
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   let body: { type?: string; id?: number; target_lang?: string };
   try { body = await req.json(); }
@@ -129,7 +137,24 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Empty source text" }, { status: 400 });
   }
 
-  // ── 3. Translate ───────────────────────────────────────────────────────────
+  // ── 3. Rate-limit: count uncached API calls this user made today ───────────
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const { count: todayCount } = await supabase
+    .from("transactions")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("type", "translate_api_call")
+    .gte("created_at", todayStart.toISOString());
+
+  if ((todayCount ?? 0) >= TRANSLATE_DAILY_LIMIT) {
+    return NextResponse.json(
+      { error: "Daily translation limit reached" },
+      { status: 429 }
+    );
+  }
+
+  // ── 4. Translate ───────────────────────────────────────────────────────────
   let result: { translated: string; source_lang: string };
   try {
     result = await translate(textToTranslate, target_lang);
@@ -138,7 +163,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 
-  // ── 4. Skip caching if source == target (no real translation happened) ─────
+  // Log this API call for rate limiting (best-effort, don't fail on error)
+  supabase.from("transactions").insert({
+    user_id:     user.id,
+    type:        "translate_api_call",
+    amount:      0,
+    description: `Translate ${type} #${id} → ${target_lang}`,
+  }).then(() => {});
+
+  // ── 5. Skip caching if source == target (no real translation happened) ─────
   const srcNorm = result.source_lang.split("-")[0].toLowerCase(); // "en-us" → "en"
   if (srcNorm && srcNorm === target_lang.toLowerCase()) {
     return NextResponse.json({
@@ -149,7 +182,7 @@ export async function POST(req: Request) {
     });
   }
 
-  // ── 5. Cache in forum_translations ────────────────────────────────────────
+  // ── 6. Cache in forum_translations ────────────────────────────────────────
   await supabase.from("forum_translations").upsert({
     type,
     source_id:  id,

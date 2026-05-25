@@ -70,27 +70,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Match already started" }, { status: 400 });
   }
 
-  // Check balance
-  const { data: profile } = await supabase
-    .from("users").select("gc_balance").eq("id", user.id).single();
-  if (!profile) {
-    return NextResponse.json({ error: "Insufficient GC" }, { status: 400 });
-  }
-
-  // Handle NULL gc_balance: initialise to 100 M GC (OAuth / trigger sign-ups)
-  let currentBalance: number = profile.gc_balance ?? 0;
-  if (profile.gc_balance == null) {
-    const INITIAL_GC = 100_000_000;
-    await supabase.from("users")
-      .update({ gc_balance: INITIAL_GC, gc_total: INITIAL_GC })
-      .eq("id", user.id);
-    currentBalance = INITIAL_GC;
-  }
-
-  if (currentBalance < amount) {
-    return NextResponse.json({ error: "Insufficient GC" }, { status: 400 });
-  }
-
   // Check if this exact score was already bet (upsert)
   const { data: existing } = await supabase
     .from("score_bets")
@@ -101,12 +80,20 @@ export async function POST(request: NextRequest) {
     .eq("score_away", a)
     .maybeSingle();
 
-  // Deduct GC first
-  const { error: deductErr } = await supabase
-    .from("users")
-    .update({ gc_balance: currentBalance - amount })
-    .eq("id", user.id);
-  if (deductErr) return NextResponse.json({ error: "GC deduction failed" }, { status: 500 });
+  // Atomically deduct GC (prevents concurrent double-spend)
+  const { error: deductErr } = await supabase.rpc("gc_deduct_atomic", {
+    p_user_id: user.id,
+    p_amount:  amount,
+    p_tx_type: "score_bet_placed",
+    p_desc:    `Score bet ${h}-${a} on match ${numericMatchId}`,
+  });
+
+  if (deductErr) {
+    if (deductErr.message?.includes("insufficient_balance")) {
+      return NextResponse.json({ error: "Insufficient GC" }, { status: 400 });
+    }
+    return NextResponse.json({ error: "GC deduction failed" }, { status: 500 });
+  }
 
   if (existing) {
     // Add to existing bet on this score
@@ -114,13 +101,16 @@ export async function POST(request: NextRequest) {
       .from("score_bets")
       .update({
         gc_amount:       existing.gc_amount + amount,
-        odds_multiplier: oddsMultiplier,  // refresh odds at current rate
+        odds_multiplier: oddsMultiplier,
         status:          "pending",
       })
       .eq("id", existing.id);
 
     if (updateErr) {
-      await supabase.from("users").update({ gc_balance: currentBalance }).eq("id", user.id);
+      await supabase.rpc("gc_credit_atomic", {
+        p_user_id: user.id, p_amount: amount,
+        p_tx_type: "score_bet_refunded", p_desc: `Refund: update failed on match ${numericMatchId}`,
+      });
       return NextResponse.json({ error: "Update failed" }, { status: 500 });
     }
   } else {
@@ -137,7 +127,10 @@ export async function POST(request: NextRequest) {
       });
 
     if (insertErr) {
-      await supabase.from("users").update({ gc_balance: currentBalance }).eq("id", user.id);
+      await supabase.rpc("gc_credit_atomic", {
+        p_user_id: user.id, p_amount: amount,
+        p_tx_type: "score_bet_refunded", p_desc: `Refund: insert failed on match ${numericMatchId}`,
+      });
       console.error("[score-bets] insert error:", insertErr);
       return NextResponse.json({ error: "Insert failed", detail: insertErr.message }, { status: 500 });
     }
@@ -192,19 +185,16 @@ export async function DELETE(request: NextRequest) {
 
   if (deleteErr) return NextResponse.json({ error: "Delete failed" }, { status: 500 });
 
-  // Refund GC
-  const { data: profile } = await supabase
-    .from("users")
-    .select("gc_balance")
-    .eq("id", user.id)
-    .single();
-
-  if (profile) {
-    await supabase
-      .from("users")
-      .update({ gc_balance: profile.gc_balance + Number(bet.gc_amount) })
-      .eq("id", user.id);
+  // Refund GC atomically
+  const refundAmount = Number(bet.gc_amount);
+  if (refundAmount > 0) {
+    await supabase.rpc("gc_credit_atomic", {
+      p_user_id: user.id,
+      p_amount:  refundAmount,
+      p_tx_type: "score_bet_refunded",
+      p_desc:    `Cancelled score bet on match ${bet.match_id}`,
+    });
   }
 
-  return NextResponse.json({ ok: true, refunded: Number(bet.gc_amount) });
+  return NextResponse.json({ ok: true, refunded: refundAmount });
 }

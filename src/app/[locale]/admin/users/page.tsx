@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
@@ -16,13 +17,15 @@ export default async function AdminUsersPage({ params, searchParams }: PageProps
   const page = Math.max(1, parseInt(pageStr, 10));
   const from = (page - 1) * 20;
 
+  // Auth check via user client, then use service client for admin queries
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect(`/${locale}/auth/login`);
   const { data: me } = await supabase.from("users").select("is_admin").eq("id", user.id).single();
   if (!me?.is_admin) redirect(`/${locale}`);
 
-  let query = supabase
+  const service = createServiceClient();
+  let query = service
     .from("users")
     .select("id, nickname, email, avatar_url, gc_balance, is_admin, is_banned, created_at", { count: "exact" })
     .order("created_at", { ascending: false })

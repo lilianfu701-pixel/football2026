@@ -60,38 +60,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "You already predicted this match" }, { status: 409 });
     }
 
-    // Check GC balance
-    const { data: profile, error: profileError } = await supabase
-      .from("users")
-      .select("gc_balance")
-      .eq("id", user.id)
-      .single();
+    // Atomically deduct GC (prevents concurrent double-spend)
+    const { error: deductError } = await supabase.rpc("gc_deduct_atomic", {
+      p_user_id: user.id,
+      p_amount:  amount,
+      p_tx_type: "bet_placed",
+      p_desc:    `Match ${numericMatchId} prediction: ${prediction}`,
+    });
 
-    if (profileError || !profile) {
-      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
-    }
-
-    // Handle NULL gc_balance: initialise to 100 M GC (OAuth / trigger sign-ups)
-    let currentBalance: number = profile.gc_balance ?? 0;
-    if (profile.gc_balance == null) {
-      const INITIAL_GC = 100_000_000;
-      await supabase.from("users")
-        .update({ gc_balance: INITIAL_GC, gc_total: INITIAL_GC })
-        .eq("id", user.id);
-      currentBalance = INITIAL_GC;
-    }
-
-    if (currentBalance < amount) {
-      return NextResponse.json({ error: "Insufficient GoalCoins" }, { status: 400 });
-    }
-
-    // Deduct GC
-    const { error: updateError } = await supabase
-      .from("users")
-      .update({ gc_balance: currentBalance - amount })
-      .eq("id", user.id);
-
-    if (updateError) {
+    if (deductError) {
+      if (deductError.message?.includes("insufficient_balance")) {
+        return NextResponse.json({ error: "Insufficient GoalCoins" }, { status: 400 });
+      }
       return NextResponse.json({ error: "Failed to deduct GoalCoins" }, { status: 500 });
     }
 
@@ -106,11 +86,13 @@ export async function POST(request: NextRequest) {
 
     if (betError) {
       console.error("[bets] insert error:", betError.message, betError.details, betError.hint);
-      // Rollback GC
-      await supabase
-        .from("users")
-        .update({ gc_balance: currentBalance })
-        .eq("id", user.id);
+      // Refund GC atomically since bet insert failed
+      await supabase.rpc("gc_credit_atomic", {
+        p_user_id: user.id,
+        p_amount:  amount,
+        p_tx_type: "bet_refunded",
+        p_desc:    `Refund: failed bet insert on match ${numericMatchId}`,
+      });
       return NextResponse.json({ error: "Failed to save prediction", detail: betError.message }, { status: 500 });
     }
 
@@ -176,19 +158,15 @@ export async function DELETE(request: NextRequest) {
 
     if (deleteErr) return NextResponse.json({ error: "Delete failed" }, { status: 500 });
 
-    // Refund GC
-    const { data: profile } = await supabase
-      .from("users")
-      .select("gc_balance")
-      .eq("id", user.id)
-      .single();
-
+    // Refund GC atomically
     const refundAmount = Number((bet as Record<string, unknown>).amount_gc ?? 0);
-    if (profile) {
-      await supabase
-        .from("users")
-        .update({ gc_balance: profile.gc_balance + refundAmount })
-        .eq("id", user.id);
+    if (refundAmount > 0) {
+      await supabase.rpc("gc_credit_atomic", {
+        p_user_id: user.id,
+        p_amount:  refundAmount,
+        p_tx_type: "bet_refunded",
+        p_desc:    `Cancelled bet on match ${bet.match_id}`,
+      });
     }
 
     return NextResponse.json({ ok: true, refunded: refundAmount });
