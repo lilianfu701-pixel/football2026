@@ -56,13 +56,17 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
   const { balance: ctxBalance, setBalance: setCtxBalance, refresh: refreshGc } = useGcBalance();
   const [localGc, setLocalGc] = useState(userGc);
 
-  // Sync localGc once the context has loaded a non-zero value
+  // On mount: refresh once from API to get latest balance
+  useEffect(() => {
+    refreshGc();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Sync localGc whenever context balance updates
   useEffect(() => {
     if (ctxBalance > 0) setLocalGc(ctxBalance);
     else if (userGc > 0) setLocalGc(userGc);
-    else refreshGc(); // fetch from /api/gc-balance if both are 0
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ctxBalance]);
+  }, [ctxBalance, userGc]);
 
   const meta = AWARD_META[activeAward];
   const players = getPlayersByAward(activeAward);
