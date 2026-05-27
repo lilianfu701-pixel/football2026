@@ -29,8 +29,8 @@ function SuccessContent() {
   const [priceCny, setPriceCny] = useState<number>(0);
 
   useEffect(() => {
-    // ── Paddle / PayPal / USDT: amount already resolved server-side ──
-    if ((type === "paddle" || type === "paypal" || type === "usdt") && gcParam) {
+    // ── Paddle / PayPal / USDT / WeChat / Alipay: amount already resolved server-side ──
+    if ((type === "paddle" || type === "paypal" || type === "usdt" || type === "wechat" || type === "alipay") && gcParam) {
       setGcAmount(Number(gcParam));
       setStatus("success");
       return;
@@ -60,6 +60,8 @@ function SuccessContent() {
     return () => clearTimeout(t);
   }, [status, locale, router]);
 
+  const isWechat = type === "wechat";
+  const isAlipay = type === "alipay";
   const isPaddle = type === "paddle";
   const isPayPal = type === "paypal";
   const isUsdt   = type === "usdt";
@@ -122,15 +124,19 @@ function SuccessContent() {
             {zh ? "充值成功！" : "Top-up Successful!"}
           </h1>
           <p className="text-gray-500 text-sm mb-6">
-            {isUsdt
-              ? (zh ? "通过 USDT TRC-20 完成支付" : "Paid via USDT TRC-20")
-              : isPayPal
-                ? (zh ? "通过 PayPal 完成支付" : "Paid via PayPal")
-                : isPaddle
-                  ? (zh ? "通过银行卡完成支付" : "Paid via Card")
-                  : priceCny > 0
-                    ? (zh ? `已支付 ¥${priceCny}` : `Paid ¥${priceCny}`)
-                    : (zh ? "支付完成" : "Payment complete")}
+            {isWechat
+              ? (zh ? "通过微信支付完成" : "Paid via WeChat Pay")
+              : isAlipay
+                ? (zh ? "通过支付宝完成" : "Paid via Alipay")
+                : isUsdt
+                  ? (zh ? "通过 USDT TRC-20 完成支付" : "Paid via USDT TRC-20")
+                  : isPayPal
+                    ? (zh ? "通过 PayPal 完成支付" : "Paid via PayPal")
+                    : isPaddle
+                      ? (zh ? "通过银行卡完成支付" : "Paid via Card")
+                      : priceCny > 0
+                        ? (zh ? `已支付 ¥${priceCny}` : `Paid ¥${priceCny}`)
+                        : (zh ? "支付完成" : "Payment complete")}
           </p>
 
           {/* GC Amount */}
