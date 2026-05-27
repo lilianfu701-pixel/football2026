@@ -180,53 +180,48 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
 
             {/* Auth Buttons */}
             {user ? (
-              <div className="relative hidden sm:block" ref={userMenuRef}>
-                {/* Avatar button */}
-                <button
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-1.5 text-sm text-gray-300 hover:text-white transition-colors"
+              <div className="hidden sm:flex items-center gap-1.5">
+                {/* Profile shortcut */}
+                <Link
+                  href={`/${locale}/profile`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-300 hover:text-white hover:bg-[#1E3A5F] rounded-lg transition-colors"
                 >
-                  <div className="w-8 h-8 bg-[#FFD700] rounded-full flex items-center justify-center text-[#0A1628] font-bold text-sm">
-                    {(nickname ?? user.email ?? "U")[0].toUpperCase()}
-                  </div>
-                  <svg className={`w-3 h-3 transition-transform ${userMenuOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+                  <span>👤</span>
+                  <span className="hidden lg:block">{locale === "zh" ? "个人后台" : "My Account"}</span>
+                </Link>
 
-                {/* Dropdown */}
-                {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-[#0F2040] border border-[#1E3A5F] rounded-xl shadow-2xl overflow-hidden z-50">
-                    {/* User info */}
-                    <div className="px-4 py-3 border-b border-[#1E3A5F]">
-                      <p className="text-xs font-bold text-white truncate">{nickname ?? user.email}</p>
-                      <p className="text-[10px] text-gray-500 truncate">{user.email}</p>
+                {/* Admin shortcut — only shown if is_admin */}
+                {isAdmin && (
+                  <Link
+                    href={`/${locale}/admin`}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#FFD700] hover:bg-[#FFD700]/10 rounded-lg transition-colors border border-[#FFD700]/30 hover:border-[#FFD700]/60"
+                  >
+                    <span>🛡️</span>
+                    <span className="hidden lg:block">{locale === "zh" ? "管理后台" : "Admin"}</span>
+                  </Link>
+                )}
+
+                {/* Avatar dropdown */}
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="flex items-center gap-1 text-sm text-gray-300 hover:text-white transition-colors"
+                  >
+                    <div className="w-8 h-8 bg-[#FFD700] rounded-full flex items-center justify-center text-[#0A1628] font-bold text-sm">
+                      {(nickname ?? user.email ?? "U")[0].toUpperCase()}
                     </div>
+                    <svg className={`w-3 h-3 transition-transform ${userMenuOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
 
-                    {/* Profile */}
-                    <Link
-                      href={`/${locale}/profile`}
-                      onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-[#1E3A5F] transition-colors"
-                    >
-                      <span>👤</span>
-                      <span>{locale === "zh" ? "个人主页" : "Profile"}</span>
-                    </Link>
-
-                    {/* Admin — only shown if is_admin */}
-                    {isAdmin && (
-                      <Link
-                        href={`/${locale}/admin`}
-                        onClick={() => setUserMenuOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#FFD700] hover:bg-[#FFD700]/10 transition-colors"
-                      >
-                        <span>🛡️</span>
-                        <span>{locale === "zh" ? "管理后台" : "Admin Panel"}</span>
-                      </Link>
-                    )}
-
-                    {/* Divider + logout */}
-                    <div className="border-t border-[#1E3A5F]">
+                  {/* Dropdown */}
+                  {userMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-44 bg-[#0F2040] border border-[#1E3A5F] rounded-xl shadow-2xl overflow-hidden z-50">
+                      <div className="px-4 py-3 border-b border-[#1E3A5F]">
+                        <p className="text-xs font-bold text-white truncate">{nickname ?? user.email}</p>
+                        <p className="text-[10px] text-gray-500 truncate">{user.email}</p>
+                      </div>
                       <button
                         onClick={handleSignOut}
                         className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-[#1E3A5F] transition-colors"
@@ -235,8 +230,8 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                         <span>{t("logout")}</span>
                       </button>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             ) : (
               <div className="hidden sm:flex items-center gap-2">
