@@ -67,10 +67,10 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
     .order("created_at", { ascending: false })
     .limit(5);
 
-  // Fetch recent transactions
+  // Fetch recent GC transactions
   const { data: recentTx } = await supabase
-    .from("transactions")
-    .select("id, type, amount, description, created_at")
+    .from("gc_transactions")
+    .select("id, type, amount, note, created_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(10);
@@ -193,8 +193,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
   }
 
   return (
-    <div className="min-h-screen bg-[#0A1628] text-white pb-16">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-8">
+    <div className="text-white space-y-6">
 
         {/* Profile Header */}
         <div className="bg-gradient-to-r from-[#0F2040] to-[#0A1628] border border-[#1E3A5F] rounded-2xl p-6 mb-6">
@@ -428,16 +427,20 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
               {recentTx.map((tx) => {
                 const isPositive = tx.amount > 0;
                 const typeLabels: Record<string, string> = {
-                  daily_checkin: "Daily Check-in",
-                  welcome_bonus: "Welcome Bonus",
-                  bet_place: "Bet Placed",
-                  bet_win: "Bet Won",
-                  bet_refund: "Bet Refund",
-                  tip_sent: "Tip Sent",
-                  tip_received: "Tip Received",
-                  transfer_sent: zh ? "转出 GC" : "GC Sent",
-                  transfer_received: zh ? "收到 GC" : "GC Received",
-                  profile_reward: zh ? "资料奖励" : "Profile Reward",
+                  topup:            zh ? "充值"       : "Top Up",
+                  daily_checkin:    zh ? "每日签到"   : "Daily Check-in",
+                  welcome_bonus:    zh ? "新人奖励"   : "Welcome Bonus",
+                  bet_placed:       zh ? "投注扣除"   : "Bet Placed",
+                  bet_won:          zh ? "投注赢利"   : "Bet Won",
+                  bet_refunded:     zh ? "投注退款"   : "Bet Refund",
+                  share_reward:     zh ? "分享奖励"   : "Share Reward",
+                  forum_post:       zh ? "发帖奖励"   : "Forum Post",
+                  forum_like:       zh ? "点赞奖励"   : "Forum Like",
+                  admin_award:      zh ? "管理员奖励" : "Admin Award",
+                  admin_deduct:     zh ? "管理员扣除" : "Admin Deduct",
+                  transfer_sent:    zh ? "转出 GC"    : "GC Sent",
+                  transfer_received:zh ? "收到 GC"    : "GC Received",
+                  profile_reward:   zh ? "资料奖励"   : "Profile Reward",
                 };
                 return (
                   <div
@@ -448,7 +451,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                       <p className="text-sm text-white">
                         {typeLabels[tx.type] ?? tx.type}
                       </p>
-                      <p className="text-xs text-gray-500">{tx.description}</p>
+                      <p className="text-xs text-gray-500">{tx.note}</p>
                     </div>
                     <span
                       className={`text-sm font-bold ${
@@ -694,7 +697,6 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
           )}
         </div>
 
-      </div>
     </div>
   );
 }
