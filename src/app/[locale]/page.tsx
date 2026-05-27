@@ -392,6 +392,55 @@ export default async function HomePage({ params }: HomePageProps) {
         </section>
       )}
 
+      {/* ── Mobile App Entry ──────────────────────────────────────────────── */}
+      <section className="bg-gradient-to-r from-[#0A1628] via-[#0F2040] to-[#0A1628] border-b border-[#FFD700]/20 py-6">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Left: text */}
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-[#FFD700]/10 border border-[#FFD700]/30 flex items-center justify-center text-3xl shrink-0">
+                📱
+              </div>
+              <div>
+                <p className="text-base font-black text-white">
+                  {zh ? "手机版 · 随时随地竞猜" : "Mobile · Predict Anytime"}
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {zh
+                    ? "用手机打开网站，可添加到主屏幕，像 App 一样使用"
+                    : "Open on your phone and add to home screen for an app-like experience"}
+                </p>
+              </div>
+            </div>
+            {/* Right: QR + button */}
+            <div className="flex items-center gap-3 shrink-0">
+              {/* QR code pointing to /m */}
+              <div className="hidden sm:block bg-white p-1.5 rounded-xl">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=72x72&data=${encodeURIComponent(`https://football2026.net/${locale}/m`)}&margin=1&format=png`}
+                  alt="Mobile QR"
+                  width={72}
+                  height={72}
+                  className="rounded-lg"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Link
+                  href={`/${locale}/m`}
+                  className="flex items-center gap-2 bg-[#FFD700] text-[#0A1628] font-black text-sm px-5 py-2.5 rounded-xl hover:bg-[#FFC200] transition-all whitespace-nowrap"
+                >
+                  📱 {zh ? "进入手机版" : "Open Mobile"}
+                </Link>
+                <p className="text-[10px] text-gray-500 text-center">
+                  {zh ? "或扫描二维码 →" : "or scan QR code →"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── During-phase leaderboards ─────────────────────────────────── */}
       {phase === "during" && wealthUsers.length > 0 && (
         <section className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
