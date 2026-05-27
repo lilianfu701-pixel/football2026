@@ -170,15 +170,17 @@ export default async function LocaleLayout({
 
   let gcBalance: number | undefined;
   let nickname: string | undefined;
+  let isAdmin = false;
   let unreadMessages = 0;
   if (user) {
     const [profileRes, unreadRes] = await Promise.all([
-      supabase.from("users").select("gc_balance, nickname").eq("id", user.id).single(),
+      supabase.from("users").select("gc_balance, nickname, is_admin").eq("id", user.id).single(),
       supabase.from("messages").select("id", { count: "exact", head: true })
         .eq("receiver_id", user.id).eq("is_read", false),
     ]);
     gcBalance      = profileRes.data?.gc_balance;
     nickname       = profileRes.data?.nickname;
+    isAdmin        = profileRes.data?.is_admin ?? false;
     unreadMessages = unreadRes.count ?? 0;
 
     // OAuth / trigger sign-ups may have gc_balance = NULL (trigger skips initial grant).
@@ -231,7 +233,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <GcBalanceProvider initial={gcBalance ?? 0}>
             <MobilePwaRegister />
-            <Navbar user={user} gcBalance={gcBalance} nickname={nickname} unreadMessages={unreadMessages} />
+            <Navbar user={user} gcBalance={gcBalance} nickname={nickname} unreadMessages={unreadMessages} isAdmin={isAdmin} />
             <div className="pt-16">
               <SidebarLayout locale={locale} sidebar={<GlobalSidebar locale={locale} />}>
                 {children}

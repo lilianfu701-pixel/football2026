@@ -16,30 +16,36 @@ interface NavbarProps {
   gcBalance?: number;
   nickname?: string;
   unreadMessages?: number;
+  isAdmin?: boolean;
 }
 
-export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unreadMessages = 0 }: NavbarProps) {
+export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unreadMessages = 0, isAdmin = false }: NavbarProps) {
   const t = useTranslations("nav");
   const params = useParams();
   const pathname = usePathname();
   const locale = (params.locale as string) || "en";
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [langOpen, setLangOpen] = useState(false);
+  const [menuOpen,     setMenuOpen]     = useState(false);
+  const [langOpen,     setLangOpen]     = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { balance: gcBalance } = useGcBalance();
-  const langRef = useRef<HTMLDivElement>(null);
+  const langRef     = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const isMobileInstallPage = pathname === `/${locale}/m`;
 
-  // Close language dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
-    if (!langOpen) return;
+    if (!langOpen && !userMenuOpen) return;
     function handleClick(e: MouseEvent) {
       if (langRef.current && !langRef.current.contains(e.target as Node)) {
         setLangOpen(false);
       }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, [langOpen]);
+  }, [langOpen, userMenuOpen]);
 
   if (isMobileInstallPage) return null;
 
@@ -174,21 +180,63 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
 
             {/* Auth Buttons */}
             {user ? (
-              <div className="flex items-center gap-2">
-                <Link
-                  href={`/${locale}/profile`}
-                  className="hidden sm:flex items-center gap-1.5 text-sm text-gray-300 hover:text-white transition-colors"
+              <div className="relative hidden sm:block" ref={userMenuRef}>
+                {/* Avatar button */}
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-1.5 text-sm text-gray-300 hover:text-white transition-colors"
                 >
                   <div className="w-8 h-8 bg-[#FFD700] rounded-full flex items-center justify-center text-[#0A1628] font-bold text-sm">
                     {(nickname ?? user.email ?? "U")[0].toUpperCase()}
                   </div>
-                </Link>
-                <button
-                  onClick={handleSignOut}
-                  className="hidden sm:block text-sm text-gray-400 hover:text-white px-3 py-1.5 hover:bg-[#1E3A5F] rounded-lg transition-colors"
-                >
-                  {t("logout")}
+                  <svg className={`w-3 h-3 transition-transform ${userMenuOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </button>
+
+                {/* Dropdown */}
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-[#0F2040] border border-[#1E3A5F] rounded-xl shadow-2xl overflow-hidden z-50">
+                    {/* User info */}
+                    <div className="px-4 py-3 border-b border-[#1E3A5F]">
+                      <p className="text-xs font-bold text-white truncate">{nickname ?? user.email}</p>
+                      <p className="text-[10px] text-gray-500 truncate">{user.email}</p>
+                    </div>
+
+                    {/* Profile */}
+                    <Link
+                      href={`/${locale}/profile`}
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-[#1E3A5F] transition-colors"
+                    >
+                      <span>👤</span>
+                      <span>{locale === "zh" ? "个人主页" : "Profile"}</span>
+                    </Link>
+
+                    {/* Admin — only shown if is_admin */}
+                    {isAdmin && (
+                      <Link
+                        href={`/${locale}/admin`}
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#FFD700] hover:bg-[#FFD700]/10 transition-colors"
+                      >
+                        <span>🛡️</span>
+                        <span>{locale === "zh" ? "管理后台" : "Admin Panel"}</span>
+                      </Link>
+                    )}
+
+                    {/* Divider + logout */}
+                    <div className="border-t border-[#1E3A5F]">
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-[#1E3A5F] transition-colors"
+                      >
+                        <span>🚪</span>
+                        <span>{t("logout")}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="hidden sm:flex items-center gap-2">
@@ -236,14 +284,35 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                 {link.label}
               </Link>
             ))}
-            <div className="pt-2 border-t border-[#1E3A5F] flex gap-2 px-4">
+            <div className="pt-2 border-t border-[#1E3A5F] px-4 space-y-1">
               {user ? (
-                <button
-                  onClick={handleSignOut}
-                  className="flex-1 text-center text-sm text-gray-400 hover:text-white py-2 hover:bg-[#1E3A5F] rounded-lg transition-colors"
-                >
-                  {t("logout")}
-                </button>
+                <>
+                  <Link
+                    href={`/${locale}/profile`}
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-[#1E3A5F] rounded-lg transition-colors"
+                  >
+                    <span>👤</span>
+                    <span>{locale === "zh" ? "个人主页" : "Profile"}</span>
+                  </Link>
+                  {isAdmin && (
+                    <Link
+                      href={`/${locale}/admin`}
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2 px-3 py-2.5 text-sm text-[#FFD700] hover:bg-[#FFD700]/10 rounded-lg transition-colors"
+                    >
+                      <span>🛡️</span>
+                      <span>{locale === "zh" ? "管理后台" : "Admin Panel"}</span>
+                    </Link>
+                  )}
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-[#1E3A5F] rounded-lg transition-colors"
+                  >
+                    <span>🚪</span>
+                    <span>{t("logout")}</span>
+                  </button>
+                </>
               ) : (
                 <>
                   <Link
