@@ -32,7 +32,7 @@ interface Props {
   goldenBootClosed: boolean;
 }
 
-const MIN_BET = 10_000_000; // 10M
+const MIN_BET = 10_000; // 10K
 const PCT_PRESETS = [0.05, 0.10, 0.20, 0.50] as const; // 5% 10% 20% 50%
 
 const POSITION_LABELS: Record<string, { zh: string; en: string; color: string }> = {

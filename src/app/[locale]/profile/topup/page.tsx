@@ -17,12 +17,12 @@ interface Package {
 }
 
 const PACKAGES: Package[] = [
-  { id: "s1",  gc: 100_000_000,    label: "1亿",   price: "¥6",   priceUsdt: 1.00,  bonus: 0  },
-  { id: "s2",  gc: 300_000_000,    label: "3亿",   price: "¥15",  priceUsdt: 2.00,  bonus: 10 },
-  { id: "s3",  gc: 600_000_000,    label: "6亿",   price: "¥25",  priceUsdt: 3.50,  bonus: 20, popular: true },
-  { id: "s4",  gc: 1_000_000_000,  label: "10亿",  price: "¥38",  priceUsdt: 5.50,  bonus: 30 },
-  { id: "s5",  gc: 3_000_000_000,  label: "30亿",  price: "¥88",  priceUsdt: 12.00, bonus: 50, best: true },
-  { id: "s6",  gc: 10_000_000_000, label: "100亿", price: "¥238", priceUsdt: 33.00, bonus: 80 },
+  { id: "s1",  gc: 100_000,    label: "10万",   price: "¥6",   priceUsdt: 1.00,  bonus: 0  },
+  { id: "s2",  gc: 300_000,    label: "30万",   price: "¥15",  priceUsdt: 2.00,  bonus: 10 },
+  { id: "s3",  gc: 600_000,    label: "60万",   price: "¥25",  priceUsdt: 3.50,  bonus: 20, popular: true },
+  { id: "s4",  gc: 1_000_000,  label: "100万",  price: "¥38",  priceUsdt: 5.50,  bonus: 30 },
+  { id: "s5",  gc: 3_000_000,  label: "300万",  price: "¥88",  priceUsdt: 12.00, bonus: 50, best: true },
+  { id: "s6",  gc: 10_000_000, label: "1000万", price: "¥238", priceUsdt: 33.00, bonus: 80 },
 ];
 
 const FREE_WAYS = [

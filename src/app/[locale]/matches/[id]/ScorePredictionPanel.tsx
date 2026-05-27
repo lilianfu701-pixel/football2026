@@ -48,7 +48,7 @@ interface Props {
   kickoffTime?: string;
 }
 
-const MIN_BET   = 10_000_000;
+const MIN_BET   = 10_000; // 10K
 const PCT_PRESETS: { pct: number; label: string }[] = [
   { pct: 0.05, label: "5%"  },
   { pct: 0.10, label: "10%" },

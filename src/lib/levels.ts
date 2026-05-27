@@ -19,7 +19,7 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     nameZh: "乞丐",
     minGc: -Infinity,
     maxGc: 0,
-    dailyFreeGc: 10_000_000,
+    dailyFreeGc: 10_000,
     color: "#A16207",
     bgColor: "#292524",
     icon: "🪣",
@@ -30,8 +30,8 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     name: "Common",
     nameZh: "平民",
     minGc: 1,
-    maxGc: 999_999_999,
-    dailyFreeGc: 29_900_000,
+    maxGc: 999_999,
+    dailyFreeGc: 30_000,
     color: "#9CA3AF",
     bgColor: "#374151",
     icon: "🥉",
@@ -41,9 +41,9 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     rank: 2,
     name: "Prosper",
     nameZh: "小康",
-    minGc: 1_000_000_000,
-    maxGc: 9_999_999_999,
-    dailyFreeGc: 39_900_000,
+    minGc: 1_000_000,
+    maxGc: 9_999_999,
+    dailyFreeGc: 40_000,
     color: "#6EE7B7",
     bgColor: "#064E3B",
     icon: "🌱",
@@ -53,9 +53,9 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     rank: 3,
     name: "Wealthy",
     nameZh: "富裕",
-    minGc: 10_000_000_000,
-    maxGc: 99_999_999_999,
-    dailyFreeGc: 59_900_000,
+    minGc: 10_000_000,
+    maxGc: 99_999_999,
+    dailyFreeGc: 60_000,
     color: "#34D399",
     bgColor: "#065F46",
     icon: "💰",
@@ -65,9 +65,9 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     rank: 4,
     name: "Noble",
     nameZh: "豪绅",
-    minGc: 100_000_000_000,
-    maxGc: 999_999_999_999,
-    dailyFreeGc: 100_000_000,
+    minGc: 100_000_000,
+    maxGc: 999_999_999,
+    dailyFreeGc: 100_000,
     color: "#60A5FA",
     bgColor: "#1E3A8A",
     icon: "👑",
@@ -77,9 +77,9 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     rank: 5,
     name: "Tycoon",
     nameZh: "富豪",
-    minGc: 1_000_000_000_000,
-    maxGc: 9_999_999_999_999,
-    dailyFreeGc: 120_000_000,
+    minGc: 1_000_000_000,
+    maxGc: 9_999_999_999,
+    dailyFreeGc: 120_000,
     color: "#818CF8",
     bgColor: "#312E81",
     icon: "🏰",
@@ -89,9 +89,9 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     rank: 6,
     name: "Magnate",
     nameZh: "财阀",
-    minGc: 10_000_000_000_000,
-    maxGc: 99_999_999_999_999,
-    dailyFreeGc: 150_000_000,
+    minGc: 10_000_000_000,
+    maxGc: 99_999_999_999,
+    dailyFreeGc: 150_000,
     color: "#C084FC",
     bgColor: "#4C1D95",
     icon: "💎",
@@ -101,9 +101,9 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     rank: 7,
     name: "Elite",
     nameZh: "巨富",
-    minGc: 100_000_000_000_000,
-    maxGc: 999_999_999_999_999,
-    dailyFreeGc: 170_000_000,
+    minGc: 100_000_000_000,
+    maxGc: 999_999_999_999,
+    dailyFreeGc: 170_000,
     color: "#F472B6",
     bgColor: "#831843",
     icon: "🔱",
@@ -113,9 +113,9 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     rank: 8,
     name: "Imperial",
     nameZh: "财尊",
-    minGc: 1_000_000_000_000_000,
-    maxGc: 499_999_999_999_999_999,
-    dailyFreeGc: 190_000_000,
+    minGc: 1_000_000_000_000,
+    maxGc: 499_999_999_999_999,
+    dailyFreeGc: 190_000,
     color: "#FB923C",
     bgColor: "#7C2D12",
     icon: "⚜️",
@@ -125,9 +125,9 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     rank: 9,
     name: "Supreme",
     nameZh: "至尊",
-    minGc: 500_000_000_000_000_000,
+    minGc: 500_000_000_000_000,
     maxGc: null,
-    dailyFreeGc: 200_000_000,
+    dailyFreeGc: 200_000,
     color: "#FFD700",
     bgColor: "#78350F",
     icon: "🌟",
@@ -160,14 +160,13 @@ export const HONOR_LEVELS: HonorLevelInfo[] = [
 ];
 
 export function getWealthLevel(gcBalance: number): LevelInfo {
-  // rank 0 (Beggar) covers 0 and all negative values
   if (gcBalance <= 0) return WEALTH_LEVELS[0];
   for (let i = WEALTH_LEVELS.length - 1; i >= 1; i--) {
     if (gcBalance >= WEALTH_LEVELS[i].minGc) {
       return WEALTH_LEVELS[i];
     }
   }
-  return WEALTH_LEVELS[1]; // Common fallback for positive GC < 1B
+  return WEALTH_LEVELS[1];
 }
 
 export function getHonorLevel(points: number): HonorLevelInfo {
@@ -181,17 +180,15 @@ export function getHonorLevel(points: number): HonorLevelInfo {
 
 export function getNextWealthLevel(gcBalance: number): LevelInfo | null {
   const current = getWealthLevel(gcBalance);
-  // Beggar (rank 0) → next is Common (rank 1)
   const next = WEALTH_LEVELS.find((l) => l.rank === current.rank + 1);
   return next ?? null;
 }
 
 export function getWealthProgress(gcBalance: number): number {
   const current = getWealthLevel(gcBalance);
-  // Beggar: show progress toward 1 GC (reaching Common), capped 0–100
   if (current.rank === 0) {
-    if (gcBalance >= 0) return Math.min(100, gcBalance * 100); // 0 GC = 0%
-    return 0; // negative balance = 0%
+    if (gcBalance >= 0) return Math.min(100, gcBalance * 100);
+    return 0;
   }
   if (!current.maxGc) return 100;
   const progress =

@@ -19,7 +19,7 @@ export async function POST() {
     return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   }
 
-  const currentBalance: number = profile.gc_balance ?? 100_000_000;
+  const currentBalance: number = profile.gc_balance ?? 100_000;
   const today     = new Date().toISOString().split("T")[0];
   const yesterday = new Date(Date.now() - 86_400_000).toISOString().split("T")[0];
 

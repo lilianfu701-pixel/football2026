@@ -9,15 +9,15 @@ export interface Milestone {
 }
 
 export const MILESTONES: Milestone[] = [
-  { count: 1,  gcBonus: 0,           label: "First Invite",   labelZh: "首次邀请",   emoji: "🌱", color: "text-green-400",  bg: "bg-green-400/10"  },
-  { count: 3,  gcBonus: 50_000_000,  label: "Recruiter",      labelZh: "招募者",     emoji: "🥉", color: "text-orange-400", bg: "bg-orange-400/10" },
-  { count: 10, gcBonus: 200_000_000, label: "Ambassador",     labelZh: "大使",       emoji: "🥈", color: "text-blue-400",   bg: "bg-blue-400/10"   },
-  { count: 25, gcBonus: 500_000_000, label: "Champion",       labelZh: "冠军推手",   emoji: "🥇", color: "text-yellow-400", bg: "bg-yellow-400/10" },
-  { count: 50, gcBonus: 1_000_000_000, label: "Legend",       labelZh: "传奇推手",   emoji: "👑", color: "text-purple-400", bg: "bg-purple-400/10" },
+  { count: 1,  gcBonus: 0,         label: "First Invite",   labelZh: "首次邀请",   emoji: "🌱", color: "text-green-400",  bg: "bg-green-400/10"  },
+  { count: 3,  gcBonus: 50_000,    label: "Recruiter",      labelZh: "招募者",     emoji: "🥉", color: "text-orange-400", bg: "bg-orange-400/10" },
+  { count: 10, gcBonus: 200_000,   label: "Ambassador",     labelZh: "大使",       emoji: "🥈", color: "text-blue-400",   bg: "bg-blue-400/10"   },
+  { count: 25, gcBonus: 500_000,   label: "Champion",       labelZh: "冠军推手",   emoji: "🥇", color: "text-yellow-400", bg: "bg-yellow-400/10" },
+  { count: 50, gcBonus: 1_000_000, label: "Legend",         labelZh: "传奇推手",   emoji: "👑", color: "text-purple-400", bg: "bg-purple-400/10" },
 ];
 
 /** Per-invite flat reward (both sides) */
-export const PER_INVITE_GC = 20_000_000;
+export const PER_INVITE_GC = 20_000;
 
 /** Find the next unclaimed milestone given current invite count */
 export function nextMilestone(inviteCount: number): Milestone | null {
