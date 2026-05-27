@@ -250,6 +250,16 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
               </div>
             )}
 
+            {/* Mobile login button — only shown when NOT logged in */}
+            {!user && (
+              <Link
+                href={`/${locale}/auth/login`}
+                className="md:hidden flex items-center gap-1.5 bg-[#FFD700] text-[#0A1628] font-bold text-sm px-3 py-1.5 rounded-xl hover:bg-[#FFC200] transition-colors"
+              >
+                {locale === "zh" ? "登录" : "Login"}
+              </Link>
+            )}
+
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
