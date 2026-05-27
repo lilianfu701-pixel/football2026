@@ -40,7 +40,7 @@ function formatGcBig(n: number): string {
   return `${n} GC`;
 }
 
-type PayMethod = "stripe" | "paypal" | "usdt";
+type PayMethod = "paypal" | "usdt";
 
 // ── Main content (needs Suspense for useSearchParams) ────────────────────────
 function TopupContent() {
@@ -51,7 +51,7 @@ function TopupContent() {
   const zh           = locale === "zh";
 
   const [selected,   setSelected]   = useState<string | null>(null);
-  const [payMethod,  setPayMethod]  = useState<PayMethod>("stripe");
+  const [payMethod,  setPayMethod]  = useState<PayMethod>("paypal");
   const [paying,     setPaying]     = useState(false);
   const [payErr,     setPayErr]     = useState<string | null>(null);
   const [tab,        setTab]        = useState<"buy" | "free">("buy");
@@ -258,25 +258,7 @@ function TopupContent() {
                 <p className="text-xs text-gray-500 mb-2 font-medium">
                   {zh ? "选择支付方式" : "Payment method"}
                 </p>
-                <div className="grid grid-cols-3 gap-2">
-                  {/* Card (Stripe) */}
-                  <button
-                    onClick={() => setPayMethod("stripe")}
-                    className={`flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-xl border-2 transition-all text-xs font-bold ${
-                      payMethod === "stripe"
-                        ? "bg-[#635BFF]/10 border-[#635BFF] text-white"
-                        : "bg-[#0F2040] border-[#1E3A5F] text-gray-400 hover:border-gray-500"
-                    }`}
-                  >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                      <rect x="2" y="5" width="20" height="14" rx="2"/>
-                      <path d="M2 10h20"/>
-                      <path strokeLinecap="round" d="M6 15h4"/>
-                      <path strokeLinecap="round" d="M14 15h4"/>
-                    </svg>
-                    <span>{zh ? "银行卡" : "Card"}</span>
-                  </button>
-
+                <div className="grid grid-cols-2 gap-2">
                   {/* PayPal */}
                   <button
                     onClick={() => setPayMethod("paypal")}
@@ -319,26 +301,6 @@ function TopupContent() {
                 <p className="text-red-400 text-sm flex-1">{payErr}</p>
                 <button onClick={() => setPayErr(null)} className="text-red-400/60 hover:text-red-400 text-xs">✕</button>
               </div>
-            )}
-
-            {/* ── Stripe pay button ── */}
-            {payMethod === "stripe" && (
-              <button
-                onClick={handleStripe}
-                disabled={!selected || paying}
-                className="w-full py-3.5 rounded-2xl font-black text-base transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-[#FFD700] text-[#0A1628] hover:bg-[#FFC200] shadow-lg shadow-[#FFD700]/20"
-              >
-                {paying ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="inline-block w-4 h-4 border-2 border-[#0A1628]/30 border-t-[#0A1628] rounded-full animate-spin" />
-                    {zh ? "跳转银行卡支付…" : "Redirecting to card payment…"}
-                  </span>
-                ) : selected ? (
-                  `${zh ? "💳 信用卡 / 储蓄卡支付" : "💳 Pay by Card"} ${pkg?.price} → ${formatGcBig(totalGc)}`
-                ) : (
-                  zh ? "请选择充值套餐" : "Select a package"
-                )}
-              </button>
             )}
 
             {/* ── PayPal buttons ── */}
@@ -494,9 +456,6 @@ function TopupContent() {
             {/* Payment info */}
             <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
               <span className="text-[10px] text-gray-600">{zh ? "支持：" : "Accepted:"}</span>
-              <span className="text-[10px] text-gray-500 bg-[#0F2040] border border-[#1E3A5F] px-2.5 py-1 rounded-md font-medium">
-                💳 {zh ? "银行卡" : "Card"}
-              </span>
               <span className="text-[10px] text-gray-500 bg-[#0F2040] border border-[#1E3A5F] px-2.5 py-1 rounded-md font-medium">
                 🅿 PayPal
               </span>
