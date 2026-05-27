@@ -2,7 +2,31 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStripe, GC_PACKAGES } from "@/lib/stripe";
 
+function checkoutOrigin(req: NextRequest): string {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL;
+  const fallback = configured ?? "http://localhost:3000";
+  const requestOrigin = req.headers.get("origin");
+
+  if (!requestOrigin) return fallback;
+
+  try {
+    const requestUrl = new URL(requestOrigin);
+    const allowed = new Set(
+      [configured, "http://localhost:3000"]
+        .filter(Boolean)
+        .map((origin) => new URL(origin!).origin),
+    );
+    return allowed.has(requestUrl.origin) ? requestUrl.origin : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export async function POST(req: NextRequest) {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return NextResponse.json({ error: "Stripe not configured (missing STRIPE_SECRET_KEY)" }, { status: 503 });
+  }
+
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -13,7 +37,7 @@ export async function POST(req: NextRequest) {
     if (!pkg) return NextResponse.json({ error: "Invalid package" }, { status: 400 });
 
     const totalGc   = Math.floor(pkg.gc * (1 + pkg.bonus / 100));
-    const origin    = req.headers.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    const origin    = checkoutOrigin(req);
     const stripe    = getStripe();
 
     const session = await stripe.checkout.sessions.create({
@@ -47,7 +71,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (err) {
-    console.error("[topup/checkout]", err);
-    return NextResponse.json({ error: "Failed to create checkout session" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[topup/checkout]", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
