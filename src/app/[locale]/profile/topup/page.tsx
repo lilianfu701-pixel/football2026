@@ -27,8 +27,8 @@ const PACKAGES: Package[] = [
 
 const FREE_WAYS = [
   { icon: "📅", title: "每日签到",     desc: "每天登录领取签到奖励，连续签到额外加成",      link: "/profile",          linkLabel: "去签到"   },
-  { icon: "⚽", title: "竞猜比赛",     desc: "预测比赛结果，赢取高额 GoalCoin 奖励",        link: "/matches",          linkLabel: "去竞猜"   },
-  { icon: "🎯", title: "竞猜比分",     desc: "精准预测比分，赔率更高，赢更多",              link: "/matches",          linkLabel: "去押注"   },
+  { icon: "⚽", title: "预测比赛",     desc: "预测比赛结果，赢取高额 GoalCoin 积分奖励",    link: "/matches",          linkLabel: "去预测"   },
+  { icon: "🎯", title: "预测比分",     desc: "精准预测比分，积分倍增，赢取更多",            link: "/matches",          linkLabel: "去预测"   },
   { icon: "👤", title: "完善个人资料", desc: "填写头像、国家、Bio 等信息，各得奖励",         link: "/profile/settings", linkLabel: "去完善"   },
   { icon: "🎁", title: "邀请好友",     desc: "邀请朋友注册，双方各得 2000 万 GC",          link: "/invite",           linkLabel: "去邀请"   },
   { icon: "🏆", title: "排行榜奖励",   desc: "登上排行榜赛季前列，赢取丰厚奖励",           link: "/leaderboard",      linkLabel: "查看榜单" },
@@ -40,7 +40,7 @@ function formatGcBig(n: number): string {
   return `${n} GC`;
 }
 
-type PayMethod = "paypal" | "usdt";
+type PayMethod = "paddle" | "paypal" | "usdt";
 
 // ── Main content (needs Suspense for useSearchParams) ────────────────────────
 function TopupContent() {
@@ -51,7 +51,7 @@ function TopupContent() {
   const zh           = locale === "zh";
 
   const [selected,   setSelected]   = useState<string | null>(null);
-  const [payMethod,  setPayMethod]  = useState<PayMethod>("paypal");
+  const [payMethod,  setPayMethod]  = useState<PayMethod>("paddle");
   const [paying,     setPaying]     = useState(false);
   const [payErr,     setPayErr]     = useState<string | null>(null);
   const [tab,        setTab]        = useState<"buy" | "free">("buy");
@@ -103,13 +103,13 @@ function TopupContent() {
   const pkg    = PACKAGES.find((p) => p.id === selected);
   const totalGc = pkg ? Math.floor(pkg.gc * (1 + pkg.bonus / 100)) : 0;
 
-  // ── Stripe handler ──────────────────────────────────────────────────────
-  async function handleStripe() {
+  // ── Paddle handler ──────────────────────────────────────────────────────
+  async function handlePaddle() {
     if (!selected || paying) return;
     setPaying(true);
     setPayErr(null);
     try {
-      const res  = await fetch("/api/topup/checkout", {
+      const res  = await fetch("/api/topup/paddle", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ packageId: selected, locale }),
@@ -120,7 +120,7 @@ function TopupContent() {
         setPaying(false);
         return;
       }
-      window.location.href = data.url; // navigate away → no setPaying(false)
+      window.location.href = data.url;
     } catch {
       setPayErr(zh ? "网络错误，请重试" : "Network error, please retry");
       setPaying(false);
@@ -182,7 +182,7 @@ function TopupContent() {
               🪙 {zh ? "GoalCoin 充值" : "Top Up GoalCoin"}
             </h1>
             <p className="text-xs text-gray-500 mt-0.5">
-              {zh ? "GoalCoin 为虚拟积分，不具备实际货币价值" : "GoalCoin is virtual currency with no monetary value"}
+              {zh ? "GoalCoin 为虚拟娱乐积分，不具备实际货币价值" : "GoalCoin is virtual entertainment points with no monetary value"}
             </p>
           </div>
         </div>
@@ -258,7 +258,25 @@ function TopupContent() {
                 <p className="text-xs text-gray-500 mb-2 font-medium">
                   {zh ? "选择支付方式" : "Payment method"}
                 </p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
+                  {/* Paddle (Card) */}
+                  <button
+                    onClick={() => setPayMethod("paddle")}
+                    className={`flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-xl border-2 transition-all text-xs font-bold ${
+                      payMethod === "paddle"
+                        ? "bg-[#0052CC]/15 border-[#0052CC] text-white"
+                        : "bg-[#0F2040] border-[#1E3A5F] text-gray-400 hover:border-gray-500"
+                    }`}
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <rect x="2" y="5" width="20" height="14" rx="2"/>
+                      <path d="M2 10h20"/>
+                      <path strokeLinecap="round" d="M6 15h4"/>
+                      <path strokeLinecap="round" d="M14 15h4"/>
+                    </svg>
+                    <span>{zh ? "银行卡" : "Card"}</span>
+                  </button>
+
                   {/* PayPal */}
                   <button
                     onClick={() => setPayMethod("paypal")}
@@ -300,6 +318,30 @@ function TopupContent() {
                 <span className="text-red-400 text-sm">⚠</span>
                 <p className="text-red-400 text-sm flex-1">{payErr}</p>
                 <button onClick={() => setPayErr(null)} className="text-red-400/60 hover:text-red-400 text-xs">✕</button>
+              </div>
+            )}
+
+            {/* ── Paddle (Card) button ── */}
+            {payMethod === "paddle" && selected && (
+              <button
+                onClick={handlePaddle}
+                disabled={paying}
+                className="w-full py-3.5 rounded-2xl font-black text-base transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-[#0052CC] text-white hover:bg-[#0047B3] shadow-lg shadow-[#0052CC]/20"
+              >
+                {paying ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    {zh ? "跳转中…" : "Redirecting…"}
+                  </span>
+                ) : (
+                  zh ? "💳 前往银行卡支付" : "💳 Pay with Card"
+                )}
+              </button>
+            )}
+
+            {payMethod === "paddle" && !selected && (
+              <div className="w-full py-3.5 rounded-2xl font-black text-base text-center opacity-40 cursor-not-allowed bg-[#0052CC]/20 border border-[#0052CC]/30 text-[#4D8FD6]">
+                {zh ? "请先选择充值套餐" : "Select a package first"}
               </div>
             )}
 
@@ -457,6 +499,9 @@ function TopupContent() {
             <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
               <span className="text-[10px] text-gray-600">{zh ? "支持：" : "Accepted:"}</span>
               <span className="text-[10px] text-gray-500 bg-[#0F2040] border border-[#1E3A5F] px-2.5 py-1 rounded-md font-medium">
+                💳 {zh ? "银行卡" : "Card"}
+              </span>
+              <span className="text-[10px] text-gray-500 bg-[#0F2040] border border-[#1E3A5F] px-2.5 py-1 rounded-md font-medium">
                 🅿 PayPal
               </span>
               <span className="text-[10px] text-gray-500 bg-[#0F2040] border border-[#1E3A5F] px-2.5 py-1 rounded-md font-medium">
@@ -466,8 +511,8 @@ function TopupContent() {
 
             <p className="text-[10px] text-gray-600 text-center mt-3 leading-relaxed">
               {zh
-                ? "GoalCoin 为虚拟游戏积分，仅用于 Football2026 平台内竞猜，购买后不可退款，不可兑换现金。"
-                : "GoalCoin is virtual game currency for Football2026 prediction only. All purchases are non-refundable and have no cash value."}
+                ? "GoalCoin 为虚拟游戏积分，仅用于 Football2026 平台内娱乐互动，购买后不可退款，不可兑换现金。"
+                : "GoalCoin is virtual entertainment points for use within the Football2026 fantasy sports platform only. All purchases are non-refundable and have no cash value."}
             </p>
           </>
         )}

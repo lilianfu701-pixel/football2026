@@ -29,8 +29,8 @@ function SuccessContent() {
   const [priceCny, setPriceCny] = useState<number>(0);
 
   useEffect(() => {
-    // ── PayPal / USDT: amount already resolved server-side ──
-    if ((type === "paypal" || type === "usdt") && gcParam) {
+    // ── Paddle / PayPal / USDT: amount already resolved server-side ──
+    if ((type === "paddle" || type === "paypal" || type === "usdt") && gcParam) {
       setGcAmount(Number(gcParam));
       setStatus("success");
       return;
@@ -60,6 +60,7 @@ function SuccessContent() {
     return () => clearTimeout(t);
   }, [status, locale, router]);
 
+  const isPaddle = type === "paddle";
   const isPayPal = type === "paypal";
   const isUsdt   = type === "usdt";
 
@@ -125,9 +126,11 @@ function SuccessContent() {
               ? (zh ? "通过 USDT TRC-20 完成支付" : "Paid via USDT TRC-20")
               : isPayPal
                 ? (zh ? "通过 PayPal 完成支付" : "Paid via PayPal")
-                : priceCny > 0
-                  ? (zh ? `已支付 ¥${priceCny}` : `Paid ¥${priceCny}`)
-                  : (zh ? "通过 Stripe 完成支付" : "Paid via Stripe")}
+                : isPaddle
+                  ? (zh ? "通过银行卡完成支付" : "Paid via Card")
+                  : priceCny > 0
+                    ? (zh ? `已支付 ¥${priceCny}` : `Paid ¥${priceCny}`)
+                    : (zh ? "支付完成" : "Payment complete")}
           </p>
 
           {/* GC Amount */}
