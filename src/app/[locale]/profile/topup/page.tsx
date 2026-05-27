@@ -259,7 +259,7 @@ function TopupContent() {
                   {zh ? "选择支付方式" : "Payment method"}
                 </p>
                 <div className="grid grid-cols-3 gap-2">
-                  {/* Stripe */}
+                  {/* Card (Stripe) */}
                   <button
                     onClick={() => setPayMethod("stripe")}
                     className={`flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-xl border-2 transition-all text-xs font-bold ${
@@ -268,10 +268,13 @@ function TopupContent() {
                         : "bg-[#0F2040] border-[#1E3A5F] text-gray-400 hover:border-gray-500"
                     }`}
                   >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <rect x="2" y="5" width="20" height="14" rx="2"/>
+                      <path d="M2 10h20"/>
+                      <path strokeLinecap="round" d="M6 15h4"/>
+                      <path strokeLinecap="round" d="M14 15h4"/>
                     </svg>
-                    <span>Stripe</span>
+                    <span>{zh ? "银行卡" : "Card"}</span>
                   </button>
 
                   {/* PayPal */}
@@ -328,10 +331,10 @@ function TopupContent() {
                 {paying ? (
                   <span className="flex items-center justify-center gap-2">
                     <span className="inline-block w-4 h-4 border-2 border-[#0A1628]/30 border-t-[#0A1628] rounded-full animate-spin" />
-                    {zh ? "跳转支付页面…" : "Redirecting…"}
+                    {zh ? "跳转银行卡支付…" : "Redirecting to card payment…"}
                   </span>
                 ) : selected ? (
-                  `${zh ? "信用卡支付" : "Pay with Card"} ${pkg?.price} → ${formatGcBig(totalGc)}`
+                  `${zh ? "💳 信用卡 / 储蓄卡支付" : "💳 Pay by Card"} ${pkg?.price} → ${formatGcBig(totalGc)}`
                 ) : (
                   zh ? "请选择充值套餐" : "Select a package"
                 )}
@@ -492,7 +495,7 @@ function TopupContent() {
             <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
               <span className="text-[10px] text-gray-600">{zh ? "支持：" : "Accepted:"}</span>
               <span className="text-[10px] text-gray-500 bg-[#0F2040] border border-[#1E3A5F] px-2.5 py-1 rounded-md font-medium">
-                💳 Stripe
+                💳 {zh ? "银行卡" : "Card"}
               </span>
               <span className="text-[10px] text-gray-500 bg-[#0F2040] border border-[#1E3A5F] px-2.5 py-1 rounded-md font-medium">
                 🅿 PayPal
