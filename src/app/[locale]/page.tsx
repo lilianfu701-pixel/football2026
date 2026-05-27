@@ -666,6 +666,58 @@ export default async function HomePage({ params }: HomePageProps) {
         )}
       </section>
 
+      {/* ── How It Works ────────────────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
+        <div className="grid sm:grid-cols-3 gap-5">
+          {[
+            {
+              icon: "⚽",
+              en: "Predict Matches",
+              zh: "预测比赛",
+              descEn: "Pick the winner or score for all 48 World Cup 2026 matches and lock in your prediction before kick-off.",
+              descZh: "为全部 48 场世界杯比赛预测结果，开球前锁定你的答案。",
+              color: "#2B6CFF",
+            },
+            {
+              icon: "💰",
+              en: "Earn GoalCoins",
+              zh: "赢取 GoalCoin",
+              descEn: "Every correct prediction earns you GoalCoins. The more you predict, the more GC you stack up.",
+              descZh: "每次猜对都能获得 GoalCoin 奖励。预测越多，积累越多。",
+              color: "#FFD700",
+            },
+            {
+              icon: "🏆",
+              en: "Dominate the Leaderboard",
+              zh: "登顶排行榜",
+              descEn: "Climb the global rankings, compete with fans worldwide, and prove you know football best.",
+              descZh: "冲击全球排行榜，与世界各地球迷同台竞技，证明你最懂球。",
+              color: "#0E9F6E",
+            },
+          ].map((item) => (
+            <div
+              key={item.en}
+              className="rounded-2xl border border-white/10 bg-[#0A1628] p-6 flex flex-col gap-4 hover:border-white/20 transition-colors"
+            >
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+                style={{ backgroundColor: item.color + "18" }}
+              >
+                {item.icon}
+              </div>
+              <div>
+                <h3 className="text-base font-black text-white mb-1.5">
+                  {zh ? item.zh : item.en}
+                </h3>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  {zh ? item.descZh : item.descEn}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ── Footer ──────────────────────────────────────────────────────── */}
       <footer className="border-t border-white/10 bg-[#030912] px-4 py-10 text-center">
         <div className="max-w-3xl mx-auto">
