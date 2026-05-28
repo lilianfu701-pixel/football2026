@@ -20,14 +20,6 @@ function getPhase(): "pre" | "during" | "post" {
 }
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
-interface AiPredictions {
-  chatgpt?:  { home: number; away: number };
-  claude?:   { home: number; away: number };
-  gemini?:   { home: number; away: number };
-  deepseek?: { home: number; away: number };
-  qwen?:     { home: number; away: number };
-}
-
 interface MatchRow {
   id: number;
   home_team: string;
@@ -39,7 +31,6 @@ interface MatchRow {
   status: string;
   group_name: string | null;
   stage: string | null;
-  ai_predictions: AiPredictions | null;
 }
 
 interface Scorer {
@@ -174,60 +165,6 @@ function ScorerRowSkeleton({ rank }: { rank: number }) {
   );
 }
 
-function aiPcts(preds: AiPredictions | null): { home: number; draw: number; away: number } {
-  if (!preds) return { home: 40, draw: 20, away: 40 };
-  const entries = Object.values(preds).filter(Boolean) as { home: number; away: number }[];
-  if (entries.length === 0) return { home: 40, draw: 20, away: 40 };
-  let homeW = 0, drawW = 0, awayW = 0;
-  for (const e of entries) {
-    if (e.home > e.away)       homeW++;
-    else if (e.home < e.away)  awayW++;
-    else                       drawW++;
-  }
-  const total = entries.length;
-  return {
-    home: Math.round((homeW / total) * 100),
-    draw: Math.round((drawW / total) * 100),
-    away: Math.round((awayW / total) * 100),
-  };
-}
-
-function AiPredictionCard({ match, locale }: { match: MatchRow; locale: string }) {
-  const zh = locale === "zh";
-  const { home, draw, away } = aiPcts(match.ai_predictions);
-
-  return (
-    <div className="rounded-2xl border border-[#FFD700]/15 bg-[#0A1628] p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <span className="text-[#FFD700] text-xs font-bold uppercase tracking-widest">
-          🤖 {zh ? "AI 预测" : "AI Prediction"}
-        </span>
-      </div>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex flex-col items-center gap-1">
-          <img src={getFlagUrl(match.home_team)} alt={match.home_team} className="w-10 h-7 rounded object-cover" />
-          <span className="text-xs font-bold text-white">{match.home_team}</span>
-        </div>
-        <span className="text-gray-600 font-black text-sm">VS</span>
-        <div className="flex flex-col items-center gap-1">
-          <img src={getFlagUrl(match.away_team)} alt={match.away_team} className="w-10 h-7 rounded object-cover" />
-          <span className="text-xs font-bold text-white">{match.away_team}</span>
-        </div>
-      </div>
-      {/* Probability bar */}
-      <div className="flex rounded-full overflow-hidden h-3 mb-2">
-        <div className="bg-[#2B6CFF] transition-all" style={{ width: `${home}%` }} />
-        <div className="bg-gray-600 transition-all" style={{ width: `${draw}%` }} />
-        <div className="bg-[#0E9F6E] transition-all" style={{ width: `${away}%` }} />
-      </div>
-      <div className="flex justify-between text-[11px] text-gray-400">
-        <span className="text-[#2B6CFF] font-bold">{home}% {zh ? "主胜" : "Home"}</span>
-        <span className="text-gray-500">{draw}% {zh ? "平" : "Draw"}</span>
-        <span className="text-[#0E9F6E] font-bold">{away}% {zh ? "客胜" : "Away"}</span>
-      </div>
-    </div>
-  );
-}
 
 function DuringLeaderboard({
   title, users, locale,
@@ -290,7 +227,6 @@ export default async function HomePage({ params }: HomePageProps) {
   /* ── Parallel data fetches ── */
   const [
     allUpcomingResult,
-    aiResult,
     scorersResult,
     groupMatchesResult,
     wealthResult,
@@ -298,19 +234,10 @@ export default async function HomePage({ params }: HomePageProps) {
     // 1. Upcoming 8 matches — first 4 go to "Upcoming", next 4 go to "Featured"
     supabase
       .from("matches")
-      .select("id,home_team,away_team,home_score,away_score,kickoff_time,venue,status,group_name,stage,ai_predictions")
+      .select("id,home_team,away_team,home_score,away_score,kickoff_time,venue,status,group_name,stage")
       .in("status", ["upcoming", "live"])
       .order("kickoff_time", { ascending: true })
       .limit(8),
-
-    // 3. AI prediction matches (upcoming with ai data)
-    supabase
-      .from("matches")
-      .select("id,home_team,away_team,home_score,away_score,kickoff_time,venue,status,group_name,stage,ai_predictions")
-      .in("status", ["upcoming", "live"])
-      .not("ai_predictions", "is", null)
-      .order("kickoff_time", { ascending: true })
-      .limit(3),
 
     // 4. Top scorers
     supabase
@@ -337,7 +264,6 @@ export default async function HomePage({ params }: HomePageProps) {
   const allUpcoming: MatchRow[] = (allUpcomingResult.data ?? []) as MatchRow[];
   const upcomingMatches: MatchRow[] = allUpcoming.slice(0, 4);
   const featuredMatches: MatchRow[] = allUpcoming.slice(4, 8);
-  const aiMatches: MatchRow[] = (aiResult.data ?? []) as MatchRow[];
   const scorers: Scorer[] = (scorersResult.data ?? []) as Scorer[];
   const groupMatches = (groupMatchesResult.data ?? []) as any[];
   const groupStandings = computeGroupStandings(groupMatches, locale);
@@ -468,29 +394,7 @@ export default async function HomePage({ params }: HomePageProps) {
         <div className="border-t border-white/5" />
       </div>
 
-      {/* ── Section 3: AI Predictions ────────────────────────────────── */}
-      {aiMatches.length > 0 && (
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
-          <div className="flex items-center justify-between mb-2">
-            <SectionTitle en="🤖 AI Predictions" zh="🤖 AI 预测对比" locale={locale} />
-          </div>
-          <p className="text-sm text-gray-500 mb-6 -mt-2">
-            {zh
-              ? "基于历史数据和当前阵容的 AI 胜负概率分析"
-              : "AI win-probability based on historical data and current lineups"}
-          </p>
-          <div className="grid sm:grid-cols-3 gap-4">
-            {aiMatches.map((m) => (
-              <AiPredictionCard key={m.id} match={m} locale={locale} />
-            ))}
-          </div>
-        </section>
-      )}
 
-      {/* Divider */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <div className="border-t border-white/5" />
-      </div>
 
       {/* ── Section 4: Top Scorers ────────────────────────────────────── */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
