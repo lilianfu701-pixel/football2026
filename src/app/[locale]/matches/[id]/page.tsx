@@ -379,7 +379,7 @@ export default async function MatchPage({ params }: MatchPageProps) {
             <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden mb-4">
 
               {/* ── Header row ── */}
-              <div className="grid grid-cols-[2fr_3fr_3fr] gap-x-6 items-center px-4 py-2 border-b border-[#1E3A5F]">
+              <div className="grid grid-cols-[1fr_3fr_3fr] gap-x-6 items-center px-4 py-2 border-b border-[#1E3A5F]">
                 {/* Title */}
                 <span className="text-sm font-bold text-gray-200">⚔️ {zh ? "交战历史" : "Head to Head"}</span>
 
@@ -419,7 +419,7 @@ export default async function MatchPage({ params }: MatchPageProps) {
                     return (
                       <div
                         key={`${m.match_date}-${m.home_team}-${m.away_team}`}
-                        className="grid grid-cols-[2fr_3fr_3fr] gap-x-6 items-center px-4 py-2 border-b border-[#1E3A5F]/30 last:border-0"
+                        className="grid grid-cols-[1fr_3fr_3fr] gap-x-6 items-center px-4 py-2 border-b border-[#1E3A5F]/30 last:border-0"
                       >
                         {/* Year + tournament */}
                         <div className="flex items-baseline gap-1.5 min-w-0">
