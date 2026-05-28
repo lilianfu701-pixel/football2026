@@ -65,8 +65,8 @@ export default async function InvitePage({ params }: PageProps) {
           </h1>
           <p className="text-gray-500 text-sm mt-1">
             {zh
-              ? "每成功邀请一人，你和好友各得 20,000,000 GC"
-              : "Each invite earns you & your friend 20,000,000 GC each"}
+              ? "每成功邀请一人，你和好友各得 500,000 GC"
+              : "Each invite earns you & your friend 500,000 GC each"}
           </p>
         </div>
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-const SHARE_GC       = 1_000_000;   // GC per share
+const SHARE_GC       = 100_000;     // GC per share
 const MAX_PER_DAY    = 5;           // max rewards per 24 h
 
 /**

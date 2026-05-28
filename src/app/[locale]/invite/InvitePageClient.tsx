@@ -87,7 +87,7 @@ export default function InvitePageClient({
         {[
           { icon: "🔗", title: zh ? "分享链接" : "Share Link",     desc: zh ? "复制你的专属链接" : "Copy your unique link"      },
           { icon: "👤", title: zh ? "好友注册" : "Friend Joins",   desc: zh ? "好友点击链接注册" : "Friend signs up via link"    },
-          { icon: "🪙", title: zh ? "双方得币" : "Both Earn GC",   desc: zh ? "各得 100,000 GC" : "Each gets 100,000 GC" },
+          { icon: "🪙", title: zh ? "双方得币" : "Both Earn GC",   desc: zh ? "各得 500,000 GC" : "Each gets 500,000 GC" },
         ].map((s) => (
           <div key={s.title} className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-4 text-center">
             <div className="text-2xl mb-2">{s.icon}</div>

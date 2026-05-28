@@ -304,8 +304,8 @@ export default function ShareBetModal({
           <span className="text-base shrink-0">🎁</span>
           <p className="text-xs text-gray-400 leading-snug">
             {zh
-              ? "邀请朋友注册，双方各得 100,000 GC 奖励！"
-              : "Invite friends to sign up — both get 100,000 GC!"}
+              ? "邀请朋友注册，双方各得 500,000 GC 奖励！"
+              : "Invite friends to sign up — both get 500,000 GC!"}
           </p>
         </div>
       </div>

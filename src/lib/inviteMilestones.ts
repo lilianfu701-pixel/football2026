@@ -17,7 +17,7 @@ export const MILESTONES: Milestone[] = [
 ];
 
 /** Per-invite flat reward (both sides) */
-export const PER_INVITE_GC = 20_000;
+export const PER_INVITE_GC = 500_000;
 
 /** Find the next unclaimed milestone given current invite count */
 export function nextMilestone(inviteCount: number): Milestone | null {
