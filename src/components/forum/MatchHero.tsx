@@ -225,7 +225,7 @@ export default function MatchHero({
               color:           "#9CA3AF",
             }}
           >
-            <div className="text-base leading-none mb-0.5">{homeFlag}</div>
+            <div className="flex justify-center mb-0.5"><img src={getFlagUrl(homeTeam, 40)} alt={homeTeam} className="w-6 h-4 object-cover rounded-[2px]" /></div>
             <div>{zh ? `支持${getTeamDisplayName(homeTeam, "zh")}` : homeTeam}</div>
             {total > 0 && (
               <div className="mt-1">
@@ -275,7 +275,7 @@ export default function MatchHero({
               color:           "#9CA3AF",
             }}
           >
-            <div className="text-base leading-none mb-0.5">{awayFlag}</div>
+            <div className="flex justify-center mb-0.5"><img src={getFlagUrl(awayTeam, 40)} alt={awayTeam} className="w-6 h-4 object-cover rounded-[2px]" /></div>
             <div>{zh ? `支持${getTeamDisplayName(awayTeam, "zh")}` : awayTeam}</div>
             {total > 0 && (
               <div className="mt-1">

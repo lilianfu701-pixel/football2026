@@ -268,7 +268,7 @@ export default async function MatchPage({ params }: MatchPageProps) {
 
         {/* ── Match strip: all matches in current group/stage ──────────────── */}
         {siblingMatches.length > 1 && (
-          <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide mb-4">
+          <div className="flex items-center gap-5 overflow-x-auto scrollbar-hide mb-4">
             <span className="text-[10px] font-bold text-gray-600 shrink-0">
               {match.group_name ? (zh ? `${match.group_name}组` : `Grp ${match.group_name}`) : (stageObj ? (zh ? stageObj.zh : stageObj.en) : match.stage)}
             </span>
