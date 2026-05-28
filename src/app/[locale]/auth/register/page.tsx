@@ -125,8 +125,8 @@ export default function RegisterPage() {
               </p>
               <p className="text-green-300/70 text-xs">
                 {locale === "zh"
-                  ? "你和好友各得 +20,000,000 GC！"
-                  : "You & your friend both get +20,000,000 GC!"}
+                  ? "你和好友各得 +100,000 GC！"
+                  : "You & your friend both get +100,000 GC!"}
               </p>
             </div>
           </div>

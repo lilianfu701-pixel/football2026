@@ -52,8 +52,8 @@ export default function InvitePageClient({
     : `${siteUrl}/${locale}/auth/register`;
 
   const shareText = zh
-    ? `🎉 加入 Football2026，免费注册即得 20,000,000 GC，一起竞猜世界杯！`
-    : `🎉 Join Football2026! Sign up free & get 20,000,000 GC. Let's predict the World Cup together!`;
+    ? `🎉 加入 Football2026，免费注册即得 100,000 GC，一起竞猜世界杯！`
+    : `🎉 Join Football2026! Sign up free & get 100,000 GC. Let's predict the World Cup together!`;
 
   async function copyLink() {
     try {
@@ -87,7 +87,7 @@ export default function InvitePageClient({
         {[
           { icon: "🔗", title: zh ? "分享链接" : "Share Link",     desc: zh ? "复制你的专属链接" : "Copy your unique link"      },
           { icon: "👤", title: zh ? "好友注册" : "Friend Joins",   desc: zh ? "好友点击链接注册" : "Friend signs up via link"    },
-          { icon: "🪙", title: zh ? "双方得币" : "Both Earn GC",   desc: zh ? "各得 20,000,000 GC" : "Each gets 20,000,000 GC" },
+          { icon: "🪙", title: zh ? "双方得币" : "Both Earn GC",   desc: zh ? "各得 100,000 GC" : "Each gets 100,000 GC" },
         ].map((s) => (
           <div key={s.title} className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-4 text-center">
             <div className="text-2xl mb-2">{s.icon}</div>

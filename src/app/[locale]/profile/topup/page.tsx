@@ -30,7 +30,7 @@ const FREE_WAYS = [
   { icon: "⚽", title: "预测比赛",     desc: "预测比赛结果，赢取高额 GoalCoin 积分奖励",    link: "/matches",          linkLabel: "去预测"   },
   { icon: "🎯", title: "预测比分",     desc: "精准预测比分，积分倍增，赢取更多",            link: "/matches",          linkLabel: "去预测"   },
   { icon: "👤", title: "完善个人资料", desc: "填写头像、国家、Bio 等信息，各得奖励",         link: "/profile/settings", linkLabel: "去完善"   },
-  { icon: "🎁", title: "邀请好友",     desc: "邀请朋友注册，双方各得 2000 万 GC",          link: "/invite",           linkLabel: "去邀请"   },
+  { icon: "🎁", title: "邀请好友",     desc: "邀请朋友注册，双方各得 10 万 GC",           link: "/invite",           linkLabel: "去邀请"   },
   { icon: "🏆", title: "排行榜奖励",   desc: "登上排行榜赛季前列，赢取丰厚奖励",           link: "/leaderboard",      linkLabel: "查看榜单" },
 ];
 

@@ -116,7 +116,7 @@ export default async function GlobalSidebar({ locale }: Props) {
               </div>
             </div>
             <div className="bg-[#0A1628]/60 rounded-xl p-4 mb-4 border border-[#FFD700]/10">
-              <p className="text-[#FFD700] font-black text-2xl text-center">100,000,000</p>
+              <p className="text-[#FFD700] font-black text-2xl text-center">100,000</p>
               <p className="text-gray-400 text-xs text-center mt-0.5">GC {zh ? "新用户礼包" : "Welcome Gift"}</p>
             </div>
             <div className="space-y-2">

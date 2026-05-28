@@ -138,7 +138,7 @@ export default async function PredictPage({ params }: PageProps) {
               {zh ? "登录后开始竞猜" : "Login to Start Predicting"}
             </p>
             <p className="text-gray-500 text-sm mb-5">
-              {zh ? "注册免费领取 1 亿 GC，马上开始押注！" : "Register free, get 100M GC, start betting now!"}
+              {zh ? "注册免费领取 10 万 GC，马上开始押注！" : "Register free, get 100K GC, start betting now!"}
             </p>
             <div className="flex gap-3 justify-center">
               <Link href={`/${locale}/auth/login`}

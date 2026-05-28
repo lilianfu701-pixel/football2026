@@ -167,7 +167,7 @@ export default function CountdownHero({ locale, zh, isLoggedIn, totalMatches }: 
               href={`/${locale}/auth/register`}
               className="inline-flex items-center justify-center gap-2 border border-[#FFD700]/30 text-[#FFD700] px-8 py-3.5 rounded-2xl text-base hover:bg-[#FFD700]/10 transition-all"
             >
-              🎁 {zh ? "免费注册领1亿GC" : "Register & Get 100M GC"}
+              🎁 {zh ? "免费注册领10万GC" : "Register & Get 100K GC"}
             </Link>
           )}
         </div>

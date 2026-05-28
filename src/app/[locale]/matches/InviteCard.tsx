@@ -81,8 +81,8 @@ export default function InviteCard({ username, locale, baseUrl, inviteCount = 0 
 
   const referralUrl = `${baseUrl}/${locale}/auth/register?ref=${username}`;
   const shareText = zh
-    ? `🎉 加入 Football2026，免费注册即得 20,000,000 GC，一起竞猜世界杯！`
-    : `🎉 Join Football2026! Sign up free & get 20,000,000 GC. Let's predict the World Cup!`;
+    ? `🎉 加入 Football2026，免费注册即得 100,000 GC，一起竞猜世界杯！`
+    : `🎉 Join Football2026! Sign up free & get 100,000 GC. Let's predict the World Cup!`;
 
   const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(referralUrl)}&color=FFD700&bgcolor=0F2040&margin=8&qzone=1`;
 
