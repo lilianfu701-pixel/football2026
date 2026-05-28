@@ -445,7 +445,7 @@ export default async function MatchPage({ params }: MatchPageProps) {
                   })}
 
                   {/* ── Stats footer ── */}
-                  <div className="grid grid-cols-[2fr_6fr] gap-x-6 items-center px-4 py-3 bg-[#0A1628]/50 border-t border-[#1E3A5F]">
+                  <div className="grid grid-cols-[1fr_6fr] gap-x-6 items-center px-4 py-3 bg-[#0A1628]/50 border-t border-[#1E3A5F]">
                     <span className="text-xs font-bold text-gray-500">{zh ? "统计" : "Record"}</span>
                     <div className="flex justify-evenly items-center">
                       <span className="text-sm font-black text-[#FFD700]">
