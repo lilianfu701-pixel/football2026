@@ -379,7 +379,7 @@ export default async function MatchPage({ params }: MatchPageProps) {
             <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden mb-4">
 
               {/* ── Header row ── */}
-              <div className="grid grid-cols-[0.2fr_3fr_2fr] gap-x-6 items-center px-4 py-2 border-b border-[#1E3A5F]">
+              <div className="grid grid-cols-[0.2fr_3fr_3fr] gap-x-6 items-center px-4 py-2 border-b border-[#1E3A5F]">
                 {/* Title */}
                 <span className="text-sm font-bold text-gray-200">⚔️ {zh ? "交战历史" : "Head to Head"}</span>
 
@@ -419,7 +419,7 @@ export default async function MatchPage({ params }: MatchPageProps) {
                     return (
                       <div
                         key={`${m.match_date}-${m.home_team}-${m.away_team}`}
-                        className="grid grid-cols-[0.2fr_3fr_2fr] gap-x-6 items-center px-4 py-2 border-b border-[#1E3A5F]/30 last:border-0"
+                        className="grid grid-cols-[0.2fr_3fr_3fr] gap-x-6 items-center px-4 py-2 border-b border-[#1E3A5F]/30 last:border-0"
                       >
                         {/* Year + tournament */}
                         <div className="flex items-baseline gap-1.5 min-w-0">
@@ -445,19 +445,19 @@ export default async function MatchPage({ params }: MatchPageProps) {
                   })}
 
                   {/* ── Stats footer ── */}
-                  <div className="grid grid-cols-[0.2fr_3fr_2fr] gap-x-6 items-center px-4 py-3 bg-[#0A1628]/50 border-t border-[#1E3A5F]">
+                  <div className="grid grid-cols-[0.2fr_6fr] gap-x-6 items-center px-4 py-3 bg-[#0A1628]/50 border-t border-[#1E3A5F]">
                     <span className="text-xs font-bold text-gray-500">{zh ? "统计" : "Record"}</span>
-                    <div className="flex items-center justify-between">
+                    <div className="flex justify-evenly items-center">
                       <span className="text-sm font-black text-[#FFD700]">
                         {h2hStats.homeWins}{zh ? "赢" : "W"}
                       </span>
-                      <span className="text-sm font-black text-gray-400">
+                      <span className="text-sm font-black text-blue-400">
                         {h2hStats.draws}{zh ? "平" : "D"}
                       </span>
+                      <span className="text-sm font-black text-purple-400">
+                        {h2hStats.awayWins}{zh ? "胜" : "W"}
+                      </span>
                     </div>
-                    <span className="text-sm font-black text-purple-400">
-                      {h2hStats.awayWins}{zh ? "胜" : "W"}
-                    </span>
                   </div>
                 </>
               ) : (
