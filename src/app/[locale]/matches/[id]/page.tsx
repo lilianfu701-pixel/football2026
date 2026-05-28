@@ -287,11 +287,11 @@ export default async function MatchPage({ params }: MatchPageProps) {
                       : "text-gray-500 hover:text-gray-200 hover:bg-[#1E3A5F]/60"
                   }`}
                 >
-                  {m.home_flag && <span className="leading-none">{m.home_flag}</span>}
+                  {!isTBD(m.home_team) && <img src={getFlagUrl(m.home_team, 20)} alt={m.home_team} className="w-4 h-3 object-cover rounded-[2px]" />}
                   <span className={`mx-0.5 ${isLiveM ? "text-green-400" : ""}`}>
                     {isDoneM || isLiveM ? `${m.home_score ?? 0}:${m.away_score ?? 0}` : String(idx + 1)}
                   </span>
-                  {m.away_flag && <span className="leading-none">{m.away_flag}</span>}
+                  {!isTBD(m.away_team) && <img src={getFlagUrl(m.away_team, 20)} alt={m.away_team} className="w-4 h-3 object-cover rounded-[2px]" />}
                 </Link>
               );
             })}
