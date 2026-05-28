@@ -14,12 +14,12 @@ INSERT INTO public.matches (match_code, home_team, away_team, kickoff_time, grou
 
 -- Group B: Canada · Bosnia-Herzegovina · Qatar · Switzerland
 INSERT INTO public.matches (match_code, home_team, away_team, kickoff_time, group_name, stage, venue, city, home_flag, away_flag, status) VALUES
-('B1', 'Canada',             'Bosnia-Herzegovina', '2026-06-12 20:00:00+00', 'B', 'group', 'BMO Field',          'Toronto',      '🇨🇦', '🇧🇦', 'upcoming'),
+('B1', 'Canada',             'Bosnia & Herzegovina', '2026-06-12 20:00:00+00', 'B', 'group', 'BMO Field',          'Toronto',      '🇨🇦', '🇧🇦', 'upcoming'),
 ('B2', 'Qatar',              'Switzerland',        '2026-06-13 00:00:00+00', 'B', 'group', 'Arrowhead Stadium',  'Kansas City',  '🇶🇦', '🇨🇭', 'upcoming'),
 ('B3', 'Canada',             'Qatar',              '2026-06-17 20:00:00+00', 'B', 'group', 'BMO Field',          'Toronto',      '🇨🇦', '🇶🇦', 'upcoming'),
-('B4', 'Bosnia-Herzegovina', 'Switzerland',        '2026-06-18 00:00:00+00', 'B', 'group', 'Gillette Stadium',   'Boston',       '🇧🇦', '🇨🇭', 'upcoming'),
-('B5', 'Switzerland',        'Canada',             '2026-06-23 20:00:00+00', 'B', 'group', 'Hard Rock Stadium',  'Miami',        '🇨🇭', '🇨🇦', 'upcoming'),
-('B6', 'Bosnia-Herzegovina', 'Qatar',              '2026-06-23 20:00:00+00', 'B', 'group', 'Lincoln Financial',  'Philadelphia', '🇧🇦', '🇶🇦', 'upcoming');
+('B4', 'Bosnia & Herzegovina', 'Switzerland',        '2026-06-18 00:00:00+00', 'B', 'group', 'Gillette Stadium',   'Boston',       '🇧🇦', '🇨🇭', 'upcoming'),
+('B5', 'Switzerland',         'Canada',             '2026-06-23 20:00:00+00', 'B', 'group', 'Hard Rock Stadium',  'Miami',        '🇨🇭', '🇨🇦', 'upcoming'),
+('B6', 'Bosnia & Herzegovina','Qatar',              '2026-06-23 20:00:00+00', 'B', 'group', 'Lincoln Financial',  'Philadelphia', '🇧🇦', '🇶🇦', 'upcoming');
 
 -- Group C: Brazil · Morocco · Haiti · Scotland
 INSERT INTO public.matches (match_code, home_team, away_team, kickoff_time, group_name, stage, venue, city, home_flag, away_flag, status) VALUES
