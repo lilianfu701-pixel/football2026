@@ -45,6 +45,9 @@ export default function MobileAppBanner({ locale, zh }: Props) {
         <div className="flex items-center gap-3 shrink-0">
           {/* QR code — hidden on small screens */}
           <div className="hidden md:flex flex-col items-center gap-1">
+            <span className="text-[9px] text-gray-400 mb-0.5">
+              {zh ? "手机端请扫描" : "Scan on mobile"}
+            </span>
             <div className="bg-white p-1 rounded-lg">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -55,9 +58,6 @@ export default function MobileAppBanner({ locale, zh }: Props) {
                 className="rounded"
               />
             </div>
-            <span className="text-[9px] text-gray-500">
-              {zh ? "扫码访问" : "Scan me"}
-            </span>
           </div>
 
           <Link
