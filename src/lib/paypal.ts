@@ -30,7 +30,7 @@ export async function getPayPalToken(): Promise<string> {
 
 /** Create a PayPal Order and return the order ID */
 export async function createPayPalOrder(
-  amountCny: number,
+  amountUsd: number,
   description: string
 ): Promise<string> {
   const token = await getPayPalToken();
@@ -47,8 +47,8 @@ export async function createPayPalOrder(
         {
           description,
           amount: {
-            currency_code: "CNY",
-            value: amountCny.toFixed(2),
+            currency_code: "USD",
+            value: amountUsd.toFixed(2),
           },
         },
       ],

@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     if (status !== "COMPLETED") {
       return NextResponse.json({ error: `Payment not completed: ${status}` }, { status: 400 });
     }
-    if (currency !== "CNY" || Math.round(value * 100) !== pkg.priceCny * 100) {
+    if (currency !== "USD" || Math.round(value * 100) !== Math.round(pkg.priceUsdt * 100)) {
       return NextResponse.json({ error: "Payment amount mismatch" }, { status: 400 });
     }
 

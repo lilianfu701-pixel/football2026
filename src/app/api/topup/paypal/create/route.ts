@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
     const totalGc   = Math.floor(pkg.gc * (1 + pkg.bonus / 100));
     const desc      = `GoalCoin ${pkg.label}${pkg.bonus > 0 ? ` (+${pkg.bonus}% 赠送)` : ""}，实得 ${(totalGc / 1_000_000).toFixed(0)}M GC`;
-    const orderID   = await createPayPalOrder(pkg.priceCny, desc);
+    const orderID   = await createPayPalOrder(pkg.priceUsdt, desc);
 
     return NextResponse.json({ orderID });
   } catch (err) {
