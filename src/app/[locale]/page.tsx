@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getFlagUrl } from "@/lib/flags";
 import { computeGroupStandings } from "@/lib/groupStandings";
 import CountdownHero from "@/components/home/CountdownHero";
+import MobileAppBanner from "@/components/home/MobileAppBanner";
 
 /* ─── Phase detection ────────────────────────────────────────────────────── */
 const WC_START = new Date("2026-06-11T20:00:00+00:00");
@@ -392,54 +393,60 @@ export default async function HomePage({ params }: HomePageProps) {
         </section>
       )}
 
-      {/* ── Mobile App Entry ──────────────────────────────────────────────── */}
-      <section className="bg-gradient-to-r from-[#0A1628] via-[#0F2040] to-[#0A1628] border-b border-[#FFD700]/20 py-6">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            {/* Left: text */}
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-[#FFD700]/10 border border-[#FFD700]/30 flex items-center justify-center text-3xl shrink-0">
-                📱
+      {/* ── How It Works ────────────────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+        <div className="grid sm:grid-cols-3 gap-5">
+          {[
+            {
+              icon: "⚽",
+              en: "Predict Matches",
+              zh: "预测比赛",
+              descEn: "Pick the winner or score for all 48 World Cup 2026 matches and lock in your prediction before kick-off.",
+              descZh: "为全部 48 场世界杯比赛预测结果，开球前锁定你的答案。",
+              color: "#2B6CFF",
+            },
+            {
+              icon: "💰",
+              en: "Earn GoalCoins",
+              zh: "赢取 GoalCoin",
+              descEn: "Every correct prediction earns you GoalCoins. The more you predict, the more GC you stack up.",
+              descZh: "每次猜对都能获得 GoalCoin 奖励。预测越多，积累越多。",
+              color: "#FFD700",
+            },
+            {
+              icon: "🏆",
+              en: "Dominate the Leaderboard",
+              zh: "登顶排行榜",
+              descEn: "Climb the global rankings, compete with fans worldwide, and prove you know football best.",
+              descZh: "冲击全球排行榜，与世界各地球迷同台竞技，证明你最懂球。",
+              color: "#0E9F6E",
+            },
+          ].map((item) => (
+            <div
+              key={item.en}
+              className="rounded-2xl border border-white/10 bg-[#0A1628] p-6 flex flex-col gap-4 hover:border-white/20 transition-colors"
+            >
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+                style={{ backgroundColor: item.color + "18" }}
+              >
+                {item.icon}
               </div>
               <div>
-                <p className="text-base font-black text-white">
-                  {zh ? "手机版 · 随时随地竞猜" : "Mobile · Predict Anytime"}
-                </p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {zh
-                    ? "用手机打开网站，可添加到主屏幕，像 App 一样使用"
-                    : "Open on your phone and add to home screen for an app-like experience"}
+                <h3 className="text-base font-black text-white mb-1.5">
+                  {zh ? item.zh : item.en}
+                </h3>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  {zh ? item.descZh : item.descEn}
                 </p>
               </div>
             </div>
-            {/* Right: QR + button */}
-            <div className="flex items-center gap-3 shrink-0">
-              {/* QR code pointing to /m */}
-              <div className="hidden sm:block bg-white p-1.5 rounded-xl">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=72x72&data=${encodeURIComponent(`https://football2026.net/${locale}/m`)}&margin=1&format=png`}
-                  alt="Mobile QR"
-                  width={72}
-                  height={72}
-                  className="rounded-lg"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Link
-                  href={`/${locale}/m`}
-                  className="flex items-center gap-2 bg-[#FFD700] text-[#0A1628] font-black text-sm px-5 py-2.5 rounded-xl hover:bg-[#FFC200] transition-all whitespace-nowrap"
-                >
-                  📱 {zh ? "进入手机版" : "Open Mobile"}
-                </Link>
-                <p className="text-[10px] text-gray-500 text-center">
-                  {zh ? "或扫描二维码 →" : "or scan QR code →"}
-                </p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </section>
+
+      {/* ── Mobile App Banner (fixed bottom, client component) ──────────── */}
+      <MobileAppBanner locale={locale} zh={zh} />
 
       {/* ── During-phase leaderboards ─────────────────────────────────── */}
       {phase === "during" && wealthUsers.length > 0 && (
@@ -664,58 +671,6 @@ export default async function HomePage({ params }: HomePageProps) {
             ))}
           </div>
         )}
-      </section>
-
-      {/* ── How It Works ────────────────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
-        <div className="grid sm:grid-cols-3 gap-5">
-          {[
-            {
-              icon: "⚽",
-              en: "Predict Matches",
-              zh: "预测比赛",
-              descEn: "Pick the winner or score for all 48 World Cup 2026 matches and lock in your prediction before kick-off.",
-              descZh: "为全部 48 场世界杯比赛预测结果，开球前锁定你的答案。",
-              color: "#2B6CFF",
-            },
-            {
-              icon: "💰",
-              en: "Earn GoalCoins",
-              zh: "赢取 GoalCoin",
-              descEn: "Every correct prediction earns you GoalCoins. The more you predict, the more GC you stack up.",
-              descZh: "每次猜对都能获得 GoalCoin 奖励。预测越多，积累越多。",
-              color: "#FFD700",
-            },
-            {
-              icon: "🏆",
-              en: "Dominate the Leaderboard",
-              zh: "登顶排行榜",
-              descEn: "Climb the global rankings, compete with fans worldwide, and prove you know football best.",
-              descZh: "冲击全球排行榜，与世界各地球迷同台竞技，证明你最懂球。",
-              color: "#0E9F6E",
-            },
-          ].map((item) => (
-            <div
-              key={item.en}
-              className="rounded-2xl border border-white/10 bg-[#0A1628] p-6 flex flex-col gap-4 hover:border-white/20 transition-colors"
-            >
-              <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-                style={{ backgroundColor: item.color + "18" }}
-              >
-                {item.icon}
-              </div>
-              <div>
-                <h3 className="text-base font-black text-white mb-1.5">
-                  {zh ? item.zh : item.en}
-                </h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  {zh ? item.descZh : item.descEn}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
       </section>
 
       {/* ── Footer ──────────────────────────────────────────────────────── */}
