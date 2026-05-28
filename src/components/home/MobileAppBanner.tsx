@@ -12,10 +12,8 @@ export default function MobileAppBanner({ locale, zh }: Props) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Only show on non-mobile devices, and only if not dismissed before
     const dismissed = sessionStorage.getItem("mobile_banner_dismissed");
-    const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-    if (!dismissed && !isMobile) setVisible(true);
+    if (!dismissed) setVisible(true);
   }, []);
 
   function dismiss() {
