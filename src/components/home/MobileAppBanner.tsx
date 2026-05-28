@@ -44,7 +44,24 @@ export default function MobileAppBanner({ locale, zh }: Props) {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
+          {/* QR code — hidden on small screens */}
+          <div className="hidden md:flex flex-col items-center gap-1">
+            <div className="bg-white p-1 rounded-lg">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=56x56&data=${encodeURIComponent(`https://football2026.net/${locale}`)}&margin=1&format=png`}
+                alt="Scan QR"
+                width={56}
+                height={56}
+                className="rounded"
+              />
+            </div>
+            <span className="text-[9px] text-gray-500">
+              {zh ? "扫码访问" : "Scan me"}
+            </span>
+          </div>
+
           <Link
             href={`/${locale}/m`}
             className="bg-[#FFD700] text-[#0A1628] font-black text-xs px-4 py-1.5 rounded-lg hover:bg-[#FFC200] transition-all whitespace-nowrap"
