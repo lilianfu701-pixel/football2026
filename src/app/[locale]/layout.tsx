@@ -91,10 +91,6 @@ export async function generateMetadata({
     creator: "Football2026",
     publisher: "Football2026",
     metadataBase: new URL("https://football2026.net"),
-    icons: {
-      icon:     { url: "/icons/levels/favicon.png", type: "image/png", sizes: "32x32" },
-      shortcut: { url: "/icons/levels/favicon.png" },
-    },
     alternates: {
       canonical: `https://football2026.net/${locale === "en" ? "" : locale}`,
       languages: {
