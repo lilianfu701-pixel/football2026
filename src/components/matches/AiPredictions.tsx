@@ -33,8 +33,8 @@ export default function AiPredictions({
   const homeName = getTeamDisplayName(homeTeam, zh ? "zh" : "en");
   const awayName = getTeamDisplayName(awayTeam, zh ? "zh" : "en");
 
-  // grid: [model 11rem] [home score flex-1] [away score 1.3fr] [rate 1.5rem]
-  const grid = "grid grid-cols-[11rem_1fr_1.3fr_1.5rem] items-center";
+  // grid: [model 13rem] [home score flex-1] [away score 1.3fr] [rate 1rem]
+  const grid = "grid grid-cols-[13rem_1fr_1.3fr_1rem] items-center";
 
   return (
     <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden mb-4">
