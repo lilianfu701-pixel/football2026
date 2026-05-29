@@ -153,12 +153,14 @@ export default async function GlobalSidebar({ locale }: Props) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white font-black text-base truncate">@{sp.username}</p>
-                <p className="text-gray-500 text-xs truncate">{sp.countryName}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="text-gray-500 text-xs truncate">{sp.countryName}</p>
+                  <Link href={`/${locale}/profile`}
+                    className="text-[10px] text-gray-600 hover:text-[#FFD700] transition-colors shrink-0">
+                    {zh ? "编辑" : "Edit"} →
+                  </Link>
+                </div>
               </div>
-              <Link href={`/${locale}/profile`}
-                className="text-xs text-gray-500 hover:text-[#FFD700] transition-colors shrink-0">
-                {zh ? "编辑" : "Edit"} →
-              </Link>
             </div>
           </div>
           <div className="px-5 py-4 space-y-3">

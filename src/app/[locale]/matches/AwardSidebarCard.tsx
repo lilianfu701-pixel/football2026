@@ -1,7 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
-import { AWARD_META, PLAYERS, dbToAwardKey, type AwardKey } from "@/data/players";
-import { formatGc } from "@/lib/levels";
+import { AWARD_META, dbToAwardKey, type AwardKey } from "@/data/players";
 import type { AwardPhase } from "@/lib/awardPhase";
 
 interface AwardBetSummary {
@@ -49,54 +47,30 @@ export default function AwardSidebarCard({ locale, bets, phase }: Props) {
         </Link>
       </div>
 
-      <div className="px-5 py-3 space-y-2.5">
+      <div className="px-4 py-3 space-y-1">
         {awards.map((key) => {
-          const meta   = AWARD_META[key];
-          const myBets = bets.filter((b) => dbToAwardKey(b.award_type) === key);
-          // Show top pick (highest gc_amount)
-          const top    = myBets.sort((a, b) => b.gc_amount - a.gc_amount)[0];
-          const player = top ? PLAYERS.find((p) => p.id === top.player_id) : null;
+          const meta  = AWARD_META[key];
+          const count = bets.filter((b) => dbToAwardKey(b.award_type) === key).length;
 
           return (
-            <div key={key} className="flex items-center gap-2.5">
-              {/* Award icon */}
+            <Link
+              key={key}
+              href={`/${locale}/predict#awards`}
+              className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-[#1E3A5F]/60 transition-colors group"
+            >
               <span className="text-base w-5 text-center shrink-0">{meta.icon}</span>
-
-              {/* Award name */}
-              <span className="text-xs text-gray-500 w-16 shrink-0 truncate">
+              <span className="text-xs text-gray-400 flex-1 group-hover:text-white transition-colors">
                 {zh ? meta.nameZh : meta.name.split(" ")[1] ?? meta.name}
               </span>
-
-              {/* Pick or empty */}
-              {top && player ? (
-                <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                  <div className="w-4 h-3 relative overflow-hidden rounded-sm shrink-0">
-                    <Image
-                      src={`https://flagcdn.com/w40/${player.countryCode}.png`}
-                      alt={player.country} fill className="object-cover" unoptimized
-                    />
-                  </div>
-                  <span className="text-xs text-gray-200 font-semibold truncate flex-1">
-                    {zh ? top.player_name_zh : top.player_name}
-                  </span>
-                  <span className="text-[10px] text-[#FFD700] font-bold shrink-0">
-                    {formatGc(top.gc_amount)}
-                  </span>
-                  {myBets.length > 1 && (
-                    <span className="text-[9px] text-gray-600 shrink-0">+{myBets.length - 1}</span>
-                  )}
-                </div>
+              {count > 0 ? (
+                <span className="text-sm font-black text-[#FFD700]">{count}</span>
               ) : (
-                <Link
-                  href={`/${locale}/awards`}
-                  className="flex-1 text-xs text-gray-600 hover:text-[#7C6FE0] transition-colors italic"
-                >
-                  {phase === "closed"
-                    ? (zh ? "已截止" : "Closed")
-                    : (zh ? "未竞猜" : "No pick yet")}
-                </Link>
+                <span className="text-xs text-gray-600">—</span>
               )}
-            </div>
+              <svg className="w-3 h-3 text-gray-600 group-hover:text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
           );
         })}
       </div>
