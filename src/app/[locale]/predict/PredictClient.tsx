@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { getFlagCode } from "@/lib/flags";
+import QuickBetDrawer from "./QuickBetDrawer";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -107,6 +108,28 @@ export default function PredictClient({
 }: Props) {
   const zh = locale === "zh";
 
+  // ── Quick-bet drawer state ─────────────────────────────────────────────────
+  const [drawerMatch, setDrawerMatch] = useState<QuickMatch | null>(null);
+  const [preselected, setPreselected] = useState<"home" | "draw" | "away" | undefined>();
+  // track placed bets locally so UI updates immediately without full reload
+  const [localBets, setLocalBets] = useState<Record<string, {
+    prediction: string; gc_amount: number; odds: number;
+    potential_payout: number; status: string;
+  }>>({});
+
+  function openDrawer(m: QuickMatch, pick?: "home" | "draw" | "away") {
+    setDrawerMatch(m);
+    setPreselected(pick);
+  }
+
+  function handleBetSuccess(matchId: string, prediction: string, gcAmount: number, odds: number) {
+    setLocalBets((prev) => ({
+      ...prev,
+      [matchId]: { prediction, gc_amount: gcAmount, odds, potential_payout: Math.round(gcAmount * odds), status: "pending" },
+    }));
+    setDrawerMatch(null);
+  }
+
   // History tab
   const [historyTab, setHistoryTab] = useState<"all" | "pending" | "won" | "lost">("all");
 
@@ -147,7 +170,133 @@ export default function PredictClient({
         </div>
       )}
 
-      {/* ② History */}
+      {/* ② Quick-bet match cards */}
+      {quickMatches.length > 0 && (
+        <div>
+          <h2 className="text-base font-black text-white mb-3">
+            ⚽ {zh ? "即将开赛 · 快速押注" : "Upcoming Matches"}
+          </h2>
+          <div className="space-y-3">
+            {quickMatches.map((m) => {
+              const activeBet = localBets[m.id] ?? m.existingBet;
+              const hc = getFlagCode(m.homeTeam);
+              const ac = getFlagCode(m.awayTeam);
+              const kickoff = new Date(m.kickoffTime);
+              const timeStr = kickoff.toLocaleString(zh ? "zh-CN" : "en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+              const isLive = m.status === "live";
+              const isFinished = m.status === "finished";
+
+              return (
+                <div key={m.id} className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
+                  {/* Match header */}
+                  <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">{m.stageLabel}</span>
+                      {m.groupName && <span className="text-[10px] text-gray-600">· {m.groupName}</span>}
+                    </div>
+                    {isLive ? (
+                      <span className="text-[10px] font-black text-red-400 animate-pulse">🔴 LIVE</span>
+                    ) : isFinished ? (
+                      <span className="text-[10px] text-gray-500">{zh ? "已结束" : "Final"}</span>
+                    ) : (
+                      <span className="text-[10px] text-gray-500">{timeStr}</span>
+                    )}
+                  </div>
+
+                  {/* Teams row */}
+                  <div className="px-4 pb-3 flex items-center gap-3">
+                    {/* Home */}
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                      {hc ? <Image src={`https://flagcdn.com/w40/${hc}.png`} alt="" width={20} height={14} className="rounded-sm shrink-0" unoptimized /> : <span className="text-base shrink-0">🏳️</span>}
+                      <span className="text-sm font-black text-white truncate">{m.homeTeam}</span>
+                    </div>
+
+                    {/* Score or vs */}
+                    <div className="shrink-0 text-center px-2">
+                      {(isLive || isFinished) && m.homeScore !== null ? (
+                        <span className="text-lg font-black text-white">{m.homeScore} – {m.awayScore}</span>
+                      ) : (
+                        <span className="text-sm text-gray-600 font-bold">VS</span>
+                      )}
+                    </div>
+
+                    {/* Away */}
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
+                      <span className="text-sm font-black text-white truncate text-right">{m.awayTeam}</span>
+                      {ac ? <Image src={`https://flagcdn.com/w40/${ac}.png`} alt="" width={20} height={14} className="rounded-sm shrink-0" unoptimized /> : <span className="text-base shrink-0">🏳️</span>}
+                    </div>
+                  </div>
+
+                  {/* Bet buttons or existing bet */}
+                  {activeBet ? (
+                    <div className="mx-4 mb-3 bg-[#FFD700]/8 border border-[#FFD700]/20 rounded-xl px-3 py-2.5 flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] text-[#FFD700]/70 font-semibold uppercase tracking-wide">{zh ? "已押注" : "Your Bet"}</span>
+                        <p className="text-sm font-black text-white">
+                          {activeBet.prediction === "home" ? `${m.homeTeam} ${zh ? "胜" : "Win"}` :
+                           activeBet.prediction === "away" ? `${m.awayTeam} ${zh ? "胜" : "Win"}` :
+                           (zh ? "平局" : "Draw")}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] text-gray-500">{fmt(activeBet.gc_amount)} GC · ×{activeBet.odds.toFixed(2)}</p>
+                        <p className="text-xs text-[#FFD700] font-black">→ {fmt(activeBet.potential_payout)}</p>
+                      </div>
+                    </div>
+                  ) : !user ? (
+                    <div className="mx-4 mb-3">
+                      <Link href={`/${locale}/auth/login`}
+                        className="block w-full text-center bg-[#FFD700]/10 border border-[#FFD700]/20 text-[#FFD700] text-xs font-bold py-2.5 rounded-xl hover:bg-[#FFD700]/20 transition-colors">
+                        {zh ? "登录后押注 →" : "Login to bet →"}
+                      </Link>
+                    </div>
+                  ) : isFinished ? null : (
+                    <div className="px-4 pb-3 grid grid-cols-3 gap-2">
+                      {(["home", "draw", "away"] as const).map((pick) => {
+                        const label = pick === "home" ? m.homeTeam : pick === "away" ? m.awayTeam : (zh ? "平局" : "Draw");
+                        const odds  = pick === "home" ? m.refOddsHome : pick === "draw" ? m.refOddsDraw : m.refOddsAway;
+                        return (
+                          <button key={pick} onClick={() => openDrawer(m, pick)}
+                            className="flex flex-col items-center gap-0.5 py-2.5 rounded-xl bg-[#0A1628] border border-[#1E3A5F] hover:border-[#FFD700]/40 hover:bg-[#FFD700]/5 transition-all group">
+                            <span className="text-[10px] text-gray-400 group-hover:text-white font-semibold truncate max-w-full px-1 text-center leading-tight">{label}</span>
+                            <span className="text-sm font-black text-[#FFD700]">×{odds.toFixed(2)}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Quick-bet drawer */}
+      {drawerMatch && (
+        <QuickBetDrawer
+          locale={locale}
+          matchId={drawerMatch.id}
+          homeTeam={drawerMatch.homeTeam}
+          awayTeam={drawerMatch.awayTeam}
+          stageLabel={drawerMatch.stageLabel}
+          kickoffTime={drawerMatch.kickoffTime}
+          poolHome={drawerMatch.poolHome}
+          poolDraw={drawerMatch.poolDraw}
+          poolAway={drawerMatch.poolAway}
+          refOddsHome={drawerMatch.refOddsHome}
+          refOddsDraw={drawerMatch.refOddsDraw}
+          refOddsAway={drawerMatch.refOddsAway}
+          gcBalance={gcBalance}
+          homeColors={drawerMatch.homeColors}
+          awayColors={drawerMatch.awayColors}
+          preselected={preselected}
+          onClose={() => setDrawerMatch(null)}
+          onSuccess={handleBetSuccess}
+        />
+      )}
+
+      {/* ③ History */}
       {user && (
         <div>
           <h2 className="text-base font-black text-white mb-3">
@@ -264,7 +413,7 @@ export default function PredictClient({
         </div>
       )}
 
-      {/* ③ Score Bet History */}
+      {/* ④ Score Bet History */}
       {user && scoreBetHistory.length > 0 && (
         <div>
           <h2 className="text-base font-black text-white mb-3">
