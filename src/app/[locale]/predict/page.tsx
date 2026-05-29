@@ -82,18 +82,32 @@ export default async function PredictPage({ params }: PageProps) {
     existingBetsMap[b.match_id] = b;
   });
 
-  // ── Full bet history ──────────────────────────────────────────────────────
-  const { data: betHistory } = user
+  // ── Full bet history (two-step to avoid silent JOIN failures) ───────────────
+  const { data: betsRaw } = user
     ? await supabase
         .from("bets")
-        .select(`
-          id, prediction, gc_amount, odds, potential_payout, status, created_at,
-          matches (id, home_team, away_team, kickoff_time, stage, group_name, status, home_score, away_score)
-        `)
+        .select("id, match_id, prediction, gc_amount, odds, potential_payout, status, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(50)
     : { data: [] };
+
+  // Fetch match details for those bets
+  const betMatchIds = [...new Set((betsRaw ?? []).map((b) => b.match_id).filter(Boolean))];
+  const { data: betMatchesRaw } = betMatchIds.length
+    ? await supabase
+        .from("matches")
+        .select("id, home_team, away_team, kickoff_time, stage, group_name, status, home_score, away_score")
+        .in("id", betMatchIds)
+    : { data: [] };
+
+  const betMatchesMap: Record<string, typeof betMatchesRaw extends (infer T)[] | null ? T : never> = {};
+  (betMatchesRaw ?? []).forEach((m) => { betMatchesMap[m.id] = m; });
+
+  const betHistory = (betsRaw ?? []).map((b) => ({
+    ...b,
+    matches: betMatchesMap[b.match_id] ?? null,
+  }));
 
   // ── Stats ─────────────────────────────────────────────────────────────────
   const totalBets    = betHistory?.length ?? 0;
@@ -182,7 +196,7 @@ export default async function PredictPage({ params }: PageProps) {
             existingBet: existingBetsMap[m.id] ?? null,
           }))}
           betHistory={(betHistory ?? []).map((b) => {
-            const match = Array.isArray(b.matches) ? b.matches[0] : b.matches;
+            const match = b.matches;
             return {
               id:             b.id,
               prediction:     b.prediction,
