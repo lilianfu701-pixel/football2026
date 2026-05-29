@@ -5,9 +5,15 @@ on:
     branches:
       - main
 
+# Cancel any in-progress deployment when a new push arrives
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -15,6 +21,7 @@ jobs:
         run: npm install -g vercel@latest
 
       - name: Deploy to Vercel Production
+        timeout-minutes: 8
         run: vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }} --scope=lilianfu701-pixels-projects
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
