@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getFlagCode } from "@/lib/flags";
 import QuickBetDrawer from "./QuickBetDrawer";
+import ScoreBetDrawer from "./ScoreBetDrawer";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -117,6 +118,12 @@ export default function PredictClient({
     potential_payout: number; status: string;
   }>>({});
 
+  // ── Score-bet drawer state ─────────────────────────────────────────────────
+  const [scoreBetMatch, setScoreBetMatch] = useState<QuickMatch | null>(null);
+  const [localScoreBets, setLocalScoreBets] = useState<Record<string, {
+    scoreHome: number; scoreAway: number; gcAmount: number; odds: number;
+  }>>({});
+
   function openDrawer(m: QuickMatch, pick?: "home" | "draw" | "away") {
     setDrawerMatch(m);
     setPreselected(pick);
@@ -128,6 +135,11 @@ export default function PredictClient({
       [matchId]: { prediction, gc_amount: gcAmount, odds, potential_payout: Math.round(gcAmount * odds), status: "pending" },
     }));
     setDrawerMatch(null);
+  }
+
+  function handleScoreBetSuccess(matchId: string, scoreHome: number, scoreAway: number, odds: number, gcAmount: number) {
+    setLocalScoreBets((prev) => ({ ...prev, [matchId]: { scoreHome, scoreAway, gcAmount, odds } }));
+    setScoreBetMatch(null);
   }
 
   // History tab
@@ -251,18 +263,33 @@ export default function PredictClient({
                       </Link>
                     </div>
                   ) : isFinished ? null : (
-                    <div className="px-4 pb-3 grid grid-cols-3 gap-2">
-                      {(["home", "draw", "away"] as const).map((pick) => {
-                        const label = pick === "home" ? m.homeTeam : pick === "away" ? m.awayTeam : (zh ? "平局" : "Draw");
-                        const odds  = pick === "home" ? m.refOddsHome : pick === "draw" ? m.refOddsDraw : m.refOddsAway;
-                        return (
-                          <button key={pick} onClick={() => openDrawer(m, pick)}
-                            className="flex flex-col items-center gap-0.5 py-2.5 rounded-xl bg-[#0A1628] border border-[#1E3A5F] hover:border-[#FFD700]/40 hover:bg-[#FFD700]/5 transition-all group">
-                            <span className="text-[10px] text-gray-400 group-hover:text-white font-semibold truncate max-w-full px-1 text-center leading-tight">{label}</span>
-                            <span className="text-sm font-black text-[#FFD700]">×{odds.toFixed(2)}</span>
-                          </button>
-                        );
-                      })}
+                    <div className="px-4 pb-3 space-y-2">
+                      {/* Win/Draw/Loss buttons */}
+                      <div className="grid grid-cols-3 gap-2">
+                        {(["home", "draw", "away"] as const).map((pick) => {
+                          const label = pick === "home" ? m.homeTeam : pick === "away" ? m.awayTeam : (zh ? "平局" : "Draw");
+                          const oddsVal = pick === "home" ? m.refOddsHome : pick === "draw" ? m.refOddsDraw : m.refOddsAway;
+                          return (
+                            <button key={pick} onClick={() => openDrawer(m, pick)}
+                              className="flex flex-col items-center gap-0.5 py-2.5 rounded-xl bg-[#0A1628] border border-[#1E3A5F] hover:border-[#FFD700]/40 hover:bg-[#FFD700]/5 transition-all group">
+                              <span className="text-[10px] text-gray-400 group-hover:text-white font-semibold truncate max-w-full px-1 text-center leading-tight">{label}</span>
+                              <span className="text-sm font-black text-[#FFD700]">×{oddsVal.toFixed(2)}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {/* Score bet button — show existing local score bet or button */}
+                      {localScoreBets[m.id] ? (
+                        <div className="bg-[#7C6FE0]/10 border border-[#7C6FE0]/20 rounded-xl px-3 py-2 flex items-center justify-between">
+                          <span className="text-xs text-[#7C6FE0] font-bold">🎯 {zh ? "比分" : "Score"} {localScoreBets[m.id].scoreHome}:{localScoreBets[m.id].scoreAway}</span>
+                          <span className="text-[10px] text-gray-500">{fmt(localScoreBets[m.id].gcAmount)} GC · ×{localScoreBets[m.id].odds.toFixed(1)}</span>
+                        </div>
+                      ) : (
+                        <button onClick={() => setScoreBetMatch(m)}
+                          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#0A1628] border border-[#7C6FE0]/30 text-[#7C6FE0] hover:bg-[#7C6FE0]/10 hover:border-[#7C6FE0]/60 transition-all text-xs font-bold">
+                          🎯 {zh ? "比分竞猜" : "Score Prediction"}
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -270,6 +297,22 @@ export default function PredictClient({
             })}
           </div>
         </div>
+      )}
+
+      {/* Score-bet drawer */}
+      {scoreBetMatch && (
+        <ScoreBetDrawer
+          locale={locale}
+          matchId={scoreBetMatch.id}
+          homeTeam={scoreBetMatch.homeTeam}
+          awayTeam={scoreBetMatch.awayTeam}
+          stageLabel={scoreBetMatch.stageLabel}
+          gcBalance={gcBalance}
+          homeColors={scoreBetMatch.homeColors}
+          awayColors={scoreBetMatch.awayColors}
+          onClose={() => setScoreBetMatch(null)}
+          onSuccess={handleScoreBetSuccess}
+        />
       )}
 
       {/* Quick-bet drawer */}
@@ -414,11 +457,18 @@ export default function PredictClient({
       )}
 
       {/* ④ Score Bet History */}
-      {user && scoreBetHistory.length > 0 && (
+      {user && (
         <div>
           <h2 className="text-base font-black text-white mb-3">
             🎯 {zh ? "比分竞猜记录" : "Score Bet History"}
           </h2>
+          {scoreBetHistory.length === 0 ? (
+            <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-6 text-center">
+              <p className="text-gray-500 text-sm">
+                {zh ? "还没有比分竞猜记录，从上方比赛卡片押注比分吧！" : "No score bets yet — click 🎯 Score Prediction on any match above!"}
+              </p>
+            </div>
+          ) : (
           <div className="space-y-2">
             {scoreBetHistory.map((bet) => {
               const match  = bet.match;
@@ -474,6 +524,7 @@ export default function PredictClient({
               );
             })}
           </div>
+          )}
         </div>
       )}
 

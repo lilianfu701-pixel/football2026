@@ -45,7 +45,7 @@ export default async function PredictPage({ params }: PageProps) {
   const { data: upcomingRaw } = await supabase
     .from("matches")
     .select("id, home_team, away_team, kickoff_time, stage, group_name, match_number, pool_home, pool_draw, pool_away, odds_home, odds_draw, odds_away, status, home_score, away_score")
-    .in("status", ["upcoming", "live"])
+    .in("status", ["upcoming", "scheduled", "live"])
     .lte("kickoff_time", now72h)
     .order("kickoff_time", { ascending: true })
     .limit(6);
@@ -55,7 +55,7 @@ export default async function PredictPage({ params }: PageProps) {
     ? await supabase
         .from("matches")
         .select("id, home_team, away_team, kickoff_time, stage, group_name, match_number, pool_home, pool_draw, pool_away, odds_home, odds_draw, odds_away, status, home_score, away_score")
-        .eq("status", "upcoming")
+        .in("status", ["upcoming", "scheduled", "live"])
         .order("kickoff_time", { ascending: true })
         .limit(4)
     : { data: [] };
