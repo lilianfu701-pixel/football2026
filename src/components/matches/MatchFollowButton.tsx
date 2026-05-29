@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Props {
   matchId: number;
@@ -41,6 +41,20 @@ export default function MatchFollowButton({
   const [showModal, setShowModal] = useState(false);
   const [permDenied, setPermDenied] = useState(false);
 
+  // On mount: sync localStorage with DB state
+  useEffect(() => {
+    const key = `follow_${matchId}`;
+    if (initialFollowing) {
+      localStorage.setItem(key, "1");
+    }
+    // If localStorage says followed but DB doesn't, trust DB
+    if (!initialFollowing) {
+      localStorage.removeItem(key);
+    }
+  }, [matchId, initialFollowing]);
+
+  const storageKey = `follow_${matchId}`;
+
   async function apiToggle(nextFollowing: boolean) {
     setLoading(true);
     try {
@@ -49,6 +63,12 @@ export default function MatchFollowButton({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ match_id: matchId, following: nextFollowing }),
       });
+      // Sync localStorage so FavoritesCard can read it
+      if (nextFollowing) {
+        localStorage.setItem(storageKey, "1");
+      } else {
+        localStorage.removeItem(storageKey);
+      }
       setFollowing(nextFollowing);
     } finally {
       setLoading(false);
@@ -56,23 +76,24 @@ export default function MatchFollowButton({
   }
 
   async function handleConfirm() {
-    if (!("Notification" in window)) {
-      alert(zh ? "您的浏览器不支持通知功能" : "Your browser doesn't support notifications");
-      return;
-    }
-    const perm = await Notification.requestPermission();
-    if (perm === "granted") {
-      await apiToggle(true);
-      setShowModal(false);
-      setPermDenied(false);
-      new Notification(zh ? "⚽ 关注成功！" : "⚽ Following match!", {
-        body: zh
-          ? `${homeTeam} vs ${awayTeam} 开赛时将第一时间通知您`
-          : `You'll be notified when ${homeTeam} vs ${awayTeam} starts`,
-        icon: "/favicon.ico",
-      });
-    } else {
-      setPermDenied(true);
+    // First save the follow (no notification required)
+    await apiToggle(true);
+    setShowModal(false);
+    setPermDenied(false);
+
+    // Then optionally request notification permission
+    if ("Notification" in window && Notification.permission === "default") {
+      const perm = await Notification.requestPermission();
+      if (perm === "granted") {
+        new Notification(zh ? "⚽ 关注成功！" : "⚽ Following match!", {
+          body: zh
+            ? `${homeTeam} vs ${awayTeam} 开赛时将第一时间通知您`
+            : `You'll be notified when ${homeTeam} vs ${awayTeam} starts`,
+          icon: "/favicon.ico",
+        });
+      } else {
+        setPermDenied(true);
+      }
     }
   }
 
