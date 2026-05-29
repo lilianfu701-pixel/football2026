@@ -586,7 +586,7 @@ export default async function HomePage({ params }: HomePageProps) {
               : "GoalCoin (GC) is a virtual entertainment currency on Football2026. It cannot be withdrawn or exchanged for real money. Entertainment only. 18+."}
           </p>
           <p className="text-xs text-gray-700 mt-3">
-            © 2026 Football2026. All rights reserved. · FIFA World Cup 2026™ is a trademark of FIFA.
+            © 2026 Football2026. All rights reserved. · FIFA World Cup 2026™ is a trademark of FIFA. · v2
           </p>
           <div className="flex justify-center gap-6 mt-5 text-xs text-gray-600">
             <Link href={`/${locale}/matches`} className="hover:text-gray-400 transition-colors">
