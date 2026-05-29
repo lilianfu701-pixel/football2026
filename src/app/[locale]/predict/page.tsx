@@ -119,6 +119,32 @@ export default async function PredictPage({ params }: PageProps) {
     .reduce((s, b) => s + (b.potential_payout ?? 0), 0) ?? 0;
   const totalStaked  = betHistory?.reduce((s, b) => s + b.gc_amount, 0) ?? 0;
 
+  // ── Score bet history ─────────────────────────────────────────────────────
+  const { data: scoreBetsRaw } = user
+    ? await supabase
+        .from("score_bets")
+        .select("id, match_id, score_home, score_away, gc_amount, odds_multiplier, status, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(50)
+    : { data: [] };
+
+  const scoreMatchIds = [...new Set((scoreBetsRaw ?? []).map((b) => b.match_id).filter(Boolean))];
+  const { data: scoreMatchesRaw } = scoreMatchIds.length
+    ? await supabase
+        .from("matches")
+        .select("id, home_team, away_team, kickoff_time, stage, status, home_score, away_score")
+        .in("id", scoreMatchIds)
+    : { data: [] };
+
+  const scoreMatchesMap: Record<string, typeof scoreMatchesRaw extends (infer T)[] | null ? T : never> = {};
+  (scoreMatchesRaw ?? []).forEach((m) => { scoreMatchesMap[m.id] = m; });
+
+  const scoreBetHistory = (scoreBetsRaw ?? []).map((b) => ({
+    ...b,
+    match: scoreMatchesMap[b.match_id] ?? null,
+  }));
+
   // ── Award bets (full fields for AwardBettingUI) ───────────────────────────
   const { data: awardBets } = user
     ? await supabase
@@ -215,6 +241,29 @@ export default async function PredictPage({ params }: PageProps) {
                 status:      match.status,
                 homeScore:   match.home_score ?? null,
                 awayScore:   match.away_score ?? null,
+              } : null,
+            };
+          })}
+          scoreBetHistory={scoreBetHistory.map((b) => {
+            const m = b.match;
+            return {
+              id:             b.id,
+              scoreHome:      b.score_home,
+              scoreAway:      b.score_away,
+              gcAmount:       Number(b.gc_amount),
+              oddsMultiplier: Number(b.odds_multiplier),
+              status:         b.status,
+              createdAt:      b.created_at,
+              match: m ? {
+                id:          m.id,
+                homeTeam:    m.home_team,
+                awayTeam:    m.away_team,
+                kickoffTime: m.kickoff_time,
+                stage:       m.stage,
+                stageLabel:  zh ? (STAGE_LABELS_ZH[m.stage] ?? m.stage) : (STAGE_LABELS[m.stage] ?? m.stage),
+                status:      m.status,
+                homeScore:   m.home_score ?? null,
+                awayScore:   m.away_score ?? null,
               } : null,
             };
           })}

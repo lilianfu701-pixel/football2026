@@ -55,6 +55,21 @@ interface Stats {
   pendingBets: number; winRate: number; totalWon: number; totalStaked: number;
 }
 
+interface ScoreBetRecord {
+  id: string;
+  scoreHome: number;
+  scoreAway: number;
+  gcAmount: number;
+  oddsMultiplier: number;
+  status: string;
+  createdAt: string;
+  match: {
+    id: string; homeTeam: string; awayTeam: string; kickoffTime: string;
+    stage: string; stageLabel: string; status: string;
+    homeScore: number | null; awayScore: number | null;
+  } | null;
+}
+
 interface Props {
   locale: string;
   user: { id: string } | null;
@@ -63,6 +78,7 @@ interface Props {
   stats: Stats;
   quickMatches: QuickMatch[];
   betHistory: BetRecord[];
+  scoreBetHistory: ScoreBetRecord[];
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -87,7 +103,7 @@ function StatusBadge({ status, locale }: { status: string; locale: string }) {
 
 export default function PredictClient({
   locale, user, gcBalance, username, stats,
-  quickMatches, betHistory,
+  quickMatches, betHistory, scoreBetHistory,
 }: Props) {
   const zh = locale === "zh";
 
@@ -245,6 +261,70 @@ export default function PredictClient({
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ③ Score Bet History */}
+      {user && scoreBetHistory.length > 0 && (
+        <div>
+          <h2 className="text-base font-black text-white mb-3">
+            🎯 {zh ? "比分竞猜记录" : "Score Bet History"}
+          </h2>
+          <div className="space-y-2">
+            {scoreBetHistory.map((bet) => {
+              const match  = bet.match;
+              const isWon  = bet.status === "won";
+              const isLost = bet.status === "lost";
+              const potential = Math.round(bet.gcAmount * bet.oddsMultiplier);
+              const hc = match ? getFlagCode(match.homeTeam) : "";
+              const ac = match ? getFlagCode(match.awayTeam) : "";
+              return (
+                <div key={bet.id} className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    {/* Flags */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {hc && <Image src={`https://flagcdn.com/w40/${hc}.png`} alt="" width={20} height={14} className="rounded-sm object-cover" unoptimized />}
+                      {ac && <Image src={`https://flagcdn.com/w40/${ac}.png`} alt="" width={20} height={14} className="rounded-sm object-cover" unoptimized />}
+                    </div>
+
+                    {/* Main info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-bold text-white truncate">
+                          {match?.homeTeam} vs {match?.awayTeam}
+                        </span>
+                        {match && (match.status === "finished" || match.status === "live") && match.homeScore !== null && (
+                          <span className="text-[10px] text-gray-500 font-bold shrink-0">
+                            ({match.homeScore}–{match.awayScore})
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span className="text-xs font-bold text-[#FFD700]">
+                          {zh ? "比分：" : "Score: "}{bet.scoreHome} – {bet.scoreAway}
+                        </span>
+                        <span className="text-[10px] text-gray-500">
+                          {fmt(bet.gcAmount)} GC · ×{bet.oddsMultiplier}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Right: status + payout */}
+                    <div className="shrink-0 text-right flex flex-col items-end gap-1">
+                      <StatusBadge status={bet.status} locale={locale} />
+                      {isWon ? (
+                        <span className="text-xs font-black text-green-400">+{fmt(potential)}</span>
+                      ) : isLost ? (
+                        <span className="text-xs font-black text-red-400">–{fmt(bet.gcAmount)}</span>
+                      ) : (
+                        <span className="text-[10px] text-gray-500">→ {fmt(potential)}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
