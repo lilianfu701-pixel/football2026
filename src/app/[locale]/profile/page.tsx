@@ -12,18 +12,19 @@ import { getCountryByCode } from "@/lib/countries";
 import DailyCheckin from "@/components/DailyCheckin";
 import ProfileCompletion from "@/components/ProfileCompletion";
 import { PROFILE_REWARDS } from "@/lib/profileRewards";
+import { AWARD_META, dbToAwardKey } from "@/data/players";
 import Link from "next/link";
 
 interface ProfilePageProps {
   params:       Promise<{ locale: string }>;
-  searchParams: Promise<{ tab?: string; page?: string }>;
+  searchParams: Promise<{ tab?: string; page?: string; betsTab?: string }>;
 }
 
 const ITEMS_PER_PAGE = 10;
 
 export default async function ProfilePage({ params, searchParams }: ProfilePageProps) {
   const { locale } = await params;
-  const { tab = "overview", page: pageStr = "1" } = await searchParams;
+  const { tab = "overview", page: pageStr = "1", betsTab = "match" } = await searchParams;
   const itemPage = Math.max(1, parseInt(pageStr, 10));
   const itemFrom = (itemPage - 1) * ITEMS_PER_PAGE;
   const supabase = await createClient();
@@ -107,6 +108,68 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
   const wonBets = betStats?.filter((b) => b.status === "won").length ?? 0;
   const winRate = totalBets > 0 ? Math.round((wonBets / totalBets) * 100) : 0;
   const totalWagered = betStats?.reduce((sum, b) => sum + (b.gc_amount ?? 0), 0) ?? 0;
+
+  // ── Score Bets (two-step) ─────────────────────────────────────────────────
+  type MatchStub = { id: string; home_team: string; away_team: string; kickoff_time: string; stage: string; status: string; home_score: number | null; away_score: number | null };
+
+  const { data: scoreBetsRaw } = await supabase
+    .from("score_bets")
+    .select("id, match_id, score_home, score_away, gc_amount, odds_multiplier, status, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  const scoreMatchIds = [...new Set((scoreBetsRaw ?? []).map((b) => b.match_id).filter(Boolean))];
+  const { data: scoreMatchesRaw } = scoreMatchIds.length
+    ? await supabase.from("matches")
+        .select("id, home_team, away_team, kickoff_time, stage, status, home_score, away_score")
+        .in("id", scoreMatchIds)
+    : { data: [] as MatchStub[] };
+  const scoreMatchMap: Record<string, MatchStub> = {};
+  (scoreMatchesRaw ?? []).forEach((m) => { scoreMatchMap[m.id] = m as MatchStub; });
+  const scoreBets = (scoreBetsRaw ?? []).map((b) => ({
+    ...b,
+    match: (scoreMatchMap[b.match_id] ?? null) as MatchStub | null,
+  }));
+
+  // ── Award Bets ────────────────────────────────────────────────────────────
+  const { data: awardBets } = await supabase
+    .from("award_bets")
+    .select("id, award_type, player_id, player_name, player_name_zh, gc_amount, odds_multiplier, bet_phase, result, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  // ── Full Match Bets (two-step) ─────────────────────────────────────────────
+  const { data: allBetsRaw } = await supabase
+    .from("bets")
+    .select("id, match_id, prediction, gc_amount, odds, potential_payout, status, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  const allBetMatchIds = [...new Set((allBetsRaw ?? []).map((b) => b.match_id).filter(Boolean))];
+  const { data: allBetMatchesRaw } = allBetMatchIds.length
+    ? await supabase.from("matches")
+        .select("id, home_team, away_team, kickoff_time, stage, status, home_score, away_score")
+        .in("id", allBetMatchIds)
+    : { data: [] as MatchStub[] };
+  const allBetMatchMap: Record<string, MatchStub> = {};
+  (allBetMatchesRaw ?? []).forEach((m) => { allBetMatchMap[m.id] = m as MatchStub; });
+  const allBets = (allBetsRaw ?? []).map((b) => ({
+    ...b,
+    match: (allBetMatchMap[b.match_id] ?? null) as MatchStub | null,
+  }));
+
+  // ── Forum Counts ──────────────────────────────────────────────────────────
+  const [
+    { count: postCount },
+    { count: replyCount },
+    { count: bookmarkCount },
+  ] = await Promise.all([
+    supabase.from("forum_posts").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("is_deleted", false),
+    supabase.from("forum_replies").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("is_deleted", false),
+    supabase.from("forum_bookmarks").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+  ]);
 
   // ── My Posts / My Replies ─────────────────────────────────────────────────
   type MyPostRow = {
@@ -528,14 +591,41 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
           )}
         </div>
 
+        {/* ── Forum Summary (overview only) ── */}
+        {tab === "overview" && (
+          <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5 mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-bold">💬 {zh ? "论坛活动" : "Forum Activity"}</h3>
+              <Link href={`/${locale}/forum`} className="text-[#FFD700] text-xs hover:underline">
+                {zh ? "去论坛 →" : "Browse →"}
+              </Link>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: zh ? "发帖" : "Posts",    value: postCount ?? 0,    icon: "📝", tab: "my-posts" },
+                { label: zh ? "回复" : "Replies",   value: replyCount ?? 0,   icon: "💬", tab: "my-replies" },
+                { label: zh ? "收藏" : "Bookmarks", value: bookmarkCount ?? 0, icon: "🔖", tab: "bookmarks" },
+              ].map((s) => (
+                <Link key={s.tab} href={`/${locale}/profile?tab=${s.tab}`}
+                  className="bg-[#0A1628] rounded-xl p-3 hover:border-[#FFD700]/30 border border-transparent transition-all text-center">
+                  <p className="text-lg mb-0.5">{s.icon}</p>
+                  <p className="text-white font-bold text-lg">{s.value}</p>
+                  <p className="text-gray-500 text-xs">{s.label}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── My Posts / My Replies Tabs ── */}
         <div className="mt-6">
           <div className="flex gap-2 mb-4">
-            {(["overview", "my-posts", "my-replies", "bookmarks"] as const).map((t) => {
+            {(["overview", "bets", "my-posts", "my-replies", "bookmarks"] as const).map((t) => {
               const labels = {
                 "overview":   zh ? "📊 概览"    : "📊 Overview",
-                "my-posts":   zh ? "📝 我的主题" : "📝 My Posts",
-                "my-replies": zh ? "💬 我的回复" : "💬 My Replies",
+                "bets":       zh ? "🎯 竞猜"    : "🎯 Bets",
+                "my-posts":   zh ? "📝 主题"    : "📝 Posts",
+                "my-replies": zh ? "💬 回复"    : "💬 Replies",
                 "bookmarks":  zh ? "🔖 收藏"    : "🔖 Saved",
               };
               return (
@@ -553,6 +643,162 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
               );
             })}
           </div>
+
+          {/* ── Bets Tab ── */}
+          {tab === "bets" && (
+            <div className="space-y-4">
+              {/* Sub-tabs */}
+              <div className="flex gap-1 bg-[#0A1628] border border-[#1E3A5F] rounded-xl p-1">
+                {(["match", "score", "award"] as const).map((bt) => {
+                  const btLabels = {
+                    match: zh ? "比赛竞猜" : "Match Bets",
+                    score: zh ? "比分竞猜" : "Score Bets",
+                    award: zh ? "大奖竞猜" : "Award Bets",
+                  };
+                  const counts = { match: allBets.length, score: scoreBets.length, award: awardBets?.length ?? 0 };
+                  return (
+                    <Link key={bt} href={`/${locale}/profile?tab=bets&betsTab=${bt}`}
+                      className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        betsTab === bt ? "bg-[#FFD700] text-[#0A1628]" : "text-gray-500 hover:text-white"
+                      }`}>
+                      {btLabels[bt]}
+                      {counts[bt] > 0 && (
+                        <span className={`ml-1 text-[10px] px-1 rounded-full ${betsTab === bt ? "bg-[#0A1628]/20 text-[#0A1628]" : "bg-[#1E3A5F] text-gray-400"}`}>
+                          {counts[bt]}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* Match Bets */}
+              {betsTab === "match" && (
+                allBets.length === 0 ? (
+                  <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-12 text-center">
+                    <p className="text-gray-500 text-sm">{zh ? "还没有比赛竞猜记录" : "No match bets yet"}</p>
+                    <Link href={`/${locale}/predict`} className="inline-block mt-3 text-[#FFD700] text-xs hover:underline">{zh ? "去押注 →" : "Place a bet →"}</Link>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {allBets.map((bet) => {
+                      const m = bet.match;
+                      const isWon = bet.status === "won";
+                      const isLost = bet.status === "lost";
+                      const pickLbl = bet.prediction === "home"
+                        ? (zh ? `${m?.home_team ?? ""} 胜` : `${m?.home_team ?? ""} Win`)
+                        : bet.prediction === "away"
+                        ? (zh ? `${m?.away_team ?? ""} 胜` : `${m?.away_team ?? ""} Win`)
+                        : (zh ? "平局" : "Draw");
+                      return (
+                        <div key={bet.id} className={`bg-[#0F2040] border rounded-xl p-3.5 ${isWon ? "border-green-500/20" : isLost ? "border-red-500/20" : "border-[#1E3A5F]"}`}>
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-white truncate">{m ? `${m.home_team} vs ${m.away_team}` : "—"}</p>
+                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                <span className="text-xs text-gray-400">{pickLbl}</span>
+                                <span className="text-[10px] text-gray-600">{formatGc(bet.gc_amount)} GC · ×{bet.odds?.toFixed(2)}</span>
+                              </div>
+                            </div>
+                            <div className="shrink-0 text-right">
+                              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isWon ? "bg-green-500/15 text-green-400" : isLost ? "bg-red-500/15 text-red-400" : "bg-blue-500/15 text-blue-400"}`}>
+                                {isWon ? (zh ? "🎉 赢" : "🎉 Won") : isLost ? (zh ? "💔 输" : "💔 Lost") : (zh ? "⏳ 待结算" : "⏳ Pending")}
+                              </span>
+                              <p className={`text-xs font-black mt-1 ${isWon ? "text-green-400" : isLost ? "text-red-400" : "text-gray-500"}`}>
+                                {isWon ? `+${formatGc(bet.potential_payout ?? 0)}` : isLost ? `-${formatGc(bet.gc_amount)}` : `→ ${formatGc(bet.potential_payout ?? 0)}`}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
+              )}
+
+              {/* Score Bets */}
+              {betsTab === "score" && (
+                scoreBets.length === 0 ? (
+                  <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-12 text-center">
+                    <p className="text-gray-500 text-sm">{zh ? "还没有比分竞猜记录" : "No score bets yet"}</p>
+                    <Link href={`/${locale}/predict`} className="inline-block mt-3 text-[#FFD700] text-xs hover:underline">{zh ? "去押注 →" : "Place a bet →"}</Link>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {scoreBets.map((bet) => {
+                      const m = bet.match;
+                      const isWon = bet.status === "won";
+                      const isLost = bet.status === "lost";
+                      const potential = Math.round(Number(bet.gc_amount) * Number(bet.odds_multiplier));
+                      return (
+                        <div key={bet.id} className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-3.5">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-white truncate">{m ? `${m.home_team} vs ${m.away_team}` : "—"}</p>
+                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                <span className="text-xs font-bold text-[#FFD700]">{zh ? "比分：" : "Score: "}{bet.score_home} – {bet.score_away}</span>
+                                <span className="text-[10px] text-gray-600">{formatGc(Number(bet.gc_amount))} GC · ×{bet.odds_multiplier}</span>
+                              </div>
+                            </div>
+                            <div className="shrink-0 text-right">
+                              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isWon ? "bg-green-500/15 text-green-400" : isLost ? "bg-red-500/15 text-red-400" : "bg-blue-500/15 text-blue-400"}`}>
+                                {isWon ? (zh ? "🎉 赢" : "🎉 Won") : isLost ? (zh ? "💔 输" : "💔 Lost") : (zh ? "⏳ 待结算" : "⏳ Pending")}
+                              </span>
+                              <p className={`text-xs font-black mt-1 ${isWon ? "text-green-400" : isLost ? "text-red-400" : "text-gray-500"}`}>
+                                {isWon ? `+${formatGc(potential)}` : isLost ? `-${formatGc(Number(bet.gc_amount))}` : `→ ${formatGc(potential)}`}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
+              )}
+
+              {/* Award Bets */}
+              {betsTab === "award" && (
+                (awardBets?.length ?? 0) === 0 ? (
+                  <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-12 text-center">
+                    <p className="text-gray-500 text-sm">{zh ? "还没有大奖竞猜记录" : "No award bets yet"}</p>
+                    <Link href={`/${locale}/awards`} className="inline-block mt-3 text-[#FFD700] text-xs hover:underline">{zh ? "去押注 →" : "Place a bet →"}</Link>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {(awardBets ?? []).map((bet) => {
+                      const awardKey = dbToAwardKey(bet.award_type);
+                      const meta = awardKey ? AWARD_META[awardKey] : null;
+                      const isWon = bet.result === "won";
+                      const isLost = bet.result === "lost";
+                      const potential = Math.round(Number(bet.gc_amount) * Number(bet.odds_multiplier));
+                      return (
+                        <div key={bet.id} className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-3.5">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 mb-0.5">
+                                <span className="text-base">{meta?.icon ?? "🏅"}</span>
+                                <span className="text-xs text-gray-400 font-semibold">{zh ? (meta?.nameZh ?? bet.award_type) : (meta?.name ?? bet.award_type)}</span>
+                              </div>
+                              <p className="text-sm font-bold text-white truncate">{zh ? bet.player_name_zh : bet.player_name}</p>
+                              <span className="text-[10px] text-gray-600">{formatGc(Number(bet.gc_amount))} GC · ×{bet.odds_multiplier}</span>
+                            </div>
+                            <div className="shrink-0 text-right">
+                              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isWon ? "bg-green-500/15 text-green-400" : isLost ? "bg-red-500/15 text-red-400" : "bg-blue-500/15 text-blue-400"}`}>
+                                {isWon ? (zh ? "🎉 赢" : "🎉 Won") : isLost ? (zh ? "💔 输" : "💔 Lost") : (zh ? "⏳ 待结算" : "⏳ Pending")}
+                              </span>
+                              <p className={`text-xs font-black mt-1 ${isWon ? "text-green-400" : isLost ? "text-red-400" : "text-gray-500"}`}>
+                                {isWon ? `+${formatGc(potential)}` : isLost ? `-${formatGc(Number(bet.gc_amount))}` : `→ ${formatGc(potential)}`}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
+              )}
+            </div>
+          )}
 
           {/* My Posts list */}
           {tab === "my-posts" && (

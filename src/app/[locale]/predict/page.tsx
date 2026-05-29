@@ -93,16 +93,18 @@ export default async function PredictPage({ params }: PageProps) {
     : { data: [] };
 
   // Fetch match details for those bets
+  type PredictMatchStub = { id: string; home_team: string; away_team: string; kickoff_time: string; stage: string; group_name?: string | null; status: string; home_score: number | null; away_score: number | null };
+
   const betMatchIds = [...new Set((betsRaw ?? []).map((b) => b.match_id).filter(Boolean))];
   const { data: betMatchesRaw } = betMatchIds.length
     ? await supabase
         .from("matches")
         .select("id, home_team, away_team, kickoff_time, stage, group_name, status, home_score, away_score")
         .in("id", betMatchIds)
-    : { data: [] };
+    : { data: [] as PredictMatchStub[] };
 
-  const betMatchesMap: Record<string, typeof betMatchesRaw extends (infer T)[] | null ? T : never> = {};
-  (betMatchesRaw ?? []).forEach((m) => { betMatchesMap[m.id] = m; });
+  const betMatchesMap: Record<string, PredictMatchStub> = {};
+  (betMatchesRaw ?? []).forEach((m) => { betMatchesMap[m.id] = m as PredictMatchStub; });
 
   const betHistory = (betsRaw ?? []).map((b) => ({
     ...b,
@@ -129,16 +131,18 @@ export default async function PredictPage({ params }: PageProps) {
         .limit(50)
     : { data: [] };
 
+  type PredictScoreMatchStub = { id: string; home_team: string; away_team: string; kickoff_time: string; stage: string; status: string; home_score: number | null; away_score: number | null };
+
   const scoreMatchIds = [...new Set((scoreBetsRaw ?? []).map((b) => b.match_id).filter(Boolean))];
   const { data: scoreMatchesRaw } = scoreMatchIds.length
     ? await supabase
         .from("matches")
         .select("id, home_team, away_team, kickoff_time, stage, status, home_score, away_score")
         .in("id", scoreMatchIds)
-    : { data: [] };
+    : { data: [] as PredictScoreMatchStub[] };
 
-  const scoreMatchesMap: Record<string, typeof scoreMatchesRaw extends (infer T)[] | null ? T : never> = {};
-  (scoreMatchesRaw ?? []).forEach((m) => { scoreMatchesMap[m.id] = m; });
+  const scoreMatchesMap: Record<string, PredictScoreMatchStub> = {};
+  (scoreMatchesRaw ?? []).forEach((m) => { scoreMatchesMap[m.id] = m as PredictScoreMatchStub; });
 
   const scoreBetHistory = (scoreBetsRaw ?? []).map((b) => ({
     ...b,
