@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
-import { getFlagUrl } from "@/lib/flags";
+import { getFlagUrl, getTeamDisplayName } from "@/lib/flags";
 import { computeGroupStandings } from "@/lib/groupStandings";
 import CountdownHero from "@/components/home/CountdownHero";
 import MobileAppBanner from "@/components/home/MobileAppBanner";
@@ -22,6 +22,7 @@ function getPhase(): "pre" | "during" | "post" {
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 interface MatchRow {
   id: number;
+  match_code: string | null;
   home_team: string;
   away_team: string;
   home_score: number | null;
@@ -31,6 +32,7 @@ interface MatchRow {
   status: string;
   group_name: string | null;
   stage: string | null;
+  is_featured?: boolean;
 }
 
 interface Scorer {
@@ -84,7 +86,7 @@ function MatchCard({ match, locale }: { match: MatchRow; locale: string }) {
         <div className="flex flex-col items-center gap-1.5 flex-1">
           <img src={getFlagUrl(match.home_team)} alt={match.home_team}
             className="w-10 h-7 rounded object-cover" />
-          <span className="text-xs font-bold text-white text-center leading-tight">{match.home_team}</span>
+          <span className="text-xs font-bold text-white text-center leading-tight">{getTeamDisplayName(match.home_team, locale)}</span>
         </div>
         {/* Score / VS */}
         <div className="flex flex-col items-center gap-1">
@@ -109,7 +111,7 @@ function MatchCard({ match, locale }: { match: MatchRow; locale: string }) {
         <div className="flex flex-col items-center gap-1.5 flex-1">
           <img src={getFlagUrl(match.away_team)} alt={match.away_team}
             className="w-10 h-7 rounded object-cover" />
-          <span className="text-xs font-bold text-white text-center leading-tight">{match.away_team}</span>
+          <span className="text-xs font-bold text-white text-center leading-tight">{getTeamDisplayName(match.away_team, locale)}</span>
         </div>
       </div>
       {match.venue && (
@@ -227,19 +229,28 @@ export default async function HomePage({ params }: HomePageProps) {
   /* ── Parallel data fetches ── */
   const [
     allUpcomingResult,
+    featuredResult,
     scorersResult,
     groupMatchesResult,
     wealthResult,
   ] = await Promise.all([
-    // 1. Upcoming 8 matches — first 4 go to "Upcoming", next 4 go to "Featured"
+    // 1. Next 4 upcoming matches
     supabase
       .from("matches")
-      .select("id,home_team,away_team,home_score,away_score,kickoff_time,venue,status,group_name,stage")
+      .select("id,match_code,home_team,away_team,home_score,away_score,kickoff_time,venue,status,group_name,stage")
       .in("status", ["upcoming", "live"])
       .order("kickoff_time", { ascending: true })
-      .limit(8),
+      .limit(4),
 
-    // 4. Top scorers
+    // 2. Manually curated featured matches (is_featured=true)
+    supabase
+      .from("matches")
+      .select("id,match_code,home_team,away_team,home_score,away_score,kickoff_time,venue,status,group_name,stage")
+      .eq("is_featured", true)
+      .order("kickoff_time", { ascending: true })
+      .limit(4),
+
+    // 3. Top scorers
     supabase
       .from("top_scorers")
       .select("id,player_name,player_name_zh,team,photo_url,goals,assists,matches_played")
@@ -247,13 +258,13 @@ export default async function HomePage({ params }: HomePageProps) {
       .order("sort_order", { ascending: true })
       .limit(5),
 
-    // 5. All group-stage matches for standings
+    // 4. All group-stage matches for standings
     supabase
       .from("matches")
       .select("home_team,away_team,home_score,away_score,group_name,status")
       .not("group_name", "is", null),
 
-    // 5. Wealth leaderboard (during phase)
+    // 5. Wealth leaderboard
     supabase
       .from("users")
       .select("id,nickname,avatar_url,gc_balance")
@@ -262,8 +273,10 @@ export default async function HomePage({ params }: HomePageProps) {
   ]);
 
   const allUpcoming: MatchRow[] = (allUpcomingResult.data ?? []) as MatchRow[];
-  const upcomingMatches: MatchRow[] = allUpcoming.slice(0, 4);
-  const featuredMatches: MatchRow[] = allUpcoming.slice(4, 8);
+  const upcomingMatches: MatchRow[] = allUpcoming;
+  // Featured: use manually curated if available, else fallback to next 4 after upcoming
+  const featuredCurated: MatchRow[] = (featuredResult.data ?? []) as MatchRow[];
+  const featuredMatches: MatchRow[] = featuredCurated.length > 0 ? featuredCurated : [];
   const scorers: Scorer[] = (scorersResult.data ?? []) as Scorer[];
   const groupMatches = (groupMatchesResult.data ?? []) as any[];
   const groupStandings = computeGroupStandings(groupMatches, locale);

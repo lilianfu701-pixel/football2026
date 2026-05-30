@@ -17,6 +17,7 @@ const NAV = [
   { key: "finance",  icon: "💰", label: "Finance",      labelZh: "财务管理" },
   { key: "reports",  icon: "🚩", label: "Reports",      labelZh: "举报审核" },
   { key: "gc-tools", icon: "🪙", label: "GC Tools",     labelZh: "GC 工具" },
+  { key: "featured", icon: "🔥", label: "Featured",     labelZh: "焦点对决" },
 ];
 
 export default function AdminSidebar({ locale, admin }: Props) {
