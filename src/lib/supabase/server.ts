@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+// Build marker: env vars NEXT_PUBLIC_SUPABASE_* are now non-sensitive (build-time available).
+
 export async function createClient() {
   const cookieStore = await cookies();
 
