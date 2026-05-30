@@ -25,6 +25,27 @@ jobs:
           node-version: 20
           cache: pnpm
 
+      - name: Verify Vercel secrets are present
+        run: |
+          missing=0
+          if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then
+            echo "::error::VERCEL_TOKEN secret is empty or not set"
+            missing=1
+          fi
+          if [ -z "${{ secrets.VERCEL_ORG_ID }}" ]; then
+            echo "::error::VERCEL_ORG_ID secret is empty or not set"
+            missing=1
+          fi
+          if [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ]; then
+            echo "::error::VERCEL_PROJECT_ID secret is empty or not set"
+            missing=1
+          fi
+          if [ "$missing" -eq 1 ]; then
+            echo "::error::One or more required Vercel secrets are missing. Add them under repo Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          echo "All Vercel secrets are present."
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -32,19 +53,19 @@ jobs:
         run: npm install -g vercel@latest
 
       - name: Pull Vercel project settings
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        run: timeout 300 vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }} --debug
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Build project locally
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: timeout 900 vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Upload prebuilt output to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: timeout 600 vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
