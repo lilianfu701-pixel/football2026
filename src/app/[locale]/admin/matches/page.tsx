@@ -5,6 +5,7 @@ import MatchScoreForm from "./MatchScoreForm";
 import AiPredictForm  from "./AiPredictForm";
 import OddsForm       from "./OddsForm";
 import type { AiPredictions } from "@/lib/aiModels";
+import { getFlagUrl, getTeamDisplayName } from "@/lib/flags";
 
 interface PageProps {
   params:       Promise<{ locale: string }>;
@@ -62,8 +63,11 @@ export default async function AdminMatchesPage({ params, searchParams }: PagePro
               {/* Teams */}
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <span>{m.home_flag}</span>
-                  <span className="text-sm font-bold text-white">{m.home_team}</span>
+                  {getFlagUrl(m.home_team) && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={getFlagUrl(m.home_team)} alt={m.home_team} className="w-7 h-5 rounded object-cover" />
+                  )}
+                  <span className="text-sm font-bold text-white">{getTeamDisplayName(m.home_team, locale)}</span>
                 </div>
                 <div className="text-center px-3">
                   {m.home_score !== null && m.away_score !== null ? (
@@ -73,8 +77,11 @@ export default async function AdminMatchesPage({ params, searchParams }: PagePro
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-white">{m.away_team}</span>
-                  <span>{m.away_flag}</span>
+                  <span className="text-sm font-bold text-white">{getTeamDisplayName(m.away_team, locale)}</span>
+                  {getFlagUrl(m.away_team) && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={getFlagUrl(m.away_team)} alt={m.away_team} className="w-7 h-5 rounded object-cover" />
+                  )}
                 </div>
               </div>
               <p className="text-[10px] text-gray-600 mb-3">
