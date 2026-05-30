@@ -130,6 +130,11 @@ export async function generateMetadata({
       description: meta.description,
       images: ["https://football2026.net/og-image.png"],
     },
+    icons: {
+      icon: "/icons/levels/favicon.png",
+      shortcut: "/icons/levels/favicon.png",
+      apple: "/icons/levels/favicon.png",
+    },
     robots: {
       index: true,
       follow: true,
