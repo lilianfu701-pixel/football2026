@@ -61,7 +61,7 @@ export default function CountdownHero({ locale, zh, isLoggedIn, totalMatches }: 
         {/* Tournament badge */}
         <div className="inline-flex items-center gap-2 bg-[#FFD700]/10 border border-[#FFD700]/25 text-[#FFD700] text-xs sm:text-sm px-4 py-1.5 rounded-full mb-7 font-bold tracking-wide">
           <span>🏆</span>
-          <span>FIFA World Cup 2026™ · USA · Canada · Mexico</span>
+          <span>World Cup 2026™ · USA · Canada · Mexico</span>
         </div>
 
         {/* Main title */}

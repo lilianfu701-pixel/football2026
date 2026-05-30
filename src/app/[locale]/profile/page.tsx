@@ -17,14 +17,14 @@ import Link from "next/link";
 
 interface ProfilePageProps {
   params:       Promise<{ locale: string }>;
-  searchParams: Promise<{ tab?: string; page?: string; betsTab?: string }>;
+  searchParams: Promise<{ tab?: string; page?: string; betsTab?: string; ratingsDir?: string }>;
 }
 
 const ITEMS_PER_PAGE = 10;
 
 export default async function ProfilePage({ params, searchParams }: ProfilePageProps) {
   const { locale } = await params;
-  const { tab = "overview", page: pageStr = "1", betsTab = "match" } = await searchParams;
+  const { tab = "overview", page: pageStr = "1", betsTab = "match", ratingsDir = "given" } = await searchParams;
   const itemPage = Math.max(1, parseInt(pageStr, 10));
   const itemFrom = (itemPage - 1) * ITEMS_PER_PAGE;
   const supabase = await createClient();
@@ -165,10 +165,12 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
     { count: postCount },
     { count: replyCount },
     { count: bookmarkCount },
+    { count: ratingsGivenCount },
   ] = await Promise.all([
     supabase.from("forum_posts").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("is_deleted", false),
     supabase.from("forum_replies").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("is_deleted", false),
     supabase.from("forum_bookmarks").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    supabase.from("forum_ratings").select("id", { count: "exact", head: true }).eq("user_id", user.id),
   ]);
 
   // ── My Posts / My Replies ─────────────────────────────────────────────────
@@ -190,6 +192,14 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
     }[];
   };
 
+  type MyRatingRow = {
+    id: number; gc_amount: number; reason: string | null; created_at: string;
+    post_id: number; reply_id: number | null; recipient_id: string | null; user_id: string;
+    forum_posts: { id: number; title: string } | { id: number; title: string }[] | null;
+    recipient: { nickname: string | null; username: string | null } | null;
+    giver: { nickname: string | null; username: string | null } | null;
+  };
+
   type MyBookmarkRow = {
     id: number; created_at: string;
     post_id: number;
@@ -203,6 +213,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
   let myPosts: MyPostRow[] = [];
   let myReplies: MyReplyRow[] = [];
   let myBookmarks: MyBookmarkRow[] = [];
+  let myRatings: MyRatingRow[] = [];
   let itemTotalCount = 0;
 
   if (tab === "my-posts") {
@@ -224,6 +235,23 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
       .order("created_at", { ascending: false })
       .range(itemFrom, itemFrom + ITEMS_PER_PAGE - 1);
     myReplies = (data ?? []) as unknown as MyReplyRow[];
+    itemTotalCount = count ?? 0;
+  } else if (tab === "my-ratings") {
+    const isGiven = ratingsDir !== "received";
+    const field = isGiven ? "user_id" : "recipient_id";
+    const { data, count } = await supabase
+      .from("forum_ratings")
+      .select(
+        `id, gc_amount, reason, created_at, post_id, reply_id, recipient_id, user_id,
+         forum_posts(id, title),
+         recipient:users!forum_ratings_recipient_id_fkey(nickname, username),
+         giver:users!forum_ratings_user_id_fkey(nickname, username)`,
+        { count: "exact" }
+      )
+      .eq(field, user.id)
+      .order("created_at", { ascending: false })
+      .range(itemFrom, itemFrom + ITEMS_PER_PAGE - 1);
+    myRatings = (data ?? []) as unknown as MyRatingRow[];
     itemTotalCount = count ?? 0;
   } else if (tab === "bookmarks") {
     const { data, count } = await supabase
@@ -600,11 +628,12 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                 {zh ? "去论坛 →" : "Browse →"}
               </Link>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               {[
                 { label: zh ? "发帖" : "Posts",    value: postCount ?? 0,    icon: "📝", tab: "my-posts" },
                 { label: zh ? "回复" : "Replies",   value: replyCount ?? 0,   icon: "💬", tab: "my-replies" },
                 { label: zh ? "收藏" : "Bookmarks", value: bookmarkCount ?? 0, icon: "🔖", tab: "bookmarks" },
+                { label: zh ? "加减分" : "Ratings",  value: ratingsGivenCount ?? 0, icon: "⭐", tab: "my-ratings" },
               ].map((s) => (
                 <Link key={s.tab} href={`/${locale}/profile?tab=${s.tab}`}
                   className="bg-[#0A1628] rounded-xl p-3 hover:border-[#FFD700]/30 border border-transparent transition-all text-center">
@@ -620,13 +649,14 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
         {/* ── My Posts / My Replies Tabs ── */}
         <div className="mt-6">
           <div className="flex gap-2 mb-4">
-            {(["overview", "bets", "my-posts", "my-replies", "bookmarks"] as const).map((t) => {
+            {(["overview", "bets", "my-posts", "my-replies", "bookmarks", "my-ratings"] as const).map((t) => {
               const labels = {
                 "overview":   zh ? "📊 概览"    : "📊 Overview",
                 "bets":       zh ? "🎯 竞猜"    : "🎯 Bets",
                 "my-posts":   zh ? "📝 主题"    : "📝 Posts",
                 "my-replies": zh ? "💬 回复"    : "💬 Replies",
                 "bookmarks":  zh ? "🔖 收藏"    : "🔖 Saved",
+                "my-ratings": zh ? "⭐ 加减分"  : "⭐ Ratings",
               };
               return (
                 <Link
@@ -923,18 +953,84 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
             </>
           )}
 
+          {/* ── My Ratings ── */}
+          {tab === "my-ratings" && (
+            <>
+              {/* Direction sub-tabs */}
+              <div className="flex gap-1 bg-[#0A1628] border border-[#1E3A5F] rounded-xl p-1 mb-4">
+                {(["given", "received"] as const).map((dir) => (
+                  <Link key={dir} href={`/${locale}/profile?tab=my-ratings&ratingsDir=${dir}`}
+                    className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      ratingsDir === dir ? "bg-[#FFD700] text-[#0A1628]" : "text-gray-500 hover:text-white"
+                    }`}>
+                    {dir === "given" ? (zh ? "我给出的" : "Given") : (zh ? "我收到的" : "Received")}
+                  </Link>
+                ))}
+              </div>
+
+              {myRatings.length === 0 ? (
+                <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-16 text-center">
+                  <div className="text-4xl mb-3">⭐</div>
+                  <p className="text-gray-500 text-sm">
+                    {ratingsDir === "given"
+                      ? (zh ? "还没有给过加减分" : "No ratings given yet")
+                      : (zh ? "还没有收到加减分" : "No ratings received yet")}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {myRatings.map((r) => {
+                    const fp = Array.isArray(r.forum_posts) ? r.forum_posts[0] : r.forum_posts;
+                    const isPositive = r.gc_amount > 0;
+                    const isGiven = ratingsDir === "given";
+                    const otherUser = isGiven
+                      ? (Array.isArray(r.recipient) ? r.recipient[0] : r.recipient)
+                      : (Array.isArray(r.giver) ? r.giver[0] : r.giver);
+                    const otherName = otherUser?.nickname ?? otherUser?.username ?? "—";
+                    return (
+                      <div key={r.id} className={`bg-[#0F2040] border rounded-xl p-3.5 ${isPositive ? "border-green-500/20" : "border-red-500/20"}`}>
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className={`text-sm font-black ${isPositive ? "text-green-400" : "text-red-400"}`}>
+                                {isPositive ? "+" : ""}{r.gc_amount.toLocaleString()} GC
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {isGiven ? (zh ? "→ " : "→ ") : (zh ? "← " : "← ")}{otherName}
+                              </span>
+                            </div>
+                            {fp && (
+                              <Link href={`/${locale}/forum/thread/${fp.id}`}
+                                className="text-xs text-gray-400 hover:text-[#FFD700] transition-colors truncate block mt-0.5">
+                                📄 {fp.title}
+                              </Link>
+                            )}
+                            {r.reason && (
+                              <p className="text-xs text-gray-600 mt-0.5 italic truncate">&ldquo;{r.reason}&rdquo;</p>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-gray-600 shrink-0">{timeAgo(r.created_at)}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+
           {/* Pagination for my-posts / my-replies / bookmarks */}
-          {(tab === "my-posts" || tab === "my-replies" || tab === "bookmarks") && itemTotalPages > 1 && (
+          {(tab === "my-posts" || tab === "my-replies" || tab === "bookmarks" || tab === "my-ratings") && itemTotalPages > 1 && (
             <div className="flex items-center justify-center gap-2 mt-4">
               {itemPage > 1 && (
-                <Link href={`/${locale}/profile?tab=${tab}&page=${itemPage - 1}`}
+                <Link href={`/${locale}/profile?tab=${tab}&page=${itemPage - 1}${tab === "my-ratings" ? `&ratingsDir=${ratingsDir}` : ""}`}
                   className="px-3 py-1.5 bg-[#0F2040] border border-[#1E3A5F] rounded-lg text-xs text-gray-400 hover:text-white transition-colors">
                   {zh ? "上一页" : "Prev"}
                 </Link>
               )}
               <span className="text-xs text-gray-500">{itemPage} / {itemTotalPages}</span>
               {itemPage < itemTotalPages && (
-                <Link href={`/${locale}/profile?tab=${tab}&page=${itemPage + 1}`}
+                <Link href={`/${locale}/profile?tab=${tab}&page=${itemPage + 1}${tab === "my-ratings" ? `&ratingsDir=${ratingsDir}` : ""}`}
                   className="px-3 py-1.5 bg-[#0F2040] border border-[#1E3A5F] rounded-lg text-xs text-gray-400 hover:text-white transition-colors">
                   {zh ? "下一页" : "Next"}
                 </Link>
