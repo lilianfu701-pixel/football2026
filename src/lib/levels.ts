@@ -18,7 +18,7 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     name: "Beggar",
     nameZh: "乞丐",
     minGc: -Infinity,
-    maxGc: 0,
+    maxGc: -1,
     dailyFreeGc: 10_000,
     color: "#A16207",
     bgColor: "#292524",
@@ -29,7 +29,7 @@ export const WEALTH_LEVELS: LevelInfo[] = [
     rank: 1,
     name: "Common",
     nameZh: "平民",
-    minGc: 1,
+    minGc: 0,
     maxGc: 999_999,
     dailyFreeGc: 30_000,
     color: "#9CA3AF",
@@ -160,7 +160,7 @@ export const HONOR_LEVELS: HonorLevelInfo[] = [
 ];
 
 export function getWealthLevel(gcBalance: number): LevelInfo {
-  if (gcBalance <= 0) return WEALTH_LEVELS[0];
+  if (gcBalance < 0) return WEALTH_LEVELS[0]; // 乞丐：仅负GC
   for (let i = WEALTH_LEVELS.length - 1; i >= 1; i--) {
     if (gcBalance >= WEALTH_LEVELS[i].minGc) {
       return WEALTH_LEVELS[i];

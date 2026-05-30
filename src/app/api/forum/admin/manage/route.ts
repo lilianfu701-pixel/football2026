@@ -32,6 +32,7 @@ export async function POST(req: Request) {
     case "unlock":    updates.is_locked   = false; break;
     case "feature":   updates.is_featured = true;  break;
     case "unfeature": updates.is_featured = false; break;
+    case "restore":   updates.is_deleted  = false; break;
     default:
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   }

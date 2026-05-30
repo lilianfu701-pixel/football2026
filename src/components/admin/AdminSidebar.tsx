@@ -18,6 +18,7 @@ const NAV = [
   { key: "reports",  icon: "🚩", label: "Reports",      labelZh: "举报审核" },
   { key: "gc-tools", icon: "🪙", label: "GC Tools",     labelZh: "GC 工具" },
   { key: "featured", icon: "🔥", label: "Featured",     labelZh: "焦点对决" },
+  { key: "forum",    icon: "💬", label: "Forum",         labelZh: "论坛管理" },
 ];
 
 export default function AdminSidebar({ locale, admin }: Props) {
