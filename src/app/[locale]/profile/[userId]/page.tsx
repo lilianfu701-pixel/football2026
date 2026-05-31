@@ -12,6 +12,7 @@ import {
 } from "@/lib/levels";
 import { getCountryByCode } from "@/lib/countries";
 import ProfileTabs from "./ProfileTabs";
+import UserFollowButton from "@/components/UserFollowButton";
 
 interface PageProps {
   params:       Promise<{ locale: string; userId: string }>;
@@ -35,14 +36,22 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
     redirect(`/${locale}/profile`);
   }
 
-  // Fetch target user
-  const { data: profile } = await supabase
-    .from("users")
-    .select("id, nickname, avatar_url, gc_balance, honor_points, country_code, bio, favorite_team, slogan, social_x, social_telegram, created_at")
-    .eq("id", userId)
-    .single();
+  // Fetch target user + follow state in parallel
+  const [profileRes, followRes] = await Promise.all([
+    supabase
+      .from("users")
+      .select("id, nickname, avatar_url, gc_balance, honor_points, country_code, bio, favorite_team, slogan, social_x, social_telegram, created_at, follower_count, following_count")
+      .eq("id", userId)
+      .single(),
+    me
+      ? supabase.from("user_follows").select("id").eq("follower_id", me.id).eq("following_id", userId).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
 
+  const profile = profileRes.data;
   if (!profile) notFound();
+
+  const isFollowing = !!followRes.data;
 
   const wealthLevel  = getWealthLevel(profile.gc_balance ?? 0);
   const honorLevel   = getHonorLevel(profile.honor_points ?? 0);
@@ -183,17 +192,27 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
               </div>
             </div>
 
-            {/* Transfer GC button */}
-            {me && (
-              <ProfileTabs
-                mode="transfer-btn"
-                targetUserId={userId}
-                targetNickname={profile.nickname}
-                targetBalance={profile.gc_balance ?? 0}
+            {/* Follow + Transfer buttons */}
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <UserFollowButton
+                targetId={userId}
+                initialFollow={isFollowing}
+                initialCount={profile.follower_count ?? 0}
+                loggedIn={!!me}
                 locale={locale}
                 zh={zh}
               />
-            )}
+              {me && (
+                <ProfileTabs
+                  mode="transfer-btn"
+                  targetUserId={userId}
+                  targetNickname={profile.nickname}
+                  targetBalance={profile.gc_balance ?? 0}
+                  locale={locale}
+                  zh={zh}
+                />
+              )}
+            </div>
           </div>
 
           {/* Bio */}
@@ -202,6 +221,19 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
               <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">{profile.bio}</p>
             </div>
           )}
+
+          {/* Follower / Following counts */}
+          <div className="mt-3 flex items-center gap-4">
+            <Link href={`/${locale}/profile/${userId}?tab=followers`} className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+              <span className="text-white font-black text-sm">{(profile.follower_count ?? 0).toLocaleString()}</span>
+              <span className="text-gray-500 text-xs">{zh ? "粉丝" : "Followers"}</span>
+            </Link>
+            <div className="w-px h-3 bg-[#1E3A5F]" />
+            <Link href={`/${locale}/profile/${userId}?tab=following`} className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+              <span className="text-white font-black text-sm">{(profile.following_count ?? 0).toLocaleString()}</span>
+              <span className="text-gray-500 text-xs">{zh ? "关注" : "Following"}</span>
+            </Link>
+          </div>
 
           {/* Stats row */}
           <div className="mt-4 grid grid-cols-3 gap-3">
