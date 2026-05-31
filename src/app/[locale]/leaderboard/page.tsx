@@ -18,21 +18,21 @@ export default async function LeaderboardPage({ params }: PageProps) {
     // Top 100 by GC balance
     supabase
       .from("users")
-      .select("id, username, nickname, avatar_url, country_code, gc_balance, honor_points")
+      .select("id, nickname, avatar_url, country_code, gc_balance, honor_points")
       .order("gc_balance", { ascending: false })
       .limit(100),
 
     // Top 100 by honor points
     supabase
       .from("users")
-      .select("id, username, nickname, avatar_url, country_code, gc_balance, honor_points")
+      .select("id, nickname, avatar_url, country_code, gc_balance, honor_points")
       .order("honor_points", { ascending: false })
       .limit(100),
 
     // Top 100 by invite count
     supabase
       .from("users")
-      .select("id, username, nickname, avatar_url, country_code, invite_count, invite_gc")
+      .select("id, nickname, avatar_url, country_code, invite_count, invite_gc")
       .order("invite_count", { ascending: false })
       .limit(100),
 
@@ -69,7 +69,7 @@ export default async function LeaderboardPage({ params }: PageProps) {
   const winRateUsers = eligibleIds.length > 0
     ? (await supabase
         .from("users")
-        .select("id, username, nickname, avatar_url, country_code, gc_balance, honor_points")
+        .select("id, nickname, avatar_url, country_code, gc_balance, honor_points")
         .in("id", eligibleIds.slice(0, 200))).data ?? []
     : [];
 
@@ -88,7 +88,7 @@ export default async function LeaderboardPage({ params }: PageProps) {
 
   // ── Enrich all boards with level info ───────────────────────────────────
   function enrich(u: {
-    id: string; username: string | null; nickname: string | null;
+    id: string; nickname: string | null;
     avatar_url: string | null; country_code: string | null;
     gc_balance?: number; honor_points?: number;
   }) {
@@ -105,7 +105,7 @@ export default async function LeaderboardPage({ params }: PageProps) {
     } catch { /* ignore */ }
     return {
       id:          u.id,
-      username:    u.username ?? u.nickname ?? "Player",
+      username:    u.nickname ?? "Player",
       avatarUrl:   u.avatar_url ?? null,
       countryCode: cc,
       countryName,
@@ -162,7 +162,7 @@ export default async function LeaderboardPage({ params }: PageProps) {
   }));
 
   type InviteRow = {
-    id: string; username: string | null; nickname: string | null;
+    id: string; nickname: string | null;
     avatar_url: string | null; country_code: string | null;
     invite_count: number | null; invite_gc: number | null;
   };
@@ -174,7 +174,7 @@ export default async function LeaderboardPage({ params }: PageProps) {
     } catch { /* ignore */ }
     return {
       id:          u.id,
-      username:    u.username ?? u.nickname ?? "Player",
+      username:    u.nickname ?? "Player",
       avatarUrl:   u.avatar_url ?? null,
       countryCode: cc,
       countryName,
