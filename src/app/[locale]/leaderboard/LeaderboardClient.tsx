@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -89,51 +88,31 @@ function Avatar({ avatarUrl, username, size = 40 }: { avatarUrl: string | null; 
   );
 }
 
+function SectionTitle({ icon, title, myRank, zh }: { icon: string; title: string; myRank: number; zh: boolean }) {
+  return (
+    <div className="flex items-center justify-between mb-3">
+      <h2 className="text-base font-black text-white flex items-center gap-2">
+        {icon} {title}
+      </h2>
+      {myRank > 0 && (
+        <span className="text-xs text-[#FFD700] font-bold bg-[#FFD700]/10 px-2.5 py-1 rounded-full">
+          {zh ? `我的排名 #${myRank}` : `My rank #${myRank}`}
+        </span>
+      )}
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function LeaderboardClient({
   locale, myId, myRanks, wealthBoard, honorBoard, winBoard, inviteBoard, countryBoard,
 }: Props) {
   const zh = locale === "zh";
-  type Tab = "wealth" | "honor" | "win" | "invite" | "country";
-  const [tab, setTab] = useState<Tab>("wealth");
-
-  const tabs: { key: Tab; label: string; icon: string; myRank: number }[] = [
-    { key: "wealth",  label: zh ? "财富榜" : "Wealth",   icon: "💰", myRank: myRanks.wealth  },
-    { key: "honor",   label: zh ? "荣誉榜" : "Honor",    icon: "🏅", myRank: myRanks.honor   },
-    { key: "country", label: zh ? "国家榜" : "Nations",  icon: "🌍", myRank: myRanks.country },
-    { key: "win",     label: zh ? "胜率榜" : "Win Rate", icon: "🎯", myRank: myRanks.win     },
-    { key: "invite",  label: zh ? "邀请榜" : "Invites",  icon: "🤝", myRank: myRanks.invite  },
-  ];
-
-  const myRankNow = tabs.find((t) => t.key === tab)?.myRank ?? 0;
+  const myCountryCode = wealthBoard.find((u) => u.id === myId)?.countryCode ?? null;
 
   return (
-    <div className="space-y-5">
-
-      {/* ── My rank banner (logged in) ── */}
-      {myId && myRankNow > 0 && (
-        <div className="bg-gradient-to-r from-[#FFD700]/15 via-[#FF8C00]/10 to-transparent border border-[#FFD700]/25 rounded-2xl px-5 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">🏆</span>
-            <div>
-              <p className="text-[10px] text-gray-500 uppercase tracking-widest">
-                {zh ? "我的排名" : "Your Rank"}
-              </p>
-              <p className="text-white font-black text-lg leading-tight">
-                #{myRankNow}
-                <span className="text-gray-500 font-normal text-xs ml-1">
-                  {zh ? "（前100名）" : "(top 100)"}
-                </span>
-              </p>
-            </div>
-          </div>
-          <Link href={`/${locale}/profile`}
-            className="text-xs text-[#FFD700] font-bold hover:underline shrink-0">
-            {zh ? "我的主页 →" : "My Profile →"}
-          </Link>
-        </div>
-      )}
+    <div className="space-y-8">
 
       {/* ── Guest banner ── */}
       {!myId && (
@@ -148,52 +127,120 @@ export default function LeaderboardClient({
         </div>
       )}
 
-      {/* ── Tabs ── */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-              tab === t.key
-                ? "bg-[#FFD700] text-[#0A1628]"
-                : "bg-[#0F2040] border border-[#1E3A5F] text-gray-400 hover:text-white"
-            }`}
-          >
-            {t.icon} {t.label}
-          </button>
-        ))}
-      </div>
+      {/* ① 国家财富榜 */}
+      <section>
+        <SectionTitle icon="🌍" title={zh ? "国家财富榜" : "Nation Wealth"} myRank={myRanks.country} zh={zh} />
+        <CountryBoard entries={countryBoard} myCountryCode={myCountryCode} zh={zh} />
+      </section>
 
-      {/* ── Boards ── */}
-      {tab === "wealth" && (
-        <WealthBoard users={wealthBoard} myId={myId} zh={zh} locale={locale}
+      {/* ② 财富榜 */}
+      <section>
+        <SectionTitle icon="💰" title={zh ? "财富榜" : "Wealth"} myRank={myRanks.wealth} zh={zh} />
+        <WealthBoard
+          users={wealthBoard} myId={myId} zh={zh} locale={locale}
           metricLabel={zh ? "GC 余额" : "GC Balance"}
           metricFn={(u) => u.gcFormatted + " GC"}
           badgeFn={(u) => ({ label: u.wlName, color: u.wlColor, bg: u.wlBg, icon: u.wlIcon })}
         />
-      )}
-      {tab === "honor" && (
-        <WealthBoard users={honorBoard} myId={myId} zh={zh} locale={locale}
+      </section>
+
+      {/* ③ 荣誉榜 */}
+      <section>
+        <SectionTitle icon="🏅" title={zh ? "荣誉榜" : "Honor"} myRank={myRanks.honor} zh={zh} />
+        <WealthBoard
+          users={honorBoard} myId={myId} zh={zh} locale={locale}
           metricLabel={zh ? "荣誉积分" : "Honor Points"}
           metricFn={(u) => u.honorFormatted}
           badgeFn={(u) => ({ label: u.hlName, color: u.hlColor, bg: u.hlColor + "22", icon: u.hlIcon })}
         />
-      )}
-      {tab === "country" && (
-        <CountryBoard
-          entries={countryBoard}
-          myCountryCode={wealthBoard.find((u) => u.id === myId)?.countryCode ?? null}
-          zh={zh}
-        />
-      )}
-      {tab === "win" && (
-        <WinBoard users={winBoard} myId={myId} zh={zh} locale={locale} />
-      )}
-      {tab === "invite" && (
-        <InviteBoard users={inviteBoard} myId={myId} zh={zh} locale={locale} />
-      )}
+      </section>
 
+      {/* ④ 胜率榜 */}
+      <section>
+        <SectionTitle icon="🎯" title={zh ? "胜率榜" : "Win Rate"} myRank={myRanks.win} zh={zh} />
+        <WinBoard users={winBoard} myId={myId} zh={zh} locale={locale} />
+      </section>
+
+      {/* ⑤ 邀请榜 */}
+      <section>
+        <SectionTitle icon="🤝" title={zh ? "邀请榜" : "Invites"} myRank={myRanks.invite} zh={zh} />
+        <InviteBoard users={inviteBoard} myId={myId} zh={zh} locale={locale} />
+      </section>
+
+    </div>
+  );
+}
+
+// ── Country board ─────────────────────────────────────────────────────────────
+
+function CountryBoard({ entries, myCountryCode, zh }: {
+  entries: CountryEntry[];
+  myCountryCode: string | null;
+  zh: boolean;
+}) {
+  if (entries.length === 0) return <EmptyState zh={zh} />;
+
+  return (
+    <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
+      <div className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 px-5 py-3 border-b border-[#1E3A5F] bg-[#0A1628]/60">
+        <span className="text-[10px] text-gray-600 uppercase tracking-widest">#</span>
+        <span className="text-[10px] text-gray-600 uppercase tracking-widest">{zh ? "国家" : "Nation"}</span>
+        <span className="text-[10px] text-gray-600 uppercase tracking-widest text-right">{zh ? "GC 总量" : "Total GC"}</span>
+      </div>
+      <div className="divide-y divide-[#1E3A5F]/60">
+        {entries.map((entry, i) => {
+          const rank = i + 1;
+          const isMe = entry.countryCode === myCountryCode;
+          return (
+            <div
+              key={entry.countryCode}
+              className={`grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 px-5 py-3.5 transition-colors ${
+                isMe
+                  ? "bg-[#FFD700]/8 border-l-2 border-l-[#FFD700]"
+                  : rank <= 3
+                  ? "bg-gradient-to-r from-[#FFD700]/5 to-transparent"
+                  : "hover:bg-[#1E3A5F]/30"
+              }`}
+            >
+              <div className="flex justify-center">
+                <RankBadge rank={rank} />
+              </div>
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-7 relative overflow-hidden rounded-md shadow shrink-0">
+                  <Image src={entry.flagUrl} alt={entry.countryCode} fill className="object-cover" unoptimized />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className={`text-sm font-bold truncate ${isMe ? "text-[#FFD700]" : "text-white"}`}>
+                      {entry.countryName || entry.countryCode}
+                    </span>
+                    {isMe && (
+                      <span className="shrink-0 text-[9px] font-black bg-[#FFD700] text-[#0A1628] px-1.5 py-0.5 rounded-full leading-none">
+                        {zh ? "我的国家" : "MINE"}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-gray-600 mt-0.5">
+                    {entry.userCount}{zh ? " 名玩家" : entry.userCount === 1 ? " player" : " players"}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <span className={`text-sm font-black tabular-nums ${
+                  rank === 1 ? "text-[#FFD700]" : rank === 2 ? "text-gray-300" : rank === 3 ? "text-amber-600" : "text-gray-300"
+                }`}>
+                  {entry.gcFormatted} GC
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="px-5 py-3 border-t border-[#1E3A5F] bg-[#0A1628]/40 text-center">
+        <p className="text-[11px] text-gray-600">
+          {zh ? "国家总GC = 该国所有玩家财富之和" : "Nation total = sum of all players' GC from that country"}
+        </p>
+      </div>
     </div>
   );
 }
@@ -215,7 +262,6 @@ function WealthBoard({
 
   return (
     <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
-      {/* Column header */}
       <div className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 px-5 py-3 border-b border-[#1E3A5F] bg-[#0A1628]/60">
         <span className="text-[10px] text-gray-600 uppercase tracking-widest">#</span>
         <span className="text-[10px] text-gray-600 uppercase tracking-widest">{zh ? "玩家" : "Player"}</span>
@@ -223,26 +269,24 @@ function WealthBoard({
       </div>
       <div className="divide-y divide-[#1E3A5F]/60">
         {users.map((u, i) => {
-          const rank   = i + 1;
-          const isMe   = u.id === myId;
-          const badge  = badgeFn(u);
+          const rank  = i + 1;
+          const isMe  = u.id === myId;
+          const badge = badgeFn(u);
           return (
-            <div
+            <Link
               key={u.id}
+              href={`/${locale}/profile/${u.id}`}
               className={`grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 px-5 py-3.5 transition-colors ${
                 isMe
                   ? "bg-[#FFD700]/8 border-l-2 border-l-[#FFD700]"
                   : rank <= 3
-                  ? "bg-gradient-to-r from-[#FFD700]/5 to-transparent"
+                  ? "bg-gradient-to-r from-[#FFD700]/5 to-transparent hover:bg-[#FFD700]/8"
                   : "hover:bg-[#1E3A5F]/30"
               }`}
             >
-              {/* Rank */}
               <div className="flex justify-center">
                 <RankBadge rank={rank} />
               </div>
-
-              {/* User */}
               <div className="flex items-center gap-3 min-w-0">
                 <div className="relative shrink-0">
                   <Avatar avatarUrl={u.avatarUrl} username={u.username} size={36} />
@@ -274,8 +318,6 @@ function WealthBoard({
                   </div>
                 </div>
               </div>
-
-              {/* Metric */}
               <div className="text-right shrink-0">
                 <span className={`text-sm font-black tabular-nums ${
                   rank === 1 ? "text-[#FFD700]" : rank === 2 ? "text-gray-300" : rank === 3 ? "text-amber-600" : "text-gray-300"
@@ -283,7 +325,7 @@ function WealthBoard({
                   {metricFn(u)}
                 </span>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
@@ -293,7 +335,7 @@ function WealthBoard({
 
 // ── Win-rate board ────────────────────────────────────────────────────────────
 
-function WinBoard({ users, myId, zh, locale: _locale }: {
+function WinBoard({ users, myId, zh, locale }: {
   users: WinUser[]; myId: string | null; zh: boolean; locale: string;
 }) {
   if (users.length === 0) return <EmptyState zh={zh} />;
@@ -310,20 +352,20 @@ function WinBoard({ users, myId, zh, locale: _locale }: {
           const rank = i + 1;
           const isMe = u.id === myId;
           return (
-            <div
+            <Link
               key={u.id}
+              href={`/${locale}/profile/${u.id}`}
               className={`grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 px-5 py-3.5 transition-colors ${
                 isMe
                   ? "bg-[#FFD700]/8 border-l-2 border-l-[#FFD700]"
                   : rank <= 3
-                  ? "bg-gradient-to-r from-[#FFD700]/5 to-transparent"
+                  ? "bg-gradient-to-r from-[#FFD700]/5 to-transparent hover:bg-[#FFD700]/8"
                   : "hover:bg-[#1E3A5F]/30"
               }`}
             >
               <div className="flex justify-center">
                 <RankBadge rank={rank} />
               </div>
-
               <div className="flex items-center gap-3 min-w-0">
                 <div className="relative shrink-0">
                   <Avatar avatarUrl={u.avatarUrl} username={u.username} size={36} />
@@ -364,7 +406,6 @@ function WinBoard({ users, myId, zh, locale: _locale }: {
                   </div>
                 </div>
               </div>
-
               <div className="text-right shrink-0">
                 <span className={`text-lg font-black tabular-nums ${
                   u.rate >= 60 ? "text-green-400" : u.rate >= 40 ? "text-[#FFD700]" : "text-red-400"
@@ -372,7 +413,7 @@ function WinBoard({ users, myId, zh, locale: _locale }: {
                   {u.rate}%
                 </span>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
@@ -412,7 +453,6 @@ function InviteBoard({ users, myId, zh, locale }: {
               <div className="flex justify-center">
                 <RankBadge rank={rank} />
               </div>
-
               <div className="flex items-center gap-3 min-w-0">
                 <div className="relative shrink-0">
                   <Avatar avatarUrl={u.avatarUrl} username={u.username} size={36} />
@@ -438,7 +478,6 @@ function InviteBoard({ users, myId, zh, locale }: {
                   </p>
                 </div>
               </div>
-
               <div className="text-right shrink-0">
                 <p className="text-sm font-black text-[#FFD700] tabular-nums">
                   {u.inviteCount.toLocaleString()}
@@ -450,8 +489,6 @@ function InviteBoard({ users, myId, zh, locale }: {
           );
         })}
       </div>
-
-      {/* CTA */}
       <div className="px-5 py-4 border-t border-[#1E3A5F] bg-[#0A1628]/40">
         <Link href={`/${locale}/invite`}
           className="block w-full text-center bg-[#1E3A5F] hover:bg-[#FFD700]/20 border border-[#1E3A5F] hover:border-[#FFD700]/40 text-gray-300 hover:text-[#FFD700] font-semibold py-2.5 rounded-xl text-sm transition-all">
@@ -462,103 +499,11 @@ function InviteBoard({ users, myId, zh, locale }: {
   );
 }
 
-// ── Country board ─────────────────────────────────────────────────────────────
-
-function CountryBoard({ entries, myCountryCode, zh }: {
-  entries: CountryEntry[];
-  myCountryCode: string | null;
-  zh: boolean;
-}) {
-  if (entries.length === 0) return <EmptyState zh={zh} />;
-
-  return (
-    <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
-      {/* Header */}
-      <div className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 px-5 py-3 border-b border-[#1E3A5F] bg-[#0A1628]/60">
-        <span className="text-[10px] text-gray-600 uppercase tracking-widest">#</span>
-        <span className="text-[10px] text-gray-600 uppercase tracking-widest">
-          {zh ? "国家" : "Nation"}
-        </span>
-        <span className="text-[10px] text-gray-600 uppercase tracking-widest text-right">
-          {zh ? "GC 总量" : "Total GC"}
-        </span>
-      </div>
-
-      <div className="divide-y divide-[#1E3A5F]/60">
-        {entries.map((entry, i) => {
-          const rank  = i + 1;
-          const isMe  = entry.countryCode === myCountryCode;
-          return (
-            <div
-              key={entry.countryCode}
-              className={`grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 px-5 py-3.5 transition-colors ${
-                isMe
-                  ? "bg-[#FFD700]/8 border-l-2 border-l-[#FFD700]"
-                  : rank <= 3
-                  ? "bg-gradient-to-r from-[#FFD700]/5 to-transparent"
-                  : "hover:bg-[#1E3A5F]/30"
-              }`}
-            >
-              {/* Rank */}
-              <div className="flex justify-center">
-                <RankBadge rank={rank} />
-              </div>
-
-              {/* Country */}
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-7 relative overflow-hidden rounded-md shadow shrink-0">
-                  <Image
-                    src={entry.flagUrl}
-                    alt={entry.countryCode}
-                    fill className="object-cover"
-                    unoptimized
-                  />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className={`text-sm font-bold truncate ${isMe ? "text-[#FFD700]" : "text-white"}`}>
-                      {entry.countryName || entry.countryCode}
-                    </span>
-                    {isMe && (
-                      <span className="shrink-0 text-[9px] font-black bg-[#FFD700] text-[#0A1628] px-1.5 py-0.5 rounded-full leading-none">
-                        {zh ? "我的国家" : "MINE"}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[10px] text-gray-600 mt-0.5">
-                    {entry.userCount}{zh ? " 名玩家" : entry.userCount === 1 ? " player" : " players"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Total GC */}
-              <div className="text-right shrink-0">
-                <span className={`text-sm font-black tabular-nums ${
-                  rank === 1 ? "text-[#FFD700]" : rank === 2 ? "text-gray-300" : rank === 3 ? "text-amber-600" : "text-gray-300"
-                }`}>
-                  {entry.gcFormatted} GC
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Footer note */}
-      <div className="px-5 py-3 border-t border-[#1E3A5F] bg-[#0A1628]/40 text-center">
-        <p className="text-[11px] text-gray-600">
-          {zh ? "国家总GC = 该国所有玩家财富之和" : "Nation total = sum of all players' GC from that country"}
-        </p>
-      </div>
-    </div>
-  );
-}
-
 // ── Empty state ───────────────────────────────────────────────────────────────
 
 function EmptyState({ zh }: { zh: boolean }) {
   return (
-    <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-16 text-center">
+    <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-12 text-center">
       <div className="text-4xl mb-3">📭</div>
       <p className="text-gray-500 text-sm">
         {zh ? "暂无数据，成为第一名吧！" : "No data yet — be the first!"}
