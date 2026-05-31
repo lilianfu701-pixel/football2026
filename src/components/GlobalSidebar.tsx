@@ -31,7 +31,7 @@ export default async function GlobalSidebar({ locale }: Props) {
 
   // ── Parallel DB fetches ──────────────────────────────────────────────────
   const [
-    profileRes, userBetsRes, awardBetsRes, allMatchesRes,
+    profileRes, userBetsRes, awardBetsRes, allMatchesRes, followsRes,
   ] = await Promise.all([
     user
       ? supabase.from("users")
@@ -49,12 +49,16 @@ export default async function GlobalSidebar({ locale }: Props) {
     supabase.from("matches")
       .select("id, home_team, away_team, kickoff_time, status, home_score, away_score")
       .order("kickoff_time", { ascending: true }),
+    user
+      ? supabase.from("match_follows").select("match_id").eq("user_id", user.id)
+      : Promise.resolve({ data: [] }),
   ]);
 
   const profile         = profileRes.data;
   const userBets        = userBetsRes.data;
   const awardBets       = awardBetsRes.data;
   const allMatchesBrief = allMatchesRes.data;
+  const dbFollowedIds   = ((followsRes.data ?? []) as { match_id: number }[]).map((r) => r.match_id);
   const { phase: awardPhase } = getBetPhase();
 
   // ── Sidebar profile (sp) ──────────────────────────────────────────────────
@@ -275,7 +279,7 @@ export default async function GlobalSidebar({ locale }: Props) {
 
       {/* ── Slot 1c: My Favorites ── */}
       {user && sp && (
-        <FavoritesCard matches={allMatchesBrief ?? []} locale={locale} />
+        <FavoritesCard matches={allMatchesBrief ?? []} locale={locale} dbFollowedIds={dbFollowedIds} />
       )}
 
       {/* ── Slot 2: Forum ── */}

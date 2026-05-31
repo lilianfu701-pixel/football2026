@@ -18,6 +18,7 @@ export interface BriefMatch {
 interface Props {
   matches: BriefMatch[];
   locale: string;
+  dbFollowedIds?: number[];
 }
 
 function getCountdown(kickoffStr: string, locale: string): string {
@@ -32,11 +33,13 @@ function getCountdown(kickoffStr: string, locale: string): string {
   return locale === "zh" ? "即将开赛" : "Starting soon";
 }
 
-export default function FavoritesCard({ matches, locale }: Props) {
+export default function FavoritesCard({ matches, locale, dbFollowedIds }: Props) {
   const zh = locale === "zh";
-  const [followedIds, setFollowedIds] = useState<number[] | null>(null);
+  const [localIds, setLocalIds] = useState<number[] | null>(null);
 
   useEffect(() => {
+    // Only read localStorage as fallback when not logged in (no dbFollowedIds)
+    if (dbFollowedIds !== undefined) { setLocalIds([]); return; }
     const ids: number[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
@@ -45,10 +48,12 @@ export default function FavoritesCard({ matches, locale }: Props) {
         if (!isNaN(id)) ids.push(id);
       }
     }
-    setFollowedIds(ids);
-  }, []);
+    setLocalIds(ids);
+  }, [dbFollowedIds]);
 
-  // Still loading from localStorage
+  const followedIds = dbFollowedIds ?? localIds;
+
+  // Still loading
   if (followedIds === null) return null;
 
   // Filter: only show matches the user is following, prefer upcoming first
