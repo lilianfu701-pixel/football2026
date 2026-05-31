@@ -35,14 +35,24 @@ interface InviteUser extends BaseUser {
   inviteGc: string;
 }
 
+interface CountryEntry {
+  countryCode: string;
+  countryName: string;
+  flagUrl: string;
+  totalGc: number;
+  userCount: number;
+  gcFormatted: string;
+}
+
 interface Props {
   locale: string;
   myId: string | null;
-  myRanks: { wealth: number; honor: number; win: number; invite: number };
+  myRanks: { wealth: number; honor: number; win: number; invite: number; country: number };
   wealthBoard: WealthUser[];
   honorBoard: WealthUser[];
   winBoard: WinUser[];
   inviteBoard: InviteUser[];
+  countryBoard: CountryEntry[];
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -82,17 +92,18 @@ function Avatar({ avatarUrl, username, size = 40 }: { avatarUrl: string | null; 
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function LeaderboardClient({
-  locale, myId, myRanks, wealthBoard, honorBoard, winBoard, inviteBoard,
+  locale, myId, myRanks, wealthBoard, honorBoard, winBoard, inviteBoard, countryBoard,
 }: Props) {
   const zh = locale === "zh";
-  type Tab = "wealth" | "honor" | "win" | "invite";
+  type Tab = "wealth" | "honor" | "win" | "invite" | "country";
   const [tab, setTab] = useState<Tab>("wealth");
 
   const tabs: { key: Tab; label: string; icon: string; myRank: number }[] = [
-    { key: "wealth", label: zh ? "财富榜" : "Wealth",   icon: "💰", myRank: myRanks.wealth },
-    { key: "honor",  label: zh ? "荣誉榜" : "Honor",    icon: "🏅", myRank: myRanks.honor  },
-    { key: "win",    label: zh ? "胜率榜" : "Win Rate",  icon: "🎯", myRank: myRanks.win    },
-    { key: "invite", label: zh ? "邀请榜" : "Invites",  icon: "🤝", myRank: myRanks.invite },
+    { key: "wealth",  label: zh ? "财富榜" : "Wealth",   icon: "💰", myRank: myRanks.wealth  },
+    { key: "honor",   label: zh ? "荣誉榜" : "Honor",    icon: "🏅", myRank: myRanks.honor   },
+    { key: "country", label: zh ? "国家榜" : "Nations",  icon: "🌍", myRank: myRanks.country },
+    { key: "win",     label: zh ? "胜率榜" : "Win Rate", icon: "🎯", myRank: myRanks.win     },
+    { key: "invite",  label: zh ? "邀请榜" : "Invites",  icon: "🤝", myRank: myRanks.invite  },
   ];
 
   const myRankNow = tabs.find((t) => t.key === tab)?.myRank ?? 0;
@@ -167,6 +178,13 @@ export default function LeaderboardClient({
           metricLabel={zh ? "荣誉积分" : "Honor Points"}
           metricFn={(u) => u.honorFormatted}
           badgeFn={(u) => ({ label: u.hlName, color: u.hlColor, bg: u.hlColor + "22", icon: u.hlIcon })}
+        />
+      )}
+      {tab === "country" && (
+        <CountryBoard
+          entries={countryBoard}
+          myCountryCode={wealthBoard.find((u) => u.id === myId)?.countryCode ?? null}
+          zh={zh}
         />
       )}
       {tab === "win" && (
@@ -439,6 +457,98 @@ function InviteBoard({ users, myId, zh, locale }: {
           className="block w-full text-center bg-[#1E3A5F] hover:bg-[#FFD700]/20 border border-[#1E3A5F] hover:border-[#FFD700]/40 text-gray-300 hover:text-[#FFD700] font-semibold py-2.5 rounded-xl text-sm transition-all">
           🤝 {zh ? "邀请好友，一起上榜" : "Invite Friends & Climb the Board"}
         </Link>
+      </div>
+    </div>
+  );
+}
+
+// ── Country board ─────────────────────────────────────────────────────────────
+
+function CountryBoard({ entries, myCountryCode, zh }: {
+  entries: CountryEntry[];
+  myCountryCode: string | null;
+  zh: boolean;
+}) {
+  if (entries.length === 0) return <EmptyState zh={zh} />;
+
+  return (
+    <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
+      {/* Header */}
+      <div className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 px-5 py-3 border-b border-[#1E3A5F] bg-[#0A1628]/60">
+        <span className="text-[10px] text-gray-600 uppercase tracking-widest">#</span>
+        <span className="text-[10px] text-gray-600 uppercase tracking-widest">
+          {zh ? "国家" : "Nation"}
+        </span>
+        <span className="text-[10px] text-gray-600 uppercase tracking-widest text-right">
+          {zh ? "GC 总量" : "Total GC"}
+        </span>
+      </div>
+
+      <div className="divide-y divide-[#1E3A5F]/60">
+        {entries.map((entry, i) => {
+          const rank  = i + 1;
+          const isMe  = entry.countryCode === myCountryCode;
+          return (
+            <div
+              key={entry.countryCode}
+              className={`grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 px-5 py-3.5 transition-colors ${
+                isMe
+                  ? "bg-[#FFD700]/8 border-l-2 border-l-[#FFD700]"
+                  : rank <= 3
+                  ? "bg-gradient-to-r from-[#FFD700]/5 to-transparent"
+                  : "hover:bg-[#1E3A5F]/30"
+              }`}
+            >
+              {/* Rank */}
+              <div className="flex justify-center">
+                <RankBadge rank={rank} />
+              </div>
+
+              {/* Country */}
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-7 relative overflow-hidden rounded-md shadow shrink-0">
+                  <Image
+                    src={entry.flagUrl}
+                    alt={entry.countryCode}
+                    fill className="object-cover"
+                    unoptimized
+                  />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className={`text-sm font-bold truncate ${isMe ? "text-[#FFD700]" : "text-white"}`}>
+                      {entry.countryName || entry.countryCode}
+                    </span>
+                    {isMe && (
+                      <span className="shrink-0 text-[9px] font-black bg-[#FFD700] text-[#0A1628] px-1.5 py-0.5 rounded-full leading-none">
+                        {zh ? "我的国家" : "MINE"}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-gray-600 mt-0.5">
+                    {entry.userCount}{zh ? " 名玩家" : entry.userCount === 1 ? " player" : " players"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Total GC */}
+              <div className="text-right shrink-0">
+                <span className={`text-sm font-black tabular-nums ${
+                  rank === 1 ? "text-[#FFD700]" : rank === 2 ? "text-gray-300" : rank === 3 ? "text-amber-600" : "text-gray-300"
+                }`}>
+                  {entry.gcFormatted} GC
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer note */}
+      <div className="px-5 py-3 border-t border-[#1E3A5F] bg-[#0A1628]/40 text-center">
+        <p className="text-[11px] text-gray-600">
+          {zh ? "国家总GC = 该国所有玩家财富之和" : "Nation total = sum of all players' GC from that country"}
+        </p>
       </div>
     </div>
   );

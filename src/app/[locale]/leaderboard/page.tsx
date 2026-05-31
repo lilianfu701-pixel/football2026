@@ -14,7 +14,7 @@ export default async function LeaderboardPage({ params }: PageProps) {
   const { data: { user } } = await supabase.auth.getUser();
 
   // ── Parallel fetches ──────────────────────────────────────────────────────
-  const [wealthRes, honorRes, inviteRes, betStatsRes] = await Promise.all([
+  const [wealthRes, honorRes, inviteRes, betStatsRes, countryRawRes] = await Promise.all([
     // Top 100 by GC balance
     supabase
       .from("users")
@@ -40,6 +40,12 @@ export default async function LeaderboardPage({ params }: PageProps) {
     supabase
       .from("bets")
       .select("user_id, status"),
+
+    // Country board: all users with country_code + gc_balance for aggregation
+    supabase
+      .from("users")
+      .select("country_code, gc_balance")
+      .not("country_code", "is", null),
   ]);
 
   // ── Win-rate board: compute from raw bets ────────────────────────────────
@@ -117,6 +123,34 @@ export default async function LeaderboardPage({ params }: PageProps) {
     };
   }
 
+  // ── Country board: aggregate gc_balance by country ──────────────────────
+  type CountryRaw = { country_code: string | null; gc_balance: number | null };
+  const countryRawRows = (countryRawRes.data ?? []) as CountryRaw[];
+  const countryMap: Record<string, { totalGc: number; userCount: number }> = {};
+  for (const row of countryRawRows) {
+    const cc = (row.country_code ?? "").toUpperCase();
+    if (!cc || cc === "UN") continue;
+    if (!countryMap[cc]) countryMap[cc] = { totalGc: 0, userCount: 0 };
+    countryMap[cc].totalGc   += row.gc_balance ?? 0;
+    countryMap[cc].userCount += 1;
+  }
+  const displayNames = new Intl.DisplayNames([zh ? "zh-CN" : "en"], { type: "region" });
+  const countryBoard = Object.entries(countryMap)
+    .map(([cc, stats]) => {
+      let countryName = "";
+      try { countryName = displayNames.of(cc) ?? cc; } catch { /* ignore */ }
+      return {
+        countryCode: cc,
+        countryName,
+        flagUrl: `https://flagcdn.com/w40/${cc.toLowerCase()}.png`,
+        totalGc: stats.totalGc,
+        userCount: stats.userCount,
+        gcFormatted: formatGc(stats.totalGc),
+      };
+    })
+    .sort((a, b) => b.totalGc - a.totalGc)
+    .slice(0, 100);
+
   const wealthBoard = (wealthRes.data ?? []).map(enrich);
   const honorBoard  = (honorRes.data  ?? []).map(enrich);
 
@@ -152,11 +186,20 @@ export default async function LeaderboardPage({ params }: PageProps) {
 
   // ── Current user's rank in each board ────────────────────────────────────
   const myId = user?.id ?? null;
+
+  // Find logged-in user's country for country board rank
+  const myProfile = wealthBoard.find((u) => u.id === myId);
+  const myCountryCode = myProfile?.countryCode ?? null;
+  const myCountryRank = myCountryCode
+    ? countryBoard.findIndex((c) => c.countryCode === myCountryCode) + 1
+    : 0;
+
   const myRanks = {
-    wealth: myId ? wealthBoard.findIndex((u) => u.id === myId) + 1 : 0,
-    honor:  myId ? honorBoard.findIndex((u)  => u.id === myId) + 1 : 0,
-    win:    myId ? winBoard.findIndex((u)    => u.id === myId) + 1 : 0,
-    invite: myId ? inviteBoard.findIndex((u) => u.id === myId) + 1 : 0,
+    wealth:  myId ? wealthBoard.findIndex((u) => u.id === myId) + 1 : 0,
+    honor:   myId ? honorBoard.findIndex((u)  => u.id === myId) + 1 : 0,
+    win:     myId ? winBoard.findIndex((u)    => u.id === myId) + 1 : 0,
+    invite:  myId ? inviteBoard.findIndex((u) => u.id === myId) + 1 : 0,
+    country: myCountryRank,
   };
 
   return (
@@ -180,6 +223,7 @@ export default async function LeaderboardPage({ params }: PageProps) {
           honorBoard={honorBoard}
           winBoard={winBoard}
           inviteBoard={inviteBoard}
+          countryBoard={countryBoard}
         />
       </div>
     </div>
