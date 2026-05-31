@@ -205,23 +205,16 @@ export default async function GlobalSidebar({ locale }: Props) {
               </div>
               <SidebarGcBalance zh={zh} />
             </div>
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              <Link href={`/${locale}/gc/recharge`}
+            <div className="grid grid-cols-1 gap-2 pt-1">
+              <Link href={`/${locale}/profile/topup`}
                 className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-gradient-to-b from-[#FFD700]/15 to-[#FF8C00]/10 border border-[#FFD700]/25 hover:border-[#FFD700]/60 hover:from-[#FFD700]/25 transition-all group">
                 <span className="text-xl">💳</span>
                 <span className="text-xs font-black text-[#FFD700] group-hover:text-[#FFC200] transition-colors">
                   {zh ? "充值" : "Top Up"}
                 </span>
               </Link>
-              <Link href={`/${locale}/gc/transfer`}
-                className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-gradient-to-b from-[#7C6FE0]/15 to-[#4F46E5]/10 border border-[#7C6FE0]/25 hover:border-[#7C6FE0]/60 hover:from-[#7C6FE0]/25 transition-all group">
-                <span className="text-xl">↔️</span>
-                <span className="text-xs font-black text-[#A89FF5] group-hover:text-white transition-colors">
-                  {zh ? "转让" : "Transfer"}
-                </span>
-              </Link>
             </div>
-            <Link href={`/${locale}/gc/history`}
+            <Link href={`/${locale}/profile`}
               className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-[#1E3A5F]/60 transition-colors group">
               <div className="flex items-center gap-2">
                 <span className="text-sm">📜</span>
