@@ -29,13 +29,13 @@ export default async function PredictPage({ params }: PageProps) {
   const { data: profile } = user
     ? await supabase
         .from("users")
-        .select("gc_balance, username, nickname, honor_points")
+        .select("gc_balance, nickname, honor_points")
         .eq("id", user.id)
         .single()
     : { data: null };
 
   const gcBalance = profile?.gc_balance ?? 0;
-  const username  = profile?.username
+  const username  = profile?.nickname
     ?? user?.user_metadata?.display_name
     ?? user?.email?.split("@")[0]
     ?? "Player";
@@ -69,7 +69,7 @@ export default async function PredictPage({ params }: PageProps) {
   const { data: existingBetsRaw } = user && quickMatchIds.length
     ? await supabase
         .from("bets")
-        .select("match_id, prediction, gc_amount, odds, potential_payout, status")
+        .select("match_id, prediction, gc_amount, odds:odds_at_bet, potential_payout, status")
         .eq("user_id", user.id)
         .in("match_id", quickMatchIds)
     : { data: [] };
@@ -86,7 +86,7 @@ export default async function PredictPage({ params }: PageProps) {
   const { data: betsRaw } = user
     ? await supabase
         .from("bets")
-        .select("id, match_id, prediction, gc_amount, odds, potential_payout, status, created_at")
+        .select("id, match_id, prediction, gc_amount, odds:odds_at_bet, potential_payout, status, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(50)
