@@ -71,6 +71,29 @@ const FONT_SIZES = [
   { label: "XXL", value: "2rem"    },
 ];
 
+// ── Emoji data ────────────────────────────────────────────────────────────
+const EMOJI_GROUPS = [
+  {
+    label: "⚽ 足球",
+    emojis: ["⚽","🏆","🥇","🥈","🥉","🎯","🏅","🎖️","🏟️","👟","🦵","💪","🤜","✊","👊","🙌","👏","🤝","🫡","🫶"],
+  },
+  {
+    label: "😄 表情",
+    emojis: ["😀","😃","😄","😁","😆","😅","🤣","😂","😊","😇","🥰","😍","🤩","😎","🤓","🥳","🤪","😜","😝","🤑","😤","😡","🤬","🤯","😱","😨","😰","😢","😭","😤"],
+  },
+  {
+    label: "👍 手势",
+    emojis: ["👍","👎","👌","✌️","🤞","🤟","🤘","🤙","👈","👉","👆","👇","☝️","✋","🤚","🖐️","🖖","🤜","🤛","💪","🫱","🫲","🫳","🫴","🫵"],
+  },
+  {
+    label: "🔥 符号",
+    emojis: ["🔥","💥","⭐","🌟","✨","💫","🎉","🎊","🎈","🎁","🏆","🥇","💎","👑","🎯","📣","📢","💡","⚡","🌈","❤️","🧡","💛","💚","💙","💜","🖤","❤️‍🔥","💯","🚀"],
+  },
+  {
+    label: "😴 其他",
+    emojis: ["🤔","🧐","🤨","😐","😑","😶","🙄","😏","😒","🤥","😬","🤐","😷","🤒","🤕","🤢","🥴","😵","💀","👻","🤖","💩","🐐","🦁","🐯","🦊","🐻","🐼","🦅","🦋"],
+  },
+];
 // ── Toolbar button ─────────────────────────────────────────────────────────
 function Btn({
   active, onClick, title, children, danger,
@@ -111,6 +134,8 @@ export default function RichTextEditor({ value, onChange, placeholder, zh, injec
   const [showLinkBox,  setShowLinkBox]  = useState(false);
   const [ytUrl,        setYtUrl]        = useState("");
   const [showYtBox,    setShowYtBox]    = useState(false);
+  const [showEmoji,    setShowEmoji]    = useState(false);
+  const [emojiGroup,   setEmojiGroup]   = useState(0);
 
   // ── @mention state ────────────────────────────────────────────────────────
   type MentionState = { query: string; from: number; top: number; left: number; activeIdx: number } | null;
@@ -499,6 +524,56 @@ export default function RichTextEditor({ value, onChange, placeholder, zh, injec
               <p className="text-[9px] text-gray-600 mt-1.5">
                 {zh ? "支持 youtube.com 和 youtu.be 链接" : "Supports youtube.com and youtu.be links"}
               </p>
+            </div>
+          )}
+        </div>
+
+        {/* Emoji Picker */}
+        <div className="relative">
+          <Btn
+            active={showEmoji}
+            onClick={() => { setShowEmoji(v => !v); setShowColors(false); setShowSizes(false); setShowLinkBox(false); setShowYtBox(false); }}
+            title={zh ? "插入表情" : "Insert emoji"}
+          >
+            😊
+          </Btn>
+          {showEmoji && (
+            <div className="absolute top-full right-0 mt-1 bg-[#0F2040] border border-[#1E3A5F] rounded-xl z-50 shadow-xl w-72">
+              {/* Group tabs */}
+              <div className="flex border-b border-[#1E3A5F] overflow-x-auto">
+                {EMOJI_GROUPS.map((g, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); setEmojiGroup(idx); }}
+                    className={`shrink-0 px-2 py-2 text-sm transition-colors ${
+                      emojiGroup === idx
+                        ? "text-[#FFD700] border-b-2 border-[#FFD700] -mb-px"
+                        : "text-gray-500 hover:text-gray-300"
+                    }`}
+                  >
+                    {g.label.split(" ")[0]}
+                  </button>
+                ))}
+              </div>
+              {/* Emoji grid */}
+              <div className="p-2 grid grid-cols-8 gap-0.5 max-h-48 overflow-y-auto">
+                {EMOJI_GROUPS[emojiGroup].emojis.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      editor.chain().focus().insertContent(emoji).run();
+                      setShowEmoji(false);
+                    }}
+                    className="w-8 h-8 flex items-center justify-center text-lg rounded hover:bg-[#1E3A5F]/80 transition-colors"
+                    title={emoji}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
