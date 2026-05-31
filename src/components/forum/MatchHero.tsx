@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { getFlagUrl, getTeamDisplayName } from "@/lib/flags";
 
@@ -89,6 +90,7 @@ export default function MatchHero({
   homeColors: hc = DEFAULT_HOME,
   awayColors: ac = DEFAULT_AWAY,
 }: Props) {
+  const router = useRouter();
   const [votes, setVotes] = useState(initialVotes);
   const [myVote, setMyVote] = useState(initialMyVote);
   const [voting, setVoting] = useState(false);
@@ -130,6 +132,9 @@ export default function MatchHero({
         // Revert
         setMyVote(oldVote);
         setVotes(votes);
+      } else {
+        // Refresh server data so fan map reflects the new vote
+        router.refresh();
       }
     } catch {
       setMyVote(oldVote);
