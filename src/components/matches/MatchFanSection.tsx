@@ -283,13 +283,38 @@ function injectFireworkStyles() {
       100% { left:90%; top:64%; transform:rotate(540deg) scale(1);   opacity:0; }
     }
 
-    /* 加油: streamers/ribbons fall from top to bottom */
-    @keyframes gc-streamer-fall {
-      0%   { top:-8%;  transform:rotate(-4deg); opacity:0; }
-      8%   { opacity:1; }
-      50%  { transform:rotate(5deg); }
-      90%  { opacity:0.7; }
-      100% { top:108%; transform:rotate(-6deg); opacity:0; }
+    /* Rally: stadium waves converge, then short ribbons rise like a supporters' surge. */
+    @keyframes gc-rally-wave-left {
+      0%   { transform:translateX(-112%) skewX(-12deg); opacity:0; }
+      16%  { opacity:0.78; }
+      72%  { transform:translateX(18%) skewX(-4deg); opacity:0.66; }
+      100% { transform:translateX(45%) skewX(0deg); opacity:0; }
+    }
+    @keyframes gc-rally-wave-right {
+      0%   { transform:translateX(112%) skewX(12deg); opacity:0; }
+      16%  { opacity:0.78; }
+      72%  { transform:translateX(-18%) skewX(4deg); opacity:0.66; }
+      100% { transform:translateX(-45%) skewX(0deg); opacity:0; }
+    }
+    @keyframes gc-rally-confetti-left {
+      0%   { bottom:-8%; transform:translateX(0) rotate(0deg) scale(0.6); opacity:0; }
+      12%  { opacity:1; }
+      100% { bottom:94%; transform:translateX(-34px) rotate(-620deg) scale(1); opacity:0; }
+    }
+    @keyframes gc-rally-confetti-right {
+      0%   { bottom:-8%; transform:translateX(0) rotate(0deg) scale(0.6); opacity:0; }
+      12%  { opacity:1; }
+      100% { bottom:94%; transform:translateX(34px) rotate(620deg) scale(1); opacity:0; }
+    }
+    @keyframes gc-rally-ring {
+      0%   { transform:translate(-50%,-50%) scale(0.28); opacity:0.72; }
+      100% { transform:translate(-50%,-50%) scale(2.35); opacity:0; }
+    }
+    @keyframes gc-rally-pulse {
+      0%   { transform:translate(-50%,-50%) scale(0.55); opacity:0; }
+      22%  { opacity:1; }
+      58%  { transform:translate(-50%,-50%) scale(1.12); opacity:1; }
+      100% { transform:translate(-50%,-50%) scale(1.34); opacity:0; }
     }
 
     /* 嘘声: toilet paper thrown from edges toward center */
@@ -451,18 +476,18 @@ const FW_SHOOT_PRT = Array.from({ length: 130 }, (_, i) => {
   };
 });
 
-// Streamer/ribbon palette (rally effect)
+// Local rally confetti palette. Remote rally particles intentionally stay unchanged.
 const STREAMER_PALETTE = [
   "#FFD700","#FF6B6B","#4FC3F7","#81C784","#FF8A65",
   "#CE93D8","#80DEEA","#FFCC80","#F48FB1","#AED581",
 ];
-// 27 streamers distributed across the full map width
-const STREAMER_BASE = Array.from({ length: 27 }, (_, i) => ({
-  x:   3 + i * 3.6,           // 3% → ~99%
-  w:   4 + (i % 3),           // 4–6 px width
-  h:   40 + (i % 5) * 10,     // 40–80 px height
-  del: (i % 9) * 0.07,        // 0–0.56 s stagger
-  dur: 2.8 + (i % 4) * 0.3,  // 2.8–3.7 s duration
+const RALLY_CONFETTI = Array.from({ length: 34 }, (_, i) => ({
+  x:    5 + pseudoRand(i * 5.91) * 90,
+  w:    4 + (i % 3),
+  h:    13 + (i % 4) * 4,
+  del:  0.28 + (i % 11) * 0.07,
+  dur:  2.35 + (i % 5) * 0.16,
+  anim: i % 2 === 0 ? "gc-rally-confetti-left" : "gc-rally-confetti-right",
 }));
 
 // Toilet paper items: 4 from left, 4 from right, 4 from top → toward center
@@ -1090,22 +1115,83 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
                       </>
                     )}
 
-                    {/* ── 加油: 27 colorful streamers/ribbons fall from top ── */}
-                    {ge.type === "rally" && STREAMER_BASE.map((s, si) => (
-                      <div key={si} style={{
-                        position:     "absolute",
-                        left:         `${s.x}%`,
-                        top:          "-8%",
-                        width:        s.w,
-                        height:       s.h,
-                        background:   `linear-gradient(180deg, ${
-                          si % 3 === 0 ? col : STREAMER_PALETTE[si % STREAMER_PALETTE.length]
-                        }, transparent)`,
-                        borderRadius: 2,
-                        opacity:      0,
-                        animation:    `gc-streamer-fall ${s.dur}s ease-in ${s.del}s forwards`,
-                      }} />
-                    ))}
+                    {/* ── Rally: local-only stadium wave, rising ribbons and center pulse ── */}
+                    {ge.type === "rally" && (
+                      <>
+                        {[0, 1, 2].map((layer) => (
+                          <div key={`left-${layer}`} style={{
+                            position:   "absolute",
+                            left:       "-42%",
+                            top:        `${30 + layer * 13}%`,
+                            width:      "78%",
+                            height:     `${18 - layer * 2}%`,
+                            borderRadius:"0 999px 999px 0",
+                            background: `linear-gradient(90deg, transparent, ${layer === 1 ? "#FFD700cc" : `${col}cc`}, transparent)`,
+                            filter:     `blur(${layer === 1 ? 0.5 : 1.4}px)`,
+                            opacity:    0,
+                            animation:  `gc-rally-wave-left ${2.05 + layer * 0.22}s ease-out ${layer * 0.14}s forwards`,
+                          }} />
+                        ))}
+                        {[0, 1, 2].map((layer) => (
+                          <div key={`right-${layer}`} style={{
+                            position:   "absolute",
+                            right:      "-42%",
+                            top:        `${30 + layer * 13}%`,
+                            width:      "78%",
+                            height:     `${18 - layer * 2}%`,
+                            borderRadius:"999px 0 0 999px",
+                            background: `linear-gradient(270deg, transparent, ${layer === 1 ? "#FFD700cc" : `${col}cc`}, transparent)`,
+                            filter:     `blur(${layer === 1 ? 0.5 : 1.4}px)`,
+                            opacity:    0,
+                            animation:  `gc-rally-wave-right ${2.05 + layer * 0.22}s ease-out ${layer * 0.14}s forwards`,
+                          }} />
+                        ))}
+                        {[0, 0.34, 0.68].map((delay, ri) => (
+                          <div key={`ring-${ri}`} style={{
+                            position:    "absolute",
+                            left:        "50%",
+                            top:         "52%",
+                            width:       "24%",
+                            aspectRatio: "1",
+                            borderRadius:"50%",
+                            border:      `${ri === 1 ? 3 : 2}px solid ${ri === 1 ? "#FFD700" : col}`,
+                            boxShadow:   `0 0 18px ${ri === 1 ? "#FFD700aa" : `${col}aa`}`,
+                            opacity:     0,
+                            animation:   `gc-rally-ring 1.85s ease-out ${0.45 + delay}s forwards`,
+                          }} />
+                        ))}
+                        <div style={{
+                          position:      "absolute",
+                          left:          "50%",
+                          top:           "52%",
+                          color:         "#fff",
+                          fontSize:      "clamp(1.2rem, 5vw, 2.35rem)",
+                          fontWeight:    900,
+                          lineHeight:    1,
+                          letterSpacing: "0.08em",
+                          textShadow:    `0 0 8px ${col}, 0 0 18px ${col}, 0 0 28px #FFD700`,
+                          whiteSpace:    "nowrap",
+                          opacity:       0,
+                          animation:     "gc-rally-pulse 2.1s ease-out 0.55s forwards",
+                        }}>
+                          {zh ? "加油!" : "GO!"}
+                        </div>
+                        {RALLY_CONFETTI.map((s, si) => (
+                          <div key={`confetti-${si}`} style={{
+                            position:     "absolute",
+                            left:         `${s.x}%`,
+                            bottom:       "-8%",
+                            width:        s.w,
+                            height:       s.h,
+                            background:   si % 3 === 0 ? col : STREAMER_PALETTE[si % STREAMER_PALETTE.length],
+                            borderRadius: 2,
+                            opacity:      0,
+                            boxShadow:    si % 5 === 0 ? "0 0 6px #FFD700aa" : "none",
+                            animation:    `${s.anim} ${s.dur}s ease-out ${s.del}s forwards`,
+                          }} />
+                        ))}
+                      </>
+                    )}
 
                     {/* ── 嘘声: 🧻 toilet paper from all edges → center ── */}
                     {ge.type === "boo" && TP_DATA.map((tp, ti) => (
