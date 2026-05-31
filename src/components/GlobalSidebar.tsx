@@ -282,7 +282,12 @@ export default async function GlobalSidebar({ locale }: Props) {
         <FavoritesCard matches={allMatchesBrief ?? []} locale={locale} dbFollowedIds={dbFollowedIds} />
       )}
 
-      {/* ── Slot 2: Forum ── */}
+      {/* ── Slot 2: Invite ── */}
+      {user && sp && (
+        <InviteCard username={sp.username} locale={locale} baseUrl={baseUrl} inviteCount={sp.inviteCount} />
+      )}
+
+      {/* ── Slot 3: Forum ── */}
       {(() => {
         const hotTopics = zh ? [
           { title: "阿根廷能否成功卫冕世界杯？",     href: "breaking", views: "2.4K" },
@@ -342,11 +347,6 @@ export default async function GlobalSidebar({ locale }: Props) {
           </div>
         );
       })()}
-
-      {/* ── Slot 3: Invite ── */}
-      {user && sp && (
-        <InviteCard username={sp.username} locale={locale} baseUrl={baseUrl} inviteCount={sp.inviteCount} />
-      )}
 
       {/* ── Slot 4: App QR ── */}
       <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5">
