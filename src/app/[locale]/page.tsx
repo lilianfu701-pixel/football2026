@@ -104,7 +104,7 @@ function MatchCard({ match, locale }: { match: MatchRow; locale: string }) {
           }`}>
             {match.status === "live"     ? (zh ? "直播中" : "LIVE") :
              match.status === "finished" ? (zh ? "已结束" : "FT") :
-                                           (zh ? "即将开赛" : "Upcoming")}
+                                           timeStr}
           </span>
         </div>
         {/* Away */}
