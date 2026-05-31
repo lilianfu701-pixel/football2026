@@ -17,7 +17,7 @@ export default async function InvitePage({ params }: PageProps) {
     user
       ? supabase
           .from("users")
-          .select("username, invite_count, invite_gc, referred_by, gc_balance")
+          .select("nickname, invite_count, invite_gc, referred_by, gc_balance")
           .eq("id", user.id)
           .single()
       : Promise.resolve({ data: null }),
@@ -31,16 +31,19 @@ export default async function InvitePage({ params }: PageProps) {
 
     supabase
       .from("users")
-      .select("username, invite_count, invite_gc, country_code, avatar_url")
+      .select("nickname, invite_count, invite_gc, country_code, avatar_url")
       .gt("invite_count", 0)
       .order("invite_count", { ascending: false })
       .limit(50),
   ]);
 
-  const myProfile = profileRes.data ?? null;
+  const myProfileRaw = profileRes.data ?? null;
+  const myProfile = myProfileRaw
+    ? { ...myProfileRaw, username: myProfileRaw.nickname ?? "Player" }
+    : null;
   const claimedMilestones = (claimsRes.data ?? []).map((c) => c.milestone as number);
   const leaderboard = (boardRes.data ?? []).map((r) => ({
-    username:    r.username     as string,
+    username:    (r.nickname    as string | null) ?? "Player",
     inviteCount: r.invite_count as number,
     inviteGc:    r.invite_gc    as number,
     countryCode: (r.country_code as string | null) ?? null,

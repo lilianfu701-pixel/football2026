@@ -35,7 +35,7 @@ export default async function GlobalSidebar({ locale }: Props) {
   ] = await Promise.all([
     user
       ? supabase.from("users")
-          .select("username, avatar_url, country_code, gc_balance, honor_points, invite_count")
+          .select("nickname, avatar_url, country_code, gc_balance, honor_points, invite_count")
           .eq("id", user.id).single()
       : Promise.resolve({ data: null }),
     user
@@ -92,7 +92,7 @@ export default async function GlobalSidebar({ locale }: Props) {
     let countryName = zh ? "未知" : "Unknown";
     try { if (cc !== "UN") countryName = new Intl.DisplayNames([zh ? "zh-CN" : "en"], { type: "region" }).of(cc) ?? cc; }
     catch { /* keep default */ }
-    const username  = profile?.username
+    const username  = profile?.nickname
       ?? (user.user_metadata?.name as string | undefined)
       ?? (user.user_metadata?.full_name as string | undefined)
       ?? user.email?.split("@")[0] ?? "User";

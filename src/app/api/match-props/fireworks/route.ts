@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
   // Run all queries in parallel
   const [profileRes, voteRes, matchRes] = await Promise.all([
     supabase.from("users")
-      .select("country_code, username, nickname")
+      .select("country_code, nickname")
       .eq("id", user.id)
       .maybeSingle(),
     supabase.from("match_votes")
@@ -81,7 +81,6 @@ export async function POST(request: NextRequest) {
   const centroid    = centroidMap.get(countryCode);
   const username    =
     profileRes.data?.nickname ??
-    profileRes.data?.username ??
     user.email?.split("@")[0] ??
     "Fan";
 
