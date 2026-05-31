@@ -79,6 +79,35 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
     }[];
   };
 
+  // Followers / following list
+  type FollowUserRow = { id: string; nickname: string; avatar_url: string | null; follower_count: number };
+  let followers: FollowUserRow[] = [];
+  let following: FollowUserRow[] = [];
+
+  if (tab === "followers" || tab === "following") {
+    if (tab === "followers") {
+      // People who follow this user
+      const { data } = await supabase
+        .from("user_follows")
+        .select("users!user_follows_follower_id_fkey(id, nickname, avatar_url, follower_count)")
+        .eq("following_id", userId)
+        .limit(100);
+      followers = ((data ?? []) as unknown as Array<{ users: FollowUserRow | FollowUserRow[] | null }>)
+        .map((r) => { const u = Array.isArray(r.users) ? r.users[0] : r.users; return u ?? null; })
+        .filter((u): u is FollowUserRow => !!u);
+    } else {
+      // People this user follows
+      const { data } = await supabase
+        .from("user_follows")
+        .select("users!user_follows_following_id_fkey(id, nickname, avatar_url, follower_count)")
+        .eq("follower_id", userId)
+        .limit(100);
+      following = ((data ?? []) as unknown as Array<{ users: FollowUserRow | FollowUserRow[] | null }>)
+        .map((r) => { const u = Array.isArray(r.users) ? r.users[0] : r.users; return u ?? null; })
+        .filter((u): u is FollowUserRow => !!u);
+    }
+  }
+
   let posts: PostRow[]     = [];
   let replies: ReplyRow[]  = [];
   let totalCount = 0;
@@ -288,9 +317,9 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
           </p>
         </div>
 
-        {/* ── Tabs: Posts | Replies ── */}
-        <div className="flex gap-2 mb-4">
-          {(["posts", "replies"] as const).map((t) => (
+        {/* ── Tabs: Posts | Replies | Followers | Following ── */}
+        <div className="flex gap-2 mb-4 flex-wrap">
+          {(["posts", "replies", "followers", "following"] as const).map((t) => (
             <Link
               key={t}
               href={`/${locale}/profile/${userId}?tab=${t}`}
@@ -301,8 +330,12 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
               }`}
             >
               {t === "posts"
-                ? (zh ? `📝 主题 (${tab === "posts" ? totalCount : ""})` : `📝 Posts ${tab === "posts" ? `(${totalCount})` : ""}`)
-                : (zh ? `💬 回复 (${tab === "replies" ? totalCount : ""})` : `💬 Replies ${tab === "replies" ? `(${totalCount})` : ""}`)}
+                ? (zh ? `📝 主题${tab === "posts" ? ` (${totalCount})` : ""}` : `📝 Posts${tab === "posts" ? ` (${totalCount})` : ""}`)
+                : t === "replies"
+                ? (zh ? `💬 回复${tab === "replies" ? ` (${totalCount})` : ""}` : `💬 Replies${tab === "replies" ? ` (${totalCount})` : ""}`)
+                : t === "followers"
+                ? (zh ? `👥 粉丝 (${(profile.follower_count ?? 0).toLocaleString()})` : `👥 Followers (${(profile.follower_count ?? 0).toLocaleString()})`)
+                : (zh ? `➕ 关注 (${(profile.following_count ?? 0).toLocaleString()})` : `➕ Following (${(profile.following_count ?? 0).toLocaleString()})`)}
             </Link>
           ))}
         </div>
@@ -399,8 +432,78 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
           </>
         )}
 
+        {/* ── Followers list ── */}
+        {tab === "followers" && (
+          <div className="space-y-2">
+            {followers.length === 0 ? (
+              <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-16 text-center">
+                <div className="text-4xl mb-3">👤</div>
+                <p className="text-gray-500 text-sm">{zh ? "还没有粉丝" : "No followers yet"}</p>
+              </div>
+            ) : (
+              followers.map((u) => (
+                <Link
+                  key={u.id}
+                  href={`/${locale}/profile/${u.id}`}
+                  className="flex items-center gap-3 bg-[#0F2040] border border-[#1E3A5F] hover:border-[#FFD700]/30 rounded-2xl px-4 py-3 transition-all group"
+                >
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-[#1E3A5F] flex items-center justify-center shrink-0">
+                    {u.avatar_url ? (
+                      <Image src={u.avatar_url} alt={u.nickname} width={40} height={40} className="w-full h-full object-cover" unoptimized />
+                    ) : (
+                      <span className="text-lg font-black text-[#FFD700]">{u.nickname?.[0]?.toUpperCase() ?? "?"}</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-black text-white group-hover:text-[#FFD700] transition-colors truncate">{u.nickname}</p>
+                    <p className="text-[10px] text-gray-600">{(u.follower_count ?? 0).toLocaleString()} {zh ? "粉丝" : "followers"}</p>
+                  </div>
+                  <svg className="w-4 h-4 text-gray-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* ── Following list ── */}
+        {tab === "following" && (
+          <div className="space-y-2">
+            {following.length === 0 ? (
+              <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-16 text-center">
+                <div className="text-4xl mb-3">👤</div>
+                <p className="text-gray-500 text-sm">{zh ? "还没有关注任何人" : "Not following anyone yet"}</p>
+              </div>
+            ) : (
+              following.map((u) => (
+                <Link
+                  key={u.id}
+                  href={`/${locale}/profile/${u.id}`}
+                  className="flex items-center gap-3 bg-[#0F2040] border border-[#1E3A5F] hover:border-[#FFD700]/30 rounded-2xl px-4 py-3 transition-all group"
+                >
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-[#1E3A5F] flex items-center justify-center shrink-0">
+                    {u.avatar_url ? (
+                      <Image src={u.avatar_url} alt={u.nickname} width={40} height={40} className="w-full h-full object-cover" unoptimized />
+                    ) : (
+                      <span className="text-lg font-black text-[#FFD700]">{u.nickname?.[0]?.toUpperCase() ?? "?"}</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-black text-white group-hover:text-[#FFD700] transition-colors truncate">{u.nickname}</p>
+                    <p className="text-[10px] text-gray-600">{(u.follower_count ?? 0).toLocaleString()} {zh ? "粉丝" : "followers"}</p>
+                  </div>
+                  <svg className="w-4 h-4 text-gray-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              ))
+            )}
+          </div>
+        )}
+
         {/* ── Pagination ── */}
-        {totalPages > 1 && (
+        {totalPages > 1 && tab !== "followers" && tab !== "following" && (
           <div className="flex items-center justify-center gap-2 mt-6">
             {page > 1 && (
               <Link
