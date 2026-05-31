@@ -164,25 +164,7 @@ export default function PredictClient({
   return (
     <div className="space-y-6">
 
-      {/* ① Stats Overview */}
-      {user && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: zh ? "押注场次"  : "Total Bets",    value: stats.totalBets,              color: "text-white",        emoji: "🎯" },
-            { label: zh ? "胜率"      : "Win Rate",       value: `${stats.winRate}%`,           color: stats.winRate >= 60 ? "text-green-400" : stats.winRate >= 40 ? "text-yellow-400" : "text-red-400", emoji: "📈" },
-            { label: zh ? "累计赢得"  : "Total Won",      value: `${fmt(stats.totalWon)} GC`,  color: "text-green-400",    emoji: "🪙" },
-            { label: zh ? "进行中"    : "In Progress",    value: stats.pendingBets,             color: "text-blue-400",     emoji: "⏳" },
-          ].map((s) => (
-            <div key={s.label} className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-3.5">
-              <div className="text-xl mb-1">{s.emoji}</div>
-              <div className={`text-lg font-black ${s.color}`}>{s.value}</div>
-              <div className="text-[10px] text-gray-500 mt-0.5 uppercase tracking-widest">{s.label}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ② Quick-bet match cards */}
+      {/* ① Quick-bet match cards */}
       {quickMatches.length > 0 && (
         <div>
           <h2 className="text-base font-black text-white mb-3">
@@ -339,7 +321,7 @@ export default function PredictClient({
         />
       )}
 
-      {/* ③ History */}
+      {/* ② History */}
       {user && (
         <div>
           <h2 className="text-base font-black text-white mb-3">
@@ -453,6 +435,24 @@ export default function PredictClient({
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ③ Stats Overview */}
+      {user && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: zh ? "押注场次"  : "Total Bets",    value: stats.totalBets,              color: "text-white",        emoji: "🎯" },
+            { label: zh ? "胜率"      : "Win Rate",       value: `${stats.winRate}%`,           color: stats.winRate >= 60 ? "text-green-400" : stats.winRate >= 40 ? "text-yellow-400" : "text-red-400", emoji: "📈" },
+            { label: zh ? "累计赢得"  : "Total Won",      value: `${fmt(stats.totalWon)} GC`,  color: "text-green-400",    emoji: "🪙" },
+            { label: zh ? "进行中"    : "In Progress",    value: stats.pendingBets,             color: "text-blue-400",     emoji: "⏳" },
+          ].map((s) => (
+            <div key={s.label} className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-3.5">
+              <div className="text-xl mb-1">{s.emoji}</div>
+              <div className={`text-lg font-black ${s.color}`}>{s.value}</div>
+              <div className="text-[10px] text-gray-500 mt-0.5 uppercase tracking-widest">{s.label}</div>
+            </div>
+          ))}
         </div>
       )}
 
