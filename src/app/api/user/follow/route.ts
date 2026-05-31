@@ -56,21 +56,20 @@ export async function POST(req: Request) {
 
   // Sync counts manually (since trigger dollar-quoting fails in some envs)
   await Promise.all([
-    supabase.rpc("increment_follow_counts", {
-      p_follower_id:  user.id,
-      p_following_id: target_id,
-      p_delta: 1,
-    }).then(() => {}).catch(() => {
-      // Fallback: direct update if RPC not available
-      supabase.from("users").select("follower_count, id").eq("id", target_id).single()
-        .then(({ data }) => {
-          if (data) supabase.from("users").update({ follower_count: (data.follower_count ?? 0) + 1 }).eq("id", target_id).then(() => {});
-        });
-      supabase.from("users").select("following_count, id").eq("id", user.id).single()
-        .then(({ data }) => {
-          if (data) supabase.from("users").update({ following_count: (data.following_count ?? 0) + 1 }).eq("id", user.id).then(() => {});
-        });
-    }),
+    (async () => {
+      const { error: rpcErr } = await supabase.rpc("increment_follow_counts", {
+        p_follower_id:  user.id,
+        p_following_id: target_id,
+        p_delta: 1,
+      });
+      if (rpcErr) {
+        // Fallback: direct update if RPC not available
+        const { data: td } = await supabase.from("users").select("follower_count, id").eq("id", target_id).single();
+        if (td) await supabase.from("users").update({ follower_count: ((td as { follower_count?: number }).follower_count ?? 0) + 1 }).eq("id", target_id);
+        const { data: fd } = await supabase.from("users").select("following_count, id").eq("id", user.id).single();
+        if (fd) await supabase.from("users").update({ following_count: ((fd as { following_count?: number }).following_count ?? 0) + 1 }).eq("id", user.id);
+      }
+    })(),
   ]);
 
   // Notify the followed user

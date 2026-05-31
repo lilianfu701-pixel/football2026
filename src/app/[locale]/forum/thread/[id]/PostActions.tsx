@@ -31,6 +31,7 @@ interface Props {
   isReplyMode?:  boolean;
   isReplyBox?:   boolean;
   isBookmarked?: boolean;
+  categorySlug?: string;           // used for "新帖" link
 }
 
 export default function PostActions({
@@ -45,6 +46,7 @@ export default function PostActions({
   onEditClick,
   isHeaderMode, isReplyBox,
   isBookmarked = false,
+  categorySlug,
 }: Props) {
   const router = useRouter();
 
@@ -68,6 +70,7 @@ export default function PostActions({
       const { html } = (e as CustomEvent<{ html: string }>).detail;
       setReplyText(html);
       setInjectHtml(html);
+      setReplyOpen(true);          // auto-expand when a quote is triggered
       setTimeout(() => {
         document.getElementById("reply-box")?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 50);
@@ -216,7 +219,7 @@ export default function PostActions({
     );
   }
 
-  // ── Reply box mode: full composer at bottom ───────────────────────────────
+  // ── Reply box mode: collapsed bar → expand on click (Discuz style) ─────────
   if (isReplyBox) {
     if (!userId) {
       return (
@@ -231,35 +234,74 @@ export default function PostActions({
         </div>
       );
     }
+
+    const newPostHref = categorySlug
+      ? `/${locale}/forum/${categorySlug}/new`
+      : `/${locale}/forum/new`;
+
     return (
       <div id="reply-box" className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
-        <div className="px-5 py-3 border-b border-[#1E3A5F]">
-          <span className="text-sm font-black text-white">✍️ {zh ? "发表回复" : "Post a Reply"}</span>
-        </div>
-        <div className="p-4">
-          <RichTextEditor
-            value={replyText}
-            onChange={setReplyText}
-            injectHtml={injectHtml}
-            zh={zh}
-            placeholder={zh ? "写下你的回复…" : "Write your reply…"}
-          />
-          {replyErr && <p className="text-xs text-red-400 mt-2">⚠ {replyErr}</p>}
-          <div className="flex justify-end mt-3">
+        {/* ── Discuz-style action bar ── */}
+        {!replyOpen && (
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-[#1E3A5F]">
+            <span className="text-xs text-gray-500 font-bold shrink-0">{zh ? "快速操作：" : "Quick actions:"}</span>
             <button
-              onClick={handleReply}
-              disabled={submitting}
-              className="bg-[#FFD700] text-[#0A1628] font-black px-6 py-2.5 rounded-xl text-sm hover:bg-[#FFC200] transition-colors disabled:opacity-50"
+              onClick={() => { setReplyOpen(true); setTimeout(() => document.getElementById("reply-box")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60); }}
+              className="flex items-center gap-1.5 px-4 py-1.5 bg-[#FFD700] text-[#0A1628] rounded-xl text-xs font-black hover:bg-[#FFC200] transition-colors"
             >
-              {submitting ? "…" : (zh ? "🚀 提交回复" : "🚀 Submit Reply")}
+              ✍️ {zh ? "回复本帖" : "Reply"}
             </button>
+            <a
+              href={newPostHref}
+              className="flex items-center gap-1.5 px-4 py-1.5 bg-[#1E3A5F] border border-[#2A5A8F] text-gray-300 rounded-xl text-xs font-bold hover:text-white hover:bg-[#2A5A8F] transition-colors"
+            >
+              📝 {zh ? "发新帖" : "New Post"}
+            </a>
           </div>
-        </div>
+        )}
+
+        {/* ── Expanded editor ── */}
+        {replyOpen && (
+          <>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-[#1E3A5F]">
+              <span className="text-sm font-black text-white">✍️ {zh ? "发表回复" : "Post a Reply"}</span>
+              <button
+                onClick={() => { setReplyOpen(false); setReplyText(""); setReplyErr(null); }}
+                className="text-gray-500 hover:text-white text-lg leading-none transition-colors"
+              >✕</button>
+            </div>
+            <div className="p-4">
+              <RichTextEditor
+                value={replyText}
+                onChange={setReplyText}
+                injectHtml={injectHtml}
+                zh={zh}
+                placeholder={zh ? "写下你的回复…" : "Write your reply…"}
+              />
+              {replyErr && <p className="text-xs text-red-400 mt-2">⚠ {replyErr}</p>}
+              <div className="flex items-center justify-between mt-3">
+                <a
+                  href={newPostHref}
+                  className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                >
+                  📝 {zh ? "发新帖" : "New Post"}
+                </a>
+                <button
+                  onClick={handleReply}
+                  disabled={submitting}
+                  className="bg-[#FFD700] text-[#0A1628] font-black px-6 py-2.5 rounded-xl text-sm hover:bg-[#FFC200] transition-colors disabled:opacity-50"
+                >
+                  {submitting ? "…" : (zh ? "🚀 提交回复" : "🚀 Submit")}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     );
   }
 
-  // ── Cell action bar: ❤️ 引用 ⭐评分 🚩举报 💬回复 | ↑Top ───────────────────
+  // ── Cell action bar: ❤️ 🔖 引用 💬回复 📝新帖 ✏️编辑 🗑删除 🚩举报 | ↑Top ─────
   return (
     <>
       <div className="flex items-center gap-0.5 flex-wrap text-[11px]">
@@ -274,6 +316,18 @@ export default function PostActions({
           }`}
         >
           ❤️ {likes > 0 ? likes : (zh ? "点赞" : "Like")}
+        </button>
+
+        {/* Bookmark (post-level) */}
+        <button
+          onClick={handleBookmark}
+          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-bold transition-all border ${
+            bookmarked
+              ? "bg-orange-500/15 border-orange-500/30 text-orange-400"
+              : "border-transparent text-gray-500 hover:text-white hover:border-[#1E3A5F]"
+          }`}
+        >
+          🔖 {bookmarked ? (zh ? "已收藏" : "Saved") : (zh ? "收藏" : "Bookmark")}
         </button>
 
         {/* Quote */}
@@ -370,6 +424,16 @@ export default function PostActions({
           >
             💬 {zh ? "回复" : "Reply"}
           </button>
+        )}
+
+        {/* New Post */}
+        {categorySlug && (
+          <a
+            href={`/${locale}/forum/${categorySlug}/new`}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-bold border border-transparent text-gray-500 hover:text-white hover:border-[#1E3A5F] transition-all"
+          >
+            📝 {zh ? "新帖" : "New Post"}
+          </a>
         )}
 
         {/* Top */}

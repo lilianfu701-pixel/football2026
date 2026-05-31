@@ -39,6 +39,8 @@ interface Props {
   isFollowing?:       boolean;
   replyCount?:        number;
   quoteContent:       string;
+  isBookmarked?:      boolean;
+  categorySlug?:      string;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -59,6 +61,7 @@ export default function EditableFloor({
   title, isPost, userId, authorId,
   locale, zh, postId, replyId, authorName, isAdmin, isLocked,
   likeCount, isLiked, isFollowing, replyCount, quoteContent,
+  isBookmarked, categorySlug,
 }: Props) {
   const router = useRouter();
   const isAuthor = !!(userId && userId === authorId);
@@ -247,6 +250,8 @@ export default function EditableFloor({
           zh={zh}
           isAuthor={isAuthor}
           onEditClick={!isLocked ? startEdit : undefined}
+          isBookmarked={isBookmarked}
+          categorySlug={categorySlug}
         />
       </div>
     </>

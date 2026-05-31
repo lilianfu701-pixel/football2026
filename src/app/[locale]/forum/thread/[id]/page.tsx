@@ -415,6 +415,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
     floorRatings:  RatingEntry[];
     title?:        string;
   }) {
+    const catSlug = Array.isArray(cat) ? (cat[0]?.slug ?? undefined) : (cat?.slug ?? undefined);
     const cellAuthorId   = authorUser?.id ?? null;
     const cellAuthorName = authorUser?.nickname ?? "?";
     return (
@@ -478,6 +479,8 @@ export default async function PostPage({ params, searchParams }: PageProps) {
               isFollowing={isPost ? !!myFollowRes.data : undefined}
               replyCount={isPost ? p.reply_count : undefined}
               quoteContent={content}
+              isBookmarked={isBookmarked}
+              categorySlug={catSlug}
             />
           </div>
         </div>
@@ -785,6 +788,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
               isLiked={false}
               isReplyBox
               zh={zh}
+              categorySlug={Array.isArray(cat) ? (cat[0]?.slug ?? undefined) : (cat?.slug ?? undefined)}
             />
           ) : (
             <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl px-5 py-6 text-center">
