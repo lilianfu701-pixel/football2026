@@ -58,7 +58,21 @@ export default async function GlobalSidebar({ locale }: Props) {
   const userBets        = userBetsRes.data;
   const awardBets       = awardBetsRes.data;
   const allMatchesBrief = allMatchesRes.data;
-  const dbFollowedIds   = ((followsRes.data ?? []) as { match_id: number }[]).map((r) => r.match_id);
+
+  // Get followed match IDs from DB, handle error gracefully
+  let dbFollowedIds: number[] = [];
+  if (user) {
+    // Check for query error first
+    if ((followsRes as any).error) {
+      console.error("[GlobalSidebar] match_follows query error:", (followsRes as any).error);
+    } else if (followsRes.data) {
+      try {
+        dbFollowedIds = (followsRes.data as { match_id: number }[]).map((r) => r.match_id);
+      } catch (e) {
+        console.error("[GlobalSidebar] Error parsing follows:", e);
+      }
+    }
+  }
   const { phase: awardPhase } = getBetPhase();
 
   // ── Sidebar profile (sp) ──────────────────────────────────────────────────
