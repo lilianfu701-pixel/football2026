@@ -5,6 +5,15 @@ import { getTeamColor } from "@/lib/teamColors";
 
 const centroidMap = new Map(COUNTRY_CENTROIDS.map((c) => [c.code, c]));
 
+type PropType = "firework" | "goal" | "rally" | "boo";
+
+const PROP_COSTS: Record<PropType, number> = {
+  firework: 5_000_000,
+  goal:     10_000_000,
+  rally:    2_000_000,
+  boo:      5_000_000,
+};
+
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -13,10 +22,12 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { match_id, prop_type = "firework" } = body;
+  const { match_id, prop_type = "firework" } = body as { match_id: number; prop_type: PropType };
   if (!match_id) {
     return NextResponse.json({ error: "match_id required" }, { status: 400 });
   }
+
+  const cost = PROP_COSTS[prop_type] ?? PROP_COSTS.firework;
 
   // Run all queries in parallel
   const [profileRes, voteRes, matchRes] = await Promise.all([
@@ -35,11 +46,33 @@ export async function POST(request: NextRequest) {
       .maybeSingle(),
   ]);
 
-  const vote      = voteRes.data?.vote as "home" | "away" | "neutral" | null;
-  const homeTeam  = matchRes.data?.home_team ?? "";
-  const awayTeam  = matchRes.data?.away_team ?? "";
+  const vote     = voteRes.data?.vote as "home" | "away" | "neutral" | null;
+  const homeTeam = matchRes.data?.home_team ?? "";
+  const awayTeam = matchRes.data?.away_team ?? "";
 
-  // Use team's representative color; neutral fans get home team color
+  // Only fans who chose a side (home or away) may use props
+  if (!vote || vote === "neutral") {
+    return NextResponse.json(
+      { error: "neutral_vote", message: "You must support a team to use props" },
+      { status: 403 },
+    );
+  }
+
+  // Deduct GC atomically (will error if insufficient balance)
+  const { error: deductError } = await supabase.rpc("gc_deduct_atomic", {
+    p_user_id: user.id,
+    p_amount:  cost,
+    p_tx_type: "prop_used",
+    p_desc:    `Match ${match_id} prop: ${prop_type}`,
+  });
+
+  if (deductError) {
+    if (deductError.message?.includes("insufficient_balance")) {
+      return NextResponse.json({ error: "insufficient_gc", message: "Insufficient GoalCoins" }, { status: 400 });
+    }
+    return NextResponse.json({ error: "Failed to deduct GoalCoins" }, { status: 500 });
+  }
+
   const teamColor = vote === "away"
     ? getTeamColor(awayTeam).primary
     : getTeamColor(homeTeam).primary;
@@ -63,5 +96,6 @@ export async function POST(request: NextRequest) {
       username,
       prop_type,
     },
+    cost_deducted: cost,
   });
 }

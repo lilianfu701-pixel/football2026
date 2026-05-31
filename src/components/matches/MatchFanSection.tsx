@@ -99,6 +99,13 @@ interface TooltipState {
 }
 type PropType = "firework" | "goal" | "rally" | "boo";
 
+const PROP_COSTS: Record<PropType, string> = {
+  firework: "5M",
+  goal:     "10M",
+  rally:    "2M",
+  boo:      "5M",
+};
+
 interface FireworkItem {
   id:           string;
   country_code: string;
@@ -691,6 +698,11 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
   // ── Launch any prop ─────────────────────────────────────────────────────────
   async function launchFirework(propType: PropType = "firework") {
     if (launching || !loggedIn) return;
+    // Block neutral or unvoted users
+    if (!userVote || userVote === "neutral") {
+      setPropError(zh ? "请先选择支持的队伍才能使用道具" : "Please support a team first to use props");
+      return;
+    }
     const now     = Date.now();
     const elapsed = (now - lastLaunchRef.current) / 1000;
     if (elapsed < FIREWORK_COOLDOWN) {
@@ -709,7 +721,13 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
       });
       const data = await res.json();
       if (!res.ok) {
-        setPropError(data.error ?? (zh ? "操作失败" : "Failed"));
+        if (data.error === "neutral_vote") {
+          setPropError(zh ? "请先选择支持的队伍才能使用道具" : "Please support a team first to use props");
+        } else if (data.error === "insufficient_gc") {
+          setPropError(zh ? "GC 余额不足" : "Insufficient GoalCoins");
+        } else {
+          setPropError(data.message ?? data.error ?? (zh ? "操作失败" : "Failed"));
+        }
         return;
       }
       // Record launch time & start cooldown countdown
@@ -1311,27 +1329,45 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
             </div>
           </div>
 
+          {/* Neutral / unvoted lock notice */}
+          {loggedIn && (!userVote || userVote === "neutral") && (
+            <div className="mb-2.5 flex items-center gap-2 bg-[#1A2D4A] border border-[#FFD700]/20 rounded-xl px-3 py-2">
+              <span className="text-sm shrink-0">⚠️</span>
+              <p className="text-[11px] text-[#FFD700]/80 leading-snug">
+                {zh
+                  ? "道具仅限支持某一方的球迷使用，请先在下方选择支持队伍"
+                  : "Props are for fans who support a team. Please vote for a side below."}
+              </p>
+            </div>
+          )}
+
           <div className="grid grid-cols-4 gap-2">
             {(
               [
-                { type: "firework" as PropType, emoji: "🎆", zh: "礼花",   en: "Firework", desc: zh ? "欢庆" : "Cheer"  },
-                { type: "goal"     as PropType, emoji: "⚽", zh: "进球",   en: "Goal",     desc: zh ? "进球" : "GOAL!"  },
-                { type: "rally"    as PropType, emoji: "💙", zh: "加油",   en: "Rally",    desc: zh ? "鼓励" : "Rally"  },
-                { type: "boo"      as PropType, emoji: "😤", zh: "嘘声",   en: "Boo",      desc: zh ? "愤怒" : "Angry"  },
-              ] as { type: PropType; emoji: string; zh: string; en: string; desc: string }[]
+                { type: "firework" as PropType, emoji: "🎆", zh: "礼花",   en: "Firework" },
+                { type: "goal"     as PropType, emoji: "⚽", zh: "进球",   en: "Goal"     },
+                { type: "rally"    as PropType, emoji: "💙", zh: "加油",   en: "Rally"    },
+                { type: "boo"      as PropType, emoji: "😤", zh: "嘘声",   en: "Boo"      },
+              ] as { type: PropType; emoji: string; zh: string; en: string }[]
             ).map((prop) => {
-              const canUse   = loggedIn && !launching && cooldownLeft === 0;
+              const hasSide  = loggedIn && (userVote === "home" || userVote === "away");
+              const canUse   = hasSide && !launching && cooldownLeft === 0;
               const isBoo    = prop.type === "boo";
               const borderOn = isBoo ? "border-red-500/50 hover:border-red-500 hover:bg-red-500/10"
                                      : "border-[#FFD700]/50 hover:border-[#FFD700] hover:bg-[#FFD700]/10";
+              const disabledTitle = !loggedIn
+                ? (zh ? "登录后使用" : "Login to use")
+                : (!userVote || userVote === "neutral")
+                  ? (zh ? "请先选择支持队伍" : "Support a team first")
+                  : undefined;
               return (
                 <button
                   key={prop.type}
                   onClick={() => launchFirework(prop.type)}
                   disabled={!canUse}
-                  title={!loggedIn ? (zh ? "登录后使用" : "Login to use") : undefined}
+                  title={disabledTitle}
                   className={`
-                    relative flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl border-2 transition-all select-none
+                    relative flex flex-col items-center gap-0.5 px-2 py-2 rounded-xl border-2 transition-all select-none
                     ${canUse ? `${borderOn} active:scale-95 cursor-pointer` : "border-[#1E3A5F] opacity-40 cursor-not-allowed"}
                   `}
                 >
@@ -1343,7 +1379,9 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
                     <span className="text-2xl">{prop.emoji}</span>
                   )}
                   <span className="text-[11px] font-bold text-gray-300">{zh ? prop.zh : prop.en}</span>
-                  <span className={`text-[9px] font-bold ${isBoo ? "text-red-400/70" : "text-gray-600"}`}>{prop.desc}</span>
+                  <span className={`text-[9px] font-bold ${isBoo ? "text-red-400/70" : "text-[#FFD700]/60"}`}>
+                    {PROP_COSTS[prop.type]} GC
+                  </span>
                 </button>
               );
             })}
