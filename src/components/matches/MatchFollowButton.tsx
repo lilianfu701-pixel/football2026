@@ -41,17 +41,25 @@ export default function MatchFollowButton({
   const [showModal, setShowModal] = useState(false);
   const [permDenied, setPermDenied] = useState(false);
 
-  // On mount: sync localStorage with DB state
+  // On mount: self-fetch follow state from API (for static-rendered pages where initialFollowing is always false)
+  useEffect(() => {
+    fetch(`/api/matches/${matchId}/user-state`)
+      .then((r) => r.json())
+      .then((d: { isFollowing: boolean; userId: string | null }) => {
+        if (d.userId) setFollowing(d.isFollowing);
+      })
+      .catch(() => {});
+  }, [matchId]);
+
+  // Sync localStorage with actual state
   useEffect(() => {
     const key = `follow_${matchId}`;
-    if (initialFollowing) {
+    if (following) {
       localStorage.setItem(key, "1");
-    }
-    // If localStorage says followed but DB doesn't, trust DB
-    if (!initialFollowing) {
+    } else {
       localStorage.removeItem(key);
     }
-  }, [matchId, initialFollowing]);
+  }, [matchId, following]);
 
   const storageKey = `follow_${matchId}`;
 

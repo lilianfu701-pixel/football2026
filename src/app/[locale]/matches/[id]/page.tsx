@@ -1,11 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createStaticClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { getFlagUrl, isTBD, getTeamDisplayName } from "@/lib/flags";
 import { getTeamColor } from "@/lib/teamColors";
-import PredictionPanel from "./PredictionPanel";
-import ScorePredictionPanel from "./ScorePredictionPanel";
+import MatchUserSection from "./MatchUserSection";
 import MatchHero from "@/components/forum/MatchHero";
 import ShareButtons from "@/components/forum/ShareButtons";
 import MatchFollowButton from "@/components/matches/MatchFollowButton";
@@ -15,6 +15,23 @@ import { getH2H } from "@/lib/h2h";
 import { AI_MODELS } from "@/lib/aiModels";
 import type { AiPredictions as AiPredictionsType } from "@/lib/aiModels";
 import type { AiSuccessRates } from "@/components/matches/AiPredictions";
+
+// ── Static generation: pre-render all 104 match pages × 2 locales ──────────────
+export const revalidate = 60; // ISR: re-generate in background every 60 seconds
+
+export async function generateStaticParams() {
+  try {
+    const supabase = createStaticClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    );
+    const { data } = await supabase.from("matches").select("id");
+    const ids = (data ?? []).map((m: { id: number }) => String(m.id));
+    return ["zh", "en"].flatMap((locale) => ids.map((id) => ({ locale, id })));
+  } catch {
+    return [];
+  }
+}
 
 interface MatchPageProps {
   params: Promise<{ locale: string; id: string }>;
@@ -36,34 +53,18 @@ export default async function MatchPage({ params }: MatchPageProps) {
   const zh = locale === "zh";
   const supabase = await createClient();
 
-  const [matchRes, userRes] = await Promise.all([
-    supabase.from("matches").select("*").eq("id", id).single(),
-    supabase.auth.getUser(),
-  ]);
+  // Only fetch public match data — no auth/user calls here (page is statically generated)
+  const matchRes = await supabase.from("matches").select("*").eq("id", id).single();
 
   const match = matchRes.data;
   if (!match) notFound();
-  const user = userRes.data.user;
 
-  // ── Parallel secondary fetches ─────────────────────────────────────────────
+  // ── Parallel public fetches ────────────────────────────────────────────────
   const [
-    profileRes, betRes, betStatsRes, fanVoteRes,
-    myFollowRes, h2hRes, forumPostRes, siblingRes, navIndexRes, aiHistoryRes,
-    scoreBetsRes,
+    fanVoteRes,
+    h2hRes, forumPostRes, siblingRes, navIndexRes, aiHistoryRes,
   ] = await Promise.all([
-    user
-      ? supabase.from("users").select("gc_balance, nickname, username").eq("id", user.id).single()
-      : Promise.resolve({ data: null }),
-    user
-      ? supabase.from("bets").select("*")
-          .eq("user_id", user.id).eq("match_id", id).single()
-      : Promise.resolve({ data: null }),
-    supabase.from("bets").select("prediction").eq("match_id", id),
-    supabase.from("match_votes").select("vote, user_id").eq("match_id", id),
-    user
-      ? supabase.from("match_follows").select("match_id")
-          .eq("user_id", user.id).eq("match_id", id).maybeSingle()
-      : Promise.resolve({ data: null }),
+    supabase.from("match_votes").select("vote").eq("match_id", id),
     // H2H — fetched from external CSV dataset, cached in h2h_matches
     getH2H(match.home_team, match.away_team, 8),
     // Forum post associated with this match (for ShareButtons)
@@ -93,33 +94,10 @@ export default async function MatchPage({ params }: MatchPageProps) {
       .select("ai_predictions, home_score, away_score")
       .eq("status", "finished")
       .not("ai_predictions", "is", null),
-    // Score bets — all of the current user's bets for this match (multi-bet)
-    user
-      ? supabase.from("score_bets")
-          .select("id, score_home, score_away, gc_amount, odds_multiplier, status")
-          .eq("match_id", id)
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: true })
-      : Promise.resolve({ data: [] }),
   ]);
 
-  const profile = profileRes.data as { gc_balance: number; nickname: string; username: string } | null;
-  const existingBet = betRes.data as { id: string; prediction: string; gc_amount: number; status: string; potential_payout: number } | null;
-
-  // Score bets — all user bets for this match
-  type ScoreBetRow = { id: string; score_home: number; score_away: number; gc_amount: number; odds_multiplier: number; status: string };
-  const myScoreBets = (scoreBetsRes.data ?? [] as ScoreBetRow[]).map((b: ScoreBetRow) => ({
-    id:             b.id,
-    scoreHome:      b.score_home,
-    scoreAway:      b.score_away,
-    gcAmount:       Number(b.gc_amount),
-    oddsMultiplier: Number(b.odds_multiplier),
-    status:         b.status,
-  }));
-  const betStats    = (betStatsRes.data ?? []) as { prediction: string }[];
-  const allVotes    = fanVoteRes.data ?? [];
-  const isFollowing = !!myFollowRes.data;
-  const h2hMatches  = h2hRes ?? [];
+  const allVotes   = fanVoteRes.data ?? [];
+  const h2hMatches = h2hRes ?? [];
   const forumPost   = forumPostRes.data as { id: number; title: string; title_zh: string | null; like_count: number } | null;
 
   type SiblingMatch = {
@@ -163,16 +141,12 @@ export default async function MatchPage({ params }: MatchPageProps) {
     }
   }
 
-  // (betStats kept for PredictionPanel — no distribution display)
-
   // ── Fan support vote counts ────────────────────────────────────────────────
   const fanCounts = { home: 0, neutral: 0, away: 0 };
-  let myVote: "home" | "neutral" | "away" | null = null;
-  for (const v of allVotes as { vote: string; user_id: string }[]) {
-    if (v.vote === "home")    fanCounts.home++;
+  for (const v of allVotes as { vote: string }[]) {
+    if (v.vote === "home")         fanCounts.home++;
     else if (v.vote === "neutral") fanCounts.neutral++;
     else if (v.vote === "away")    fanCounts.away++;
-    if (user && v.user_id === user.id) myVote = v.vote as "home" | "neutral" | "away";
   }
 
   // ── H2H stats ──────────────────────────────────────────────────────────────
@@ -185,7 +159,6 @@ export default async function MatchPage({ params }: MatchPageProps) {
   }
 
   const isFinished = match.status === "finished";
-  const isLive     = match.status === "live";
 
   const stageObj   = STAGE_LABELS[match.stage];
   const stageLabel = match.group_name
@@ -201,8 +174,6 @@ export default async function MatchPage({ params }: MatchPageProps) {
 
   const homeColors   = getTeamColor(match.home_team);
   const awayColors   = getTeamColor(match.away_team);
-
-  const forumPostId = forumPost?.id ?? null;
 
   return (
     <div className="min-h-screen bg-[#0A1628] text-white pb-20 pt-6 px-1">
@@ -319,8 +290,8 @@ export default async function MatchPage({ params }: MatchPageProps) {
               awayScore={match.away_score}
               status={match.status ?? "upcoming"}
               votes={fanCounts}
-              myVote={myVote}
-              loggedIn={!!user}
+              myVote={null}
+              loggedIn={false}
               zh={zh}
               homeColors={homeColors}
               awayColors={awayColors}
@@ -335,13 +306,13 @@ export default async function MatchPage({ params }: MatchPageProps) {
                 translatedTitle={forumPost?.title_zh ?? null}
                 locale={locale}
                 zh={zh}
-                username={profile?.username ?? null}
+                username={null}
               />
 
               {/* Right: follow match */}
               <MatchFollowButton
                 matchId={Number(id)}
-                initialFollowing={isFollowing}
+                initialFollowing={false}
                 homeTeam={getTeamDisplayName(match.home_team, zh ? "zh" : "en")}
                 awayTeam={getTeamDisplayName(match.away_team, zh ? "zh" : "en")}
                 zh={zh}
@@ -484,85 +455,27 @@ export default async function MatchPage({ params }: MatchPageProps) {
           locale={locale}
         />
 
-        {/* ── Prediction Panel (above the map) ─────────────────────────────── */}
-        {isFinished ? (
-          <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5 text-center mb-4">
-            <div className="text-3xl mb-2">🏁</div>
-            <p className="text-gray-400 text-sm">
-              {zh ? "比赛已结束，竞猜已关闭。" : "This match has ended. Predictions are closed."}
-            </p>
-            {existingBet && (
-              <div className={`mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold ${
-                existingBet.status === "won" ? "bg-green-500/20 text-green-400" :
-                existingBet.status === "lost" ? "bg-red-500/20 text-red-400" :
-                "bg-gray-500/20 text-gray-400"
-              }`}>
-                {existingBet.status === "won" ? (zh ? "🎉 恭喜获奖！" : "🎉 You won!") :
-                 existingBet.status === "lost" ? (zh ? "😔 下次加油" : "😔 Better luck") :
-                 (zh ? "⏳ 等待结算" : "⏳ Pending")}
-              </div>
-            )}
-          </div>
-        ) : !user ? (
-          <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-6 text-center mb-4">
-            <div className="text-3xl mb-3">🔒</div>
-            <p className="text-white font-bold mb-1">{zh ? "登录即可参与竞猜" : "Login to Predict"}</p>
-            <p className="text-gray-500 text-sm mb-5">
-              {zh ? "注册账号，参与竞猜，赢取GoalCoin！" : "Sign in to place your prediction and earn GoalCoins"}
-            </p>
-            <div className="flex gap-3 justify-center">
-              <Link href={`/${locale}/auth/login`}
-                className="px-6 py-2.5 bg-[#FFD700] text-[#0A1628] font-bold rounded-xl text-sm hover:bg-[#FFC200] transition-colors">
-                {zh ? "登录" : "Login"}
-              </Link>
-              <Link href={`/${locale}/auth/register`}
-                className="px-6 py-2.5 border border-[#1E3A5F] text-gray-300 font-semibold rounded-xl text-sm hover:border-[#FFD700]/50 hover:text-white transition-colors">
-                {zh ? "免费注册" : "Register Free"}
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <div className="mb-4">
-            <PredictionPanel
-              matchId={id}
-              locale={locale}
-              homeTeam={match.home_team}
-              awayTeam={match.away_team}
-              homeTeamZh={getTeamDisplayName(match.home_team, "zh")}
-              awayTeamZh={getTeamDisplayName(match.away_team, "zh")}
-              homeFlag={match.home_flag ?? "🏳️"}
-              awayFlag={match.away_flag ?? "🏳️"}
-              poolHome={poolHome}
-              poolDraw={poolDraw}
-              poolAway={poolAway}
-              refOddsHome={refOddsHome}
-              refOddsDraw={refOddsDraw}
-              refOddsAway={refOddsAway}
-              gcBalance={profile?.gc_balance ?? 0}
-              username={profile?.nickname ?? user?.user_metadata?.display_name ?? user?.email?.split("@")[0] ?? "Player"}
-              stageLabel={stageLabel}
-              existingBet={existingBet}
-              homeColors={homeColors}
-              awayColors={awayColors}
-              kickoffTime={match.kickoff_time}
-            />
-          </div>
-        )}
-
-        {/* ── Score Prediction Panel ────────────────────────────────────────── */}
-        {!isFinished && user && (
-          <ScorePredictionPanel
-            matchId={id}
-            locale={locale}
-            homeTeam={match.home_team}
-            awayTeam={match.away_team}
-            homeColors={homeColors}
-            awayColors={awayColors}
-            gcBalance={profile?.gc_balance ?? 0}
-            myBets={myScoreBets}
-            kickoffTime={match.kickoff_time}
-          />
-        )}
+        {/* ── Prediction Panel + Score Panel (client-side, user-aware) ────────── */}
+        <MatchUserSection
+          matchId={id}
+          locale={locale}
+          zh={zh}
+          homeTeam={match.home_team}
+          awayTeam={match.away_team}
+          homeFlag={match.home_flag ?? "🏳️"}
+          awayFlag={match.away_flag ?? "🏳️"}
+          poolHome={poolHome}
+          poolDraw={poolDraw}
+          poolAway={poolAway}
+          refOddsHome={refOddsHome}
+          refOddsDraw={refOddsDraw}
+          refOddsAway={refOddsAway}
+          homeColors={homeColors}
+          awayColors={awayColors}
+          stageLabel={stageLabel}
+          kickoffTime={match.kickoff_time}
+          isFinished={isFinished}
+        />
 
         {/* ── Global Fan Map ────────────────────────────────────────────────── */}
         <MatchFanSection
@@ -572,8 +485,8 @@ export default async function MatchPage({ params }: MatchPageProps) {
           homeColors={homeColors}
           awayColors={awayColors}
           zh={zh}
-          loggedIn={!!user}
-          userVote={myVote}
+          loggedIn={false}
+          userVote={null}
         />
 
     </div>

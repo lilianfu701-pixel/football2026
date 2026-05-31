@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { getFlagUrl, getTeamDisplayName } from "@/lib/flags";
@@ -94,6 +94,17 @@ export default function MatchHero({
   const [votes, setVotes] = useState(initialVotes);
   const [myVote, setMyVote] = useState(initialMyVote);
   const [voting, setVoting] = useState(false);
+
+  // Self-fetch user vote on mount (for statically-generated match pages where initialMyVote is null)
+  useEffect(() => {
+    if (initialMyVote !== null) return;  // server already provided vote — skip
+    fetch(`/api/matches/${matchId}/user-state`)
+      .then((r) => r.json())
+      .then((d: { myVote: string | null; userId: string | null }) => {
+        if (d.userId) setMyVote(d.myVote);
+      })
+      .catch(() => {});
+  }, [matchId, initialMyVote]);
 
   const total = votes.home + votes.neutral + votes.away;
   const pct = (n: number) => total > 0 ? Math.round((n / total) * 100) : 0;
