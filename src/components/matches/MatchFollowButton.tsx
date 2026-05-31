@@ -99,6 +99,7 @@ export default function MatchFollowButton({
 
   function handleClick(e: React.MouseEvent) {
     e.preventDefault();
+    e.stopPropagation();
     if (following) {
       apiToggle(false);
     } else {

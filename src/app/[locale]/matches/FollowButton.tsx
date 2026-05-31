@@ -69,12 +69,14 @@ export default function FollowButton({ matchId, homeTeam, awayTeam, locale }: Pr
 
   function handleUnfollow(e: React.MouseEvent) {
     e.preventDefault();
+    e.stopPropagation();
     localStorage.removeItem(storageKey);
     setFollowing(false);
   }
 
   function handleClick(e: React.MouseEvent) {
     e.preventDefault();
+    e.stopPropagation();
     if (following) {
       handleUnfollow(e);
     } else {
