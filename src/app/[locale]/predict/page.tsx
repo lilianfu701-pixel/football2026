@@ -79,7 +79,11 @@ export default async function PredictPage({ params }: PageProps) {
     potential_payout: number; status: string;
   }> = {};
   (existingBetsRaw ?? []).forEach((b) => {
-    existingBetsMap[b.match_id] = b;
+    existingBetsMap[b.match_id] = {
+      ...b,
+      odds: b.odds ?? 0,
+      potential_payout: b.potential_payout ?? 0,
+    };
   });
 
   // ── Full bet history (two-step to avoid silent JOIN failures) ───────────────
@@ -231,7 +235,7 @@ export default async function PredictPage({ params }: PageProps) {
               id:             b.id,
               prediction:     b.prediction,
               gcAmount:       b.gc_amount,
-              odds:           b.odds,
+              odds:           b.odds ?? 0,
               potentialPayout: b.potential_payout ?? 0,
               status:         b.status,
               createdAt:      b.created_at,

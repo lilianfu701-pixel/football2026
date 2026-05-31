@@ -233,7 +233,7 @@ export default function PredictClient({
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[10px] text-gray-500">{fmt(activeBet.gc_amount)} GC · ×{activeBet.odds.toFixed(2)}</p>
+                        <p className="text-[10px] text-gray-500">{fmt(activeBet.gc_amount)} GC · ×{(activeBet.odds ?? 0).toFixed(2)}</p>
                         <p className="text-xs text-[#FFD700] font-black">→ {fmt(activeBet.potential_payout)}</p>
                       </div>
                     </div>
@@ -413,7 +413,7 @@ export default function PredictClient({
                             {pickLbl}
                           </span>
                           <span className="text-[10px] text-gray-500">
-                            {fmt(bet.gcAmount)} GC · ×{bet.odds.toFixed(2)}
+                            {fmt(bet.gcAmount)} GC · ×{(bet.odds ?? 0).toFixed(2)}
                           </span>
                         </div>
                       </div>
