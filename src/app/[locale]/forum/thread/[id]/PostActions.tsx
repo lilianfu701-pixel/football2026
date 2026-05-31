@@ -348,16 +348,8 @@ export default function PostActions({
                 : "";
 
               if (html) {
-                // Inject into this cell's inline reply box
-                setInjectHtml(html);
-                setReplyText(html);
-                setReplyOpen(true);
-                // Also broadcast for the bottom reply box
+                // Broadcast to the bottom reply box only (not inline)
                 window.dispatchEvent(new CustomEvent("forum:quote", { detail: { html } }));
-                setTimeout(() => {
-                  document.getElementById(`inline-reply-${targetId}`)
-                    ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-                }, 80);
               } else {
                 // No content — just open inline reply
                 setReplyOpen(true);
