@@ -3,6 +3,7 @@
 import {
   CalendarDays,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   CircleDollarSign,
   Flame,
@@ -16,9 +17,12 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGcBalance } from "@/context/GcBalance";
+import { getFlagUrl } from "@/lib/flags";
 import MobileInstallPrompt from "@/components/mobile/MobileInstallPrompt";
+import MobileScheduleDetails from "@/components/mobile/MobileScheduleDetails";
+import { redirectToMobileLogin } from "@/components/mobile/mobileAuth";
 
 declare global {
   interface Navigator {
@@ -43,15 +47,31 @@ export type MobileMatch = {
   oddsDraw: number | null;
   oddsAway: number | null;
   followCount: number;
+  isFollowing: boolean;
+};
+
+export type MobileTopScorer = {
+  id: number;
+  playerName: string;
+  playerNameZh: string | null;
+  team: string;
+  goals: number;
+  assists: number;
+  matchesPlayed: number;
 };
 
 interface MobileHomeProps {
   locale: string;
   isLoggedIn: boolean;
+  canPersistActions: boolean;
   userEmail?: string;
+  userDisplayName?: string;
+  profileBalance: number;
   daysLeft: string;
   upcomingMatches: MobileMatch[];
-  followedMatches: MobileMatch[];
+  featuredMatches: MobileMatch[];
+  scheduleMatches: MobileMatch[];
+  topScorers: MobileTopScorer[];
 }
 
 type MobileView = "home" | "matches" | "predict" | "forum" | "mine";
@@ -329,14 +349,19 @@ function mergeMatches(...groups: MobileMatch[][]) {
 export default function MobileHome({
   locale,
   isLoggedIn,
+  canPersistActions,
   userEmail,
+  userDisplayName,
+  profileBalance,
   daysLeft,
   upcomingMatches,
-  followedMatches,
+  featuredMatches,
+  scheduleMatches,
+  topScorers,
 }: MobileHomeProps) {
   const t = getCopy(locale);
-  const { balance, refresh } = useGcBalance();
-  const allMatches = useMemo(() => mergeMatches(upcomingMatches, followedMatches), [upcomingMatches, followedMatches]);
+  const { balance, setBalance, refresh } = useGcBalance();
+  const allMatches = useMemo(() => mergeMatches(upcomingMatches, featuredMatches), [upcomingMatches, featuredMatches]);
   const [checkinState, setCheckinState] = useState<"idle" | "loading" | "done" | "already" | "error">("idle");
   const [isAppMode, setIsAppMode] = useState(false);
   const [modeReady, setModeReady] = useState(false);
@@ -349,6 +374,10 @@ export default function MobileHome({
   useEffect(() => {
     if (!selectedMatch && allMatches[0]) setSelectedMatch(getMatchTeams(locale, allMatches[0]));
   }, [allMatches, locale, selectedMatch]);
+
+  useEffect(() => {
+    if (isLoggedIn) setBalance(profileBalance);
+  }, [isLoggedIn, profileBalance, setBalance]);
 
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
@@ -385,7 +414,11 @@ export default function MobileHome({
   }
 
   async function claimDaily() {
-    if (!isLoggedIn || checkinState === "loading" || checkinState === "done") return;
+    if (!canPersistActions) {
+      redirectToMobileLogin(locale);
+      return;
+    }
+    if (checkinState === "loading" || checkinState === "done") return;
     setCheckinState("loading");
     try {
       const res = await fetch("/api/checkin", { method: "POST" });
@@ -404,7 +437,7 @@ export default function MobileHome({
   const checkinLabel =
     checkinState === "loading" ? t.checking :
     checkinState === "done" || checkinState === "already" ? t.checked :
-    isLoggedIn ? t.checkin : t.checkinLogin;
+    canPersistActions ? t.checkin : t.checkinLogin;
 
   if (!modeReady) {
     return <main className="-mt-16 min-h-screen bg-[#081120]" />;
@@ -416,14 +449,16 @@ export default function MobileHome({
 
   return (
     <main className="-mt-16 min-h-screen bg-[#081120] pb-[calc(5.75rem+env(safe-area-inset-bottom))] text-white">
-      <AppHeader locale={locale} t={t} isLoggedIn={isLoggedIn} userEmail={userEmail} balance={balance} />
+      {activeView !== "matches" && (
+        <AppHeader locale={locale} t={t} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} userEmail={userEmail} userDisplayName={userDisplayName} balance={balance} />
+      )}
 
       <section className="mx-auto max-w-md px-3 py-3">
         {activeView === "home" && (
-          <HomeView locale={locale} t={t} upcomingMatches={upcomingMatches} followedMatches={followedMatches} onOpenView={openView} />
+          <HomeView locale={locale} t={t} upcomingMatches={upcomingMatches} featuredMatches={featuredMatches} topScorers={topScorers} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} />
         )}
         {activeView === "matches" && (
-          <MatchesView locale={locale} t={t} matches={allMatches} onOpenView={openView} />
+          <MatchesView locale={locale} t={t} matches={scheduleMatches} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} onOpenView={openView} />
         )}
         {activeView === "predict" && (
           <PredictView
@@ -447,6 +482,7 @@ export default function MobileHome({
             locale={locale}
             t={t}
             isLoggedIn={isLoggedIn}
+            canPersistActions={canPersistActions}
             userEmail={userEmail}
             balance={balance}
             checkinLabel={checkinLabel}
@@ -465,15 +501,20 @@ function AppHeader({
   locale,
   t,
   isLoggedIn,
+  canPersistActions,
   userEmail,
+  userDisplayName,
   balance,
 }: {
   locale: string;
   t: MobileCopy;
   isLoggedIn: boolean;
+  canPersistActions: boolean;
   userEmail?: string;
+  userDisplayName?: string;
   balance: number;
 }) {
+  const displayName = userDisplayName ?? userEmail?.split("@")[0] ?? "User";
   return (
     <header className="sticky top-0 z-30 border-b border-white/10 bg-[#081120]/95 px-3 py-2.5 backdrop-blur">
       <div className="mx-auto flex max-w-md items-center justify-between gap-3">
@@ -486,17 +527,22 @@ function AppHeader({
             <p className="mt-1 truncate text-[11px] leading-none text-slate-500">m.football2026.net</p>
           </div>
         </div>
-        <Link
-          href={isLoggedIn ? `/${locale}/profile` : `/${locale}/auth/login`}
-          className="max-w-[9.25rem] shrink-0 rounded-lg border border-[#FFD700]/25 bg-[#FFD700]/10 px-2.5 py-1.5 text-right text-[11px] font-black text-[#FFD700]"
-        >
+        <Link href={canPersistActions ? `/${locale}/profile` : `/${locale}/m/login?next=${encodeURIComponent("/m?view=home")}`} className="shrink-0">
           {isLoggedIn ? (
-            <>
-              <span className="block text-[9px] leading-none text-[#FFD700]/70">{t.loggedIn}</span>
-              <span className="mt-0.5 block truncate leading-none">{userEmail ?? `${formatBalance(balance)} GC`}</span>
-            </>
+            <span className="flex max-w-[10rem] items-center gap-1.5">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFD700] text-xs font-black text-[#081120]">
+                {displayName.slice(0, 1).toUpperCase()}
+              </span>
+              <span className="min-w-0 text-right">
+                <span className="flex items-center justify-end gap-1 text-[11px] font-black leading-none text-white">
+                  <span className="truncate">{displayName}</span>
+                  {!canPersistActions && <span className="shrink-0 text-[9px] text-slate-500">{locale === "zh" ? "预览" : "Preview"}</span>}
+                </span>
+                <span className="mt-1 block text-[9px] font-bold leading-none text-[#FFD700]">{formatBalance(balance)} GC</span>
+              </span>
+            </span>
           ) : (
-            t.login
+            <span className="rounded-lg border border-[#FFD700]/25 bg-[#FFD700]/10 px-2.5 py-1.5 text-[11px] font-black text-[#FFD700]">{t.login}</span>
           )}
         </Link>
       </div>
@@ -508,15 +554,36 @@ function HomeView({
   locale,
   t,
   upcomingMatches,
-  followedMatches,
-  onOpenView,
+  featuredMatches,
+  topScorers,
+  isLoggedIn,
+  canPersistActions,
 }: {
   locale: string;
   t: MobileCopy;
   upcomingMatches: MobileMatch[];
-  followedMatches: MobileMatch[];
-  onOpenView: (view: MobileView, match?: string) => void;
+  featuredMatches: MobileMatch[];
+  topScorers: MobileTopScorer[];
+  isLoggedIn: boolean;
+  canPersistActions: boolean;
 }) {
+  const [expandedMatchId, setExpandedMatchId] = useState<number | null>(null);
+  const matchRefs = useRef(new Map<number, HTMLElement>());
+
+  function toggleMatch(matchId: number) {
+    setExpandedMatchId((current) => current === matchId ? null : matchId);
+    window.setTimeout(() => {
+      const node = matchRefs.current.get(matchId);
+      if (!node) return;
+      window.scrollTo({ top: Math.max(0, window.scrollY + node.getBoundingClientRect().top - 54), behavior: "smooth" });
+    }, 80);
+  }
+
+  function setMatchRef(matchId: number, node: HTMLElement | null) {
+    if (node) matchRefs.current.set(matchId, node);
+    else matchRefs.current.delete(matchId);
+  }
+
   return (
     <div className="grid gap-3">
       <section className="overflow-hidden rounded-xl border border-white/10 bg-[linear-gradient(145deg,#0d1a2b_0%,#10345b_58%,#14533b_100%)] p-3">
@@ -528,52 +595,60 @@ function HomeView({
         <p className="mt-1 text-xs leading-5 text-slate-300">{t.subtitle}</p>
       </section>
 
-      <HomeMatchSection
+      <HomeScheduleSection
         locale={locale}
         t={t}
         title={t.upcomingMatches}
-        subtitle={t.upcomingHint}
         matches={upcomingMatches}
-        onOpenView={onOpenView}
+        isLoggedIn={isLoggedIn}
+        canPersistActions={canPersistActions}
+        expandedMatchId={expandedMatchId}
+        onToggle={toggleMatch}
+        setMatchRef={setMatchRef}
       />
 
-      <HomeMatchSection
+      <HomeScheduleSection
         locale={locale}
         t={t}
-        title={t.mostFollowedMatches}
-        subtitle={t.followedHint}
-        matches={followedMatches}
-        showFollowers
-        onOpenView={onOpenView}
+        title={locale === "zh" ? "焦点对决" : "Featured Matches"}
+        matches={featuredMatches}
+        isLoggedIn={isLoggedIn}
+        canPersistActions={canPersistActions}
+        expandedMatchId={expandedMatchId}
+        onToggle={toggleMatch}
+        setMatchRef={setMatchRef}
       />
+
+      <TopScorersSection locale={locale} scorers={topScorers} />
     </div>
   );
 }
 
-function HomeMatchSection({
+function HomeScheduleSection({
   locale,
   t,
   title,
-  subtitle,
   matches,
-  showFollowers = false,
-  onOpenView,
+  isLoggedIn,
+  canPersistActions,
+  expandedMatchId,
+  onToggle,
+  setMatchRef,
 }: {
   locale: string;
   t: MobileCopy;
   title: string;
-  subtitle: string;
   matches: MobileMatch[];
-  showFollowers?: boolean;
-  onOpenView: (view: MobileView, match?: string) => void;
+  isLoggedIn: boolean;
+  canPersistActions: boolean;
+  expandedMatchId: number | null;
+  onToggle: (matchId: number) => void;
+  setMatchRef: (matchId: number, node: HTMLElement | null) => void;
 }) {
   return (
     <section className="rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
-      <div className="mb-2 flex items-end justify-between gap-3">
-        <div>
-          <h2 className="text-base font-black leading-tight text-white">{title}</h2>
-          <p className="mt-1 text-[11px] leading-none text-slate-500">{subtitle}</p>
-        </div>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h2 className="text-sm font-black leading-tight text-white">{title}</h2>
         <span className="shrink-0 text-[11px] font-black text-[#FFD700]">{matches.length}</span>
       </div>
 
@@ -581,29 +656,51 @@ function HomeMatchSection({
         <div className="rounded-lg border border-white/10 bg-white/[0.035] p-3 text-xs text-slate-400">{t.noMatches}</div>
       ) : (
         <div className="grid gap-2">
-          {matches.map((match) => (
-            <button
+          {matches.map((match) => {
+            const expanded = expandedMatchId === match.id;
+            return (
+            <ExpandableScheduleCard
               key={match.id}
-              type="button"
-              onClick={() => onOpenView("predict", getMatchTeams(locale, match))}
-              className="grid grid-cols-[1fr_auto] gap-3 rounded-lg border border-white/10 bg-white/[0.035] p-2.5 text-left active:bg-white/[0.06]"
-            >
-              <div className="min-w-0">
-                <div className="mb-1 flex min-w-0 items-center gap-1.5">
-                  <span className="truncate text-sm font-black leading-5 text-white">{getMatchTeams(locale, match)}</span>
-                  <span className="shrink-0 rounded-full bg-[#FFD700]/10 px-1.5 py-0.5 text-[9px] font-black text-[#FFD700]">
-                    {getStageLabel(match, locale)}
-                  </span>
-                </div>
-                <p className="truncate text-[11px] leading-4 text-slate-500">
-                  {formatKickoff(match.kickoffTime, locale)} · {getLocation(match, locale)} · {showFollowers ? (match.followCount > 0 ? `${formatNumber(match.followCount, locale)} ${t.followers}` : t.featuredByCode) : formatCountdown(match.kickoffTime, locale)}
-                </p>
-              </div>
-              <div className="flex min-w-[4.75rem] flex-col items-end justify-center">
-                <span className="text-[11px] font-black text-[#FFD700]">{formatPool(match)}</span>
-                <span className="mt-1 text-[10px] text-slate-500">{t.odds} {formatOdds(match)}</span>
-              </div>
-            </button>
+              locale={locale}
+              match={match}
+              isLoggedIn={isLoggedIn}
+              canPersistActions={canPersistActions}
+              expanded={expanded}
+              onToggle={() => onToggle(match.id)}
+              setRef={(node) => setMatchRef(match.id, node)}
+            />
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function TopScorersSection({ locale, scorers }: { locale: string; scorers: MobileTopScorer[] }) {
+  return (
+    <section className="rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
+      <h2 className="mb-2 text-sm font-black text-white">{locale === "zh" ? "射手榜 Top 5" : "Top Scorers"}</h2>
+      {scorers.length === 0 ? (
+        <p className="rounded-lg border border-white/10 bg-white/[0.035] p-3 text-xs text-slate-400">{locale === "zh" ? "暂无射手榜数据" : "No scorer data"}</p>
+      ) : (
+        <div className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.035]">
+          <div className="grid grid-cols-[1.5rem_1fr_2.4rem_2.4rem] gap-1 border-b border-white/10 px-2 py-1 text-[9px] font-bold text-slate-500">
+            <span>#</span><span>{locale === "zh" ? "球员" : "Player"}</span><span className="text-center">{locale === "zh" ? "进球" : "G"}</span><span className="text-center">{locale === "zh" ? "助攻" : "A"}</span>
+          </div>
+          {scorers.map((scorer, index) => (
+            <div key={scorer.id} className="grid grid-cols-[1.5rem_1fr_2.4rem_2.4rem] items-center gap-1 border-b border-white/5 px-2 py-1.5 text-[10px] last:border-b-0">
+              <span className={`font-black ${index === 0 ? "text-[#FFD700]" : "text-slate-500"}`}>{index + 1}</span>
+              <span className="flex min-w-0 items-center gap-1.5">
+                <img src={getFlagUrl(scorer.team, 20)} alt="" className="h-3 w-4 shrink-0 rounded-[2px] object-cover" />
+                <span className="min-w-0">
+                  <span className="block truncate font-black text-white">{locale === "zh" && scorer.playerNameZh ? scorer.playerNameZh : scorer.playerName}</span>
+                  <span className="block truncate text-[9px] text-slate-500">{getTeamName(scorer.team, locale)}</span>
+                </span>
+              </span>
+              <span className="text-center font-black text-[#FFD700]">{scorer.goals}</span>
+              <span className="text-center font-bold text-slate-400">{scorer.assists}</span>
+            </div>
           ))}
         </div>
       )}
@@ -611,35 +708,221 @@ function HomeMatchSection({
   );
 }
 
+function ExpandableScheduleCard({
+  locale,
+  match,
+  isLoggedIn,
+  canPersistActions,
+  expanded,
+  onToggle,
+  setRef,
+}: {
+  locale: string;
+  match: MobileMatch;
+  isLoggedIn: boolean;
+  canPersistActions: boolean;
+  expanded: boolean;
+  onToggle: () => void;
+  setRef?: (node: HTMLElement | null) => void;
+}) {
+  return (
+    <article ref={setRef} className={`min-w-0 overflow-hidden rounded-lg border bg-white/[0.035] ${expanded ? "border-[#FFD700]/45" : "border-white/10"}`}>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onToggle}
+        onKeyDown={(event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          onToggle();
+        }}
+        className="grid w-full min-w-0 cursor-pointer gap-1 p-2.5 text-left active:bg-white/[0.06]"
+      >
+        <div className="min-w-0 text-left"><MatchAlignedRow locale={locale} match={match} /></div>
+        <MatchMetaLine locale={locale} match={match} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} />
+      </div>
+      {expanded && <MobileScheduleDetails locale={locale} match={match} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} />}
+    </article>
+  );
+}
+
 function MatchesView({
   locale,
   t,
   matches,
+  isLoggedIn,
+  canPersistActions,
   onOpenView,
 }: {
   locale: string;
   t: MobileCopy;
   matches: MobileMatch[];
+  isLoggedIn: boolean;
+  canPersistActions: boolean;
   onOpenView: (view: MobileView, match?: string) => void;
 }) {
+  const [groupFilter, setGroupFilter] = useState("all");
+  const [groupPanelOpen, setGroupPanelOpen] = useState(false);
+  const [teamFilters, setTeamFilters] = useState<string[]>([]);
+  const [teamPanelOpen, setTeamPanelOpen] = useState(false);
+  const [timeSort, setTimeSort] = useState(false);
+  const [expandedMatchId, setExpandedMatchId] = useState<number | null>(null);
+  const firstUpcomingRef = useRef<HTMLElement | null>(null);
+  const matchRefs = useRef(new Map<number, HTMLElement>());
+
+  const groups = useMemo(() => Array.from(new Set(matches.map((match) => match.groupName).filter((group): group is string => Boolean(group)))).sort(), [matches]);
+  const teams = useMemo(() => Array.from(new Set(matches.flatMap((match) => [match.homeTeam, match.awayTeam]).filter((team) => Boolean(TEAM_ZH[team])))).sort((a, b) => getTeamName(a, locale).localeCompare(getTeamName(b, locale))), [locale, matches]);
+  const selectedTeamNames = teamFilters.map((team) => getTeamName(team, locale)).join(locale === "zh" ? "、" : ", ");
+  const filteredMatches = useMemo(() => {
+    const filtered = matches.filter((match) => {
+      const groupOk = groupFilter === "all" || match.groupName === groupFilter;
+      const teamOk = teamFilters.length === 0 || teamFilters.some((team) => team === match.homeTeam || team === match.awayTeam);
+      return groupOk && teamOk;
+    });
+    return timeSort ? [...filtered].sort((a, b) => new Date(a.kickoffTime).getTime() - new Date(b.kickoffTime).getTime()) : filtered;
+  }, [groupFilter, matches, teamFilters, timeSort]);
+  const firstUpcoming = filteredMatches.find((match) => new Date(match.kickoffTime).getTime() >= Date.now());
+
+  function applyGroupFilter(group: string) {
+    setTeamFilters([]);
+    setGroupFilter(group);
+    setGroupPanelOpen(false);
+    setTeamPanelOpen(false);
+  }
+
+  function toggleTeamFilter(team: string) {
+    setGroupFilter("all");
+    setTeamFilters((current) => current.includes(team) ? current.filter((item) => item !== team) : [...current, team]);
+  }
+
+  function toggleMatch(matchId: number) {
+    setExpandedMatchId((current) => current === matchId ? null : matchId);
+    window.setTimeout(() => {
+      const node = matchRefs.current.get(matchId);
+      if (!node) return;
+      window.scrollTo({ top: Math.max(0, window.scrollY + node.getBoundingClientRect().top), behavior: "smooth" });
+    }, 80);
+  }
+
+  function sortByTime() {
+    setTimeSort(true);
+    if (!firstUpcoming) return;
+    window.setTimeout(() => firstUpcomingRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  }
+
   return (
-    <div className="grid gap-3">
-      <SectionTitle eyebrow={t.upcomingHint} title={t.matches} />
-      {matches.length === 0 ? (
+    <div className="grid gap-2">
+      <section className="sticky top-0 z-20 -mx-3 bg-[#081120]/95 px-3 pb-2 pt-1 backdrop-blur">
+        <div className="grid grid-cols-[0.72fr_minmax(0,1.28fr)_3.2rem] gap-1.5">
+          <div className="relative min-w-0">
+            <button type="button" onClick={() => { setGroupPanelOpen((open) => !open); setTeamPanelOpen(false); }} className="flex h-8 w-full items-center justify-between gap-1 rounded-md border border-white/10 bg-[#0d1a2b] px-1.5 text-left text-[11px] font-black text-white">
+              <span className="truncate">{groupFilter === "all" ? (locale === "zh" ? "全部组别" : "All groups") : (locale === "zh" ? `${groupFilter}组` : `Group ${groupFilter}`)}</span>
+              <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition ${groupPanelOpen ? "rotate-180" : ""}`} />
+            </button>
+            {groupPanelOpen && (
+              <div className="absolute left-0 right-0 top-9 z-40 rounded-lg border border-white/10 bg-[#0b1626] p-2 shadow-xl shadow-black/40">
+                <button type="button" onClick={() => applyGroupFilter("all")} className="mb-1.5 h-7 w-full rounded-md border border-white/10 bg-white/[0.035] px-2 text-left text-[11px] font-black text-slate-300">{locale === "zh" ? "全部组别" : "All groups"}</button>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {groups.map((group) => <button key={group} type="button" onClick={() => applyGroupFilter(group)} className="h-8 rounded-md border border-white/10 bg-white/[0.035] px-2 text-left text-[11px] font-black text-slate-300">{locale === "zh" ? `${group}组` : `Group ${group}`}</button>)}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="relative min-w-0">
+            <button type="button" onClick={() => { setTeamPanelOpen((open) => !open); setGroupPanelOpen(false); }} className="flex h-8 w-full items-center justify-between gap-1 rounded-md border border-white/10 bg-[#0d1a2b] px-1.5 text-left text-[11px] font-black text-white">
+              <span className="truncate">{teamFilters.length === 0 ? (locale === "zh" ? "全部球队" : "All teams") : selectedTeamNames}</span>
+              <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition ${teamPanelOpen ? "rotate-180" : ""}`} />
+            </button>
+            {teamPanelOpen && (
+              <div className="absolute left-0 right-0 top-9 z-40 max-h-56 overflow-y-auto rounded-lg border border-white/10 bg-[#0b1626] p-2 shadow-xl shadow-black/40">
+                <div className="mb-1.5 grid grid-cols-2 gap-1.5">
+                  <button type="button" onClick={() => { setTeamFilters([]); setTeamPanelOpen(false); }} className="h-7 rounded-md border border-white/10 bg-white/[0.035] px-2 text-left text-[11px] font-black text-slate-300">{locale === "zh" ? "全部球队" : "All teams"}</button>
+                  <button type="button" onClick={() => setTeamPanelOpen(false)} className="h-7 rounded-md bg-[#FFD700] px-2 text-[11px] font-black text-[#081120]">{locale === "zh" ? "完成" : "Done"}</button>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {teams.map((team) => <button key={team} type="button" onClick={() => toggleTeamFilter(team)} className={`h-8 min-w-0 truncate rounded-md border px-1.5 text-left text-[11px] font-black ${teamFilters.includes(team) ? "border-[#FFD700]/60 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-white/[0.035] text-slate-300"}`}>{getTeamName(team, locale)}</button>)}
+                </div>
+              </div>
+            )}
+          </div>
+          <button type="button" onClick={sortByTime} className={`h-8 rounded-md border px-1 text-[11px] font-black ${timeSort ? "border-[#FFD700]/60 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-[#0d1a2b] text-slate-300"}`}>{locale === "zh" ? "时间" : "Time"}</button>
+        </div>
+      </section>
+      {filteredMatches.length === 0 ? (
         <div className="rounded-lg border border-white/10 bg-white/[0.035] p-3 text-xs text-slate-400">{t.noMatches}</div>
       ) : (
-        matches.map((match) => (
-          <MatchCard
-            key={match.id}
-            locale={locale}
-            t={t}
-            match={match}
-            onPredict={() => onOpenView("predict", getMatchTeams(locale, match))}
-          />
-        ))
+        filteredMatches.map((match) => {
+          const expanded = expandedMatchId === match.id;
+          return (
+            <ExpandableScheduleCard
+              key={match.id}
+              locale={locale}
+              match={match}
+              isLoggedIn={isLoggedIn}
+              canPersistActions={canPersistActions}
+              expanded={expanded}
+              onToggle={() => toggleMatch(match.id)}
+              setRef={(node) => {
+                if (node) matchRefs.current.set(match.id, node);
+                else matchRefs.current.delete(match.id);
+                if (timeSort && firstUpcoming?.id === match.id) firstUpcomingRef.current = node;
+              }}
+            />
+          );
+        })
       )}
     </div>
   );
+}
+
+function MatchAlignedRow({ locale, match }: { locale: string; match: MobileMatch }) {
+  return (
+    <span className="grid min-w-0 grid-cols-[2.85rem_minmax(0,0.86fr)_2.35rem_minmax(0,0.86fr)] items-center gap-1 text-[11px] font-black text-white">
+      <span className="rounded-full bg-[#FFD700]/10 px-1 py-0.5 text-center text-[9px] text-[#FFD700]">{getStageLabel(match, locale)}</span>
+      <span className="flex min-w-0 items-center gap-1"><img src={getFlagUrl(match.homeTeam, 20)} alt="" className="h-3 w-4 shrink-0 rounded-[2px] object-cover" /><span className="truncate">{getTeamName(match.homeTeam, locale)}</span></span>
+      <span className="text-center text-[9px] text-slate-500">VS</span>
+      <span className="flex min-w-0 items-center justify-end gap-1"><img src={getFlagUrl(match.awayTeam, 20)} alt="" className="h-3 w-4 shrink-0 rounded-[2px] object-cover" /><span className="truncate text-right">{getTeamName(match.awayTeam, locale)}</span></span>
+    </span>
+  );
+}
+
+function MatchMetaLine({ locale, match, isLoggedIn, canPersistActions }: { locale: string; match: MobileMatch; isLoggedIn: boolean; canPersistActions: boolean }) {
+  return <span className="flex min-w-0 items-center gap-1.5 overflow-hidden text-[10px] leading-4 text-slate-500"><span className="shrink-0">{formatKickoff(match.kickoffTime, locale)}</span><span className="min-w-0 truncate">{getLocation(match, locale)}</span><span className="shrink-0">{formatCountdown(match.kickoffTime, locale)}</span><MobileFollowButton locale={locale} match={match} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} /></span>;
+}
+
+function MobileFollowButton({ locale, match, isLoggedIn, canPersistActions }: { locale: string; match: MobileMatch; isLoggedIn: boolean; canPersistActions: boolean }) {
+  const [following, setFollowing] = useState(match.isFollowing);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setFollowing(match.isFollowing);
+  }, [match.id, match.isFollowing]);
+
+  async function toggleFollow(event: React.MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+    if (!isLoggedIn || !canPersistActions) {
+      redirectToMobileLogin(locale);
+      return;
+    }
+    if (loading) return;
+    const next = !following;
+    setFollowing(next);
+    setLoading(true);
+    try {
+      const response = await fetch("/api/match-follow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ match_id: match.id, following: next }),
+      });
+      if (!response.ok) throw new Error("follow failed");
+    } catch {
+      setFollowing(!next);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return <button type="button" onClick={toggleFollow} onKeyDown={(event) => event.stopPropagation()} disabled={loading} title={!canPersistActions ? (locale === "zh" ? "请先完成登录" : "Please sign in") : undefined} className="ml-auto h-5 shrink-0 rounded-full border border-[#FFD700]/60 bg-transparent px-2 text-[10px] font-black leading-none text-[#FFD700] disabled:opacity-50">{following ? (locale === "zh" ? "已关注比赛" : "Following") : (locale === "zh" ? "关注比赛" : "Follow match")}</button>;
 }
 
 function PredictView({
@@ -738,6 +1021,7 @@ function MineView({
   locale,
   t,
   isLoggedIn,
+  canPersistActions,
   userEmail,
   balance,
   checkinLabel,
@@ -747,6 +1031,7 @@ function MineView({
   locale: string;
   t: MobileCopy;
   isLoggedIn: boolean;
+  canPersistActions: boolean;
   userEmail?: string;
   balance: number;
   checkinLabel: string;
@@ -759,7 +1044,7 @@ function MineView({
       <section className="rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
         {isLoggedIn && userEmail && (
           <div className="mb-3 rounded-lg border border-[#FFD700]/20 bg-[#FFD700]/10 px-3 py-2">
-            <p className="text-[11px] font-black text-[#FFD700]">{t.loggedIn}</p>
+            <p className="text-[11px] font-black text-[#FFD700]">{canPersistActions ? t.loggedIn : (locale === "zh" ? "数据预览" : "Data preview")}</p>
             <p className="mt-1 truncate text-xs font-bold text-white">{userEmail}</p>
           </div>
         )}
