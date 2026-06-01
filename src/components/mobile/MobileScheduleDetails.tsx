@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useGcBalance } from "@/context/GcBalance";
 import MatchFanSection from "@/components/matches/MatchFanSection";
-import { AI_MODELS, type AiPredictions } from "@/lib/aiModels";
 import { getTeamDisplayName } from "@/lib/flags";
 import { calcScoreOdds, netPayout } from "@/lib/scoreOdds";
 import { getTeamColor } from "@/lib/teamColors";
@@ -18,8 +17,7 @@ const PRESETS = [0.05, 0.1, 0.2, 0.5] as const;
 
 type VoteChoice = "home" | "neutral" | "away";
 type ResultChoice = "home" | "draw" | "away";
-type FoldKey = "history" | "ai" | "map" | "posts";
-type H2HRow = { home_team: string; away_team: string; home_score: number; away_score: number; match_date: string; tournament: string };
+type FoldKey = "map" | "posts";
 type CountryRow = { countryCode: string; home: number; away: number; total: number };
 type ForumPost = { id: number; title: string; content: string; replyCount: number; likeCount: number; replies: { id: number; content: string; likeCount: number; createdAt: string }[] };
 type ExistingBet = { id: string; prediction: ResultChoice; gcAmount: number; status: string; potentialPayout: number };
@@ -30,8 +28,6 @@ type DetailData = {
   isFollowing: boolean;
   existingBet: ExistingBet | null;
   scoreBets: ScoreBetRow[];
-  h2h: H2HRow[];
-  aiPredictions: AiPredictions | null;
   countries: CountryRow[];
   forumPostCount: number;
   forumPost: ForumPost | null;
@@ -62,7 +58,7 @@ function resultOdds(match: MobileMatch, choice: ResultChoice | null) {
 export default function MobileScheduleDetails({ locale, match, isLoggedIn, canPersistActions }: { locale: string; match: MobileMatch; isLoggedIn: boolean; canPersistActions: boolean }) {
   const [data, setData] = useState<DetailData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [folds, setFolds] = useState<Record<FoldKey, boolean>>({ history: false, ai: false, map: true, posts: false });
+  const [folds, setFolds] = useState<Record<FoldKey, boolean>>({ map: true, posts: false });
 
   useEffect(() => {
     let active = true;
@@ -85,12 +81,6 @@ export default function MobileScheduleDetails({ locale, match, isLoggedIn, canPe
       <SupportAndShare locale={locale} match={match} canPersistActions={canPersistActions} initialData={data} />
       <WinBet locale={locale} match={match} canPersistActions={canPersistActions} existingBet={data?.existingBet ?? null} detailLoading={loading} />
       <ScoreBet locale={locale} match={match} canPersistActions={canPersistActions} initialBets={data?.scoreBets ?? []} />
-      <FoldRow title="交战历史" summary={historySummary(match, data?.h2h ?? [])} open={folds.history} onToggle={() => toggle("history")}>
-        <HistoryPanel match={match} rows={data?.h2h ?? []} loading={loading} />
-      </FoldRow>
-      <FoldRow title="AI 预测" summary={`${getTeamDisplayName(match.homeTeam, locale)}　${getTeamDisplayName(match.awayTeam, locale)}　准确率`} open={folds.ai} onToggle={() => toggle("ai")}>
-        <AiPanel locale={locale} match={match} predictions={data?.aiPredictions ?? null} loading={loading} />
-      </FoldRow>
       <FoldRow title="球迷地图" summary={`${data?.countries.length ?? 0} 个国家`} open={folds.map} onToggle={() => toggle("map")}>
         <MatchFanSection
           matchId={match.id}
@@ -362,19 +352,6 @@ function FoldRow({ title, summary, open, onToggle, children }: { title: string; 
   return <section className="overflow-hidden rounded-md border border-white/10 bg-white/[0.035]"><button type="button" onClick={onToggle} className="flex h-7 w-full items-center justify-between gap-2 px-2 text-left"><span className="shrink-0 text-[12px] font-black text-white">{title}</span><span className="ml-auto truncate text-[11px] text-slate-500">{summary}</span><ChevronDown className={`h-3 w-3 shrink-0 text-slate-500 transition ${open ? "rotate-180" : ""}`} /></button>{open && <div className="border-t border-white/10">{children}</div>}</section>;
 }
 
-function HistoryPanel({ match, rows, loading }: { match: MobileMatch; rows: H2HRow[]; loading: boolean }) {
-  if (loading) return <EmptyText>加载中...</EmptyText>;
-  if (!rows.length) return <EmptyText>暂无历史交锋</EmptyText>;
-  return <div>{rows.map((row) => { const forward = row.home_team === match.homeTeam; return <div key={`${row.match_date}-${row.home_team}`} className="grid grid-cols-[1fr_2.4rem_2.4rem] gap-1 border-b border-white/5 px-2 py-1 text-[11px] text-slate-400 last:border-0"><span className="truncate">{row.match_date.slice(0, 4)} {row.tournament}</span><b className="text-center text-[#FFD700]">{forward ? row.home_score : row.away_score}</b><b className="text-center text-purple-300">{forward ? row.away_score : row.home_score}</b></div>; })}</div>;
-}
-
-function AiPanel({ locale, match, predictions, loading }: { locale: string; match: MobileMatch; predictions: AiPredictions | null; loading: boolean }) {
-  if (loading) return <EmptyText>加载中...</EmptyText>;
-  const rows = AI_MODELS.filter((model) => predictions?.[model.key]);
-  if (!rows.length) return <EmptyText>暂无 AI 预测</EmptyText>;
-  return <div><div className="grid grid-cols-[1fr_3.5rem_3.5rem_3rem] gap-4 border-b border-white/10 px-3 py-1 text-[11px] font-black text-slate-500"><span>模型</span><span className="-translate-x-2 truncate text-center">{getTeamDisplayName(match.homeTeam, locale)}</span><span className="truncate text-center">{getTeamDisplayName(match.awayTeam, locale)}</span><span className="text-center">准确率</span></div>{rows.map((model) => <div key={model.key} className="grid grid-cols-[1fr_3.5rem_3.5rem_3rem] gap-4 border-b border-white/5 px-3 py-1 text-[11px] text-slate-400 last:border-0"><span>{model.name}</span><b className="-translate-x-2 text-center text-[#FFD700]">{predictions?.[model.key]?.home}</b><b className="text-center text-purple-300">{predictions?.[model.key]?.away}</b><span className="text-center text-slate-500">--</span></div>)}</div>;
-}
-
 function EmptyText({ children }: { children: React.ReactNode }) {
   return <p className="p-2 text-[12px] text-slate-500">{children}</p>;
 }
@@ -439,18 +416,4 @@ function InlineForumPanel({ locale, post, canPersistActions }: { locale: string;
 
 function ForumHtml({ html, className }: { html: string; className: string }) {
   return <div className={className} dangerouslySetInnerHTML={{ __html: html }} />;
-}
-
-function historySummary(match: MobileMatch, rows: H2HRow[]) {
-  if (!rows.length) return "暂无数据";
-  let home = 0; let draw = 0; let away = 0;
-  for (const row of rows) {
-    if (row.home_score === row.away_score) draw++;
-    else {
-      const winningTeam = row.home_score > row.away_score ? row.home_team : row.away_team;
-      if (winningTeam === match.homeTeam) home++;
-      else away++;
-    }
-  }
-  return `${home}胜 ${draw}平 ${away}胜`;
 }
