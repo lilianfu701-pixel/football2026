@@ -997,7 +997,7 @@ function PredictView({
         </div>
 
         <Link
-          href={isLoggedIn ? `/${locale}/matches` : `/${locale}/auth/login`}
+          href={isLoggedIn ? `/${locale}/matches` : `/${locale}/m/login?next=${encodeURIComponent("/m?view=predict")}`}
           className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#FFD700] px-4 text-sm font-black text-[#081120]"
         >
           {isLoggedIn ? t.submit : t.login}
@@ -1065,7 +1065,7 @@ function MineView({
               {checkinLabel}
             </button>
           ) : (
-            <Link href={`/${locale}/auth/register`} className="rounded-lg bg-[#FFD700] px-3 py-2 text-sm font-black text-[#081120]">
+            <Link href={`/${locale}/m/register?next=${encodeURIComponent("/m?view=mine")}`} className="rounded-lg bg-[#FFD700] px-3 py-2 text-sm font-black text-[#081120]">
               {t.register}
             </Link>
           )}

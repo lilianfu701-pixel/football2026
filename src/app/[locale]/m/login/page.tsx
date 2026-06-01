@@ -97,7 +97,7 @@ export default function MobileLoginPage() {
 
           <p className="mt-4 text-center text-[12px] text-slate-500">
             {zh ? "还没有账号？" : "No account yet?"}{" "}
-            <Link href={`/${locale}/auth/register`} className="font-black text-[#FFD700]">
+            <Link href={`/${locale}/m/register?next=${encodeURIComponent(next)}`} className="font-black text-[#FFD700]">
               {zh ? "注册" : "Register"}
             </Link>
           </p>
