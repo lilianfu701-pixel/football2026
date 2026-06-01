@@ -3,7 +3,6 @@ import Link from "next/link";
 import PredictClient from "./PredictClient";
 import AwardBettingUI from "@/app/[locale]/awards/AwardBettingUI";
 import { getBetPhase } from "@/lib/awardPhase";
-import { getTeamColor } from "@/lib/teamColors";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -35,56 +34,6 @@ export default async function PredictPage({ params }: PageProps) {
     : { data: null };
 
   const gcBalance = profile?.gc_balance ?? 0;
-  const username  = profile?.nickname
-    ?? user?.user_metadata?.display_name
-    ?? user?.email?.split("@")[0]
-    ?? "Player";
-
-  // ── Upcoming matches (next 72h + live) for quick-bet ─────────────────────
-  const now72h = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
-  const { data: upcomingRaw } = await supabase
-    .from("matches")
-    .select("id, home_team, away_team, kickoff_time, stage, group_name, match_number, pool_home, pool_draw, pool_away, odds_home, odds_draw, odds_away, status, home_score, away_score")
-    .in("status", ["upcoming", "scheduled", "live"])
-    .lte("kickoff_time", now72h)
-    .order("kickoff_time", { ascending: true })
-    .limit(6);
-
-  // If less than 3, grab next upcoming regardless of time window
-  const { data: nextUpcoming } = (upcomingRaw?.length ?? 0) < 3
-    ? await supabase
-        .from("matches")
-        .select("id, home_team, away_team, kickoff_time, stage, group_name, match_number, pool_home, pool_draw, pool_away, odds_home, odds_draw, odds_away, status, home_score, away_score")
-        .in("status", ["upcoming", "scheduled", "live"])
-        .order("kickoff_time", { ascending: true })
-        .limit(4)
-    : { data: [] };
-
-  const quickMatches = upcomingRaw?.length
-    ? upcomingRaw
-    : (nextUpcoming ?? []);
-
-  // ── User's existing bets on quick matches ─────────────────────────────────
-  const quickMatchIds = quickMatches.map((m) => m.id);
-  const { data: existingBetsRaw } = user && quickMatchIds.length
-    ? await supabase
-        .from("bets")
-        .select("match_id, prediction, gc_amount, odds:odds_at_bet, potential_payout, status")
-        .eq("user_id", user.id)
-        .in("match_id", quickMatchIds)
-    : { data: [] };
-
-  const existingBetsMap: Record<string, {
-    prediction: string; gc_amount: number; odds: number;
-    potential_payout: number; status: string;
-  }> = {};
-  (existingBetsRaw ?? []).forEach((b) => {
-    existingBetsMap[b.match_id] = {
-      ...b,
-      odds: b.odds ?? 0,
-      potential_payout: b.potential_payout ?? 0,
-    };
-  });
 
   // ── Full bet history (two-step to avoid silent JOIN failures) ───────────────
   const { data: betsRaw } = user
@@ -124,34 +73,6 @@ export default async function PredictPage({ params }: PageProps) {
   const totalWon     = betHistory?.filter((b) => b.status === "won")
     .reduce((s, b) => s + (b.potential_payout ?? 0), 0) ?? 0;
   const totalStaked  = betHistory?.reduce((s, b) => s + b.gc_amount, 0) ?? 0;
-
-  // ── Score bet history ─────────────────────────────────────────────────────
-  const { data: scoreBetsRaw } = user
-    ? await supabase
-        .from("score_bets")
-        .select("id, match_id, score_home, score_away, gc_amount, odds_multiplier, status, created_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(50)
-    : { data: [] };
-
-  type PredictScoreMatchStub = { id: string; home_team: string; away_team: string; kickoff_time: string; stage: string; status: string; home_score: number | null; away_score: number | null };
-
-  const scoreMatchIds = [...new Set((scoreBetsRaw ?? []).map((b) => b.match_id).filter(Boolean))];
-  const { data: scoreMatchesRaw } = scoreMatchIds.length
-    ? await supabase
-        .from("matches")
-        .select("id, home_team, away_team, kickoff_time, stage, status, home_score, away_score")
-        .in("id", scoreMatchIds)
-    : { data: [] as PredictScoreMatchStub[] };
-
-  const scoreMatchesMap: Record<string, PredictScoreMatchStub> = {};
-  (scoreMatchesRaw ?? []).forEach((m) => { scoreMatchesMap[m.id] = m as PredictScoreMatchStub; });
-
-  const scoreBetHistory = (scoreBetsRaw ?? []).map((b) => ({
-    ...b,
-    match: scoreMatchesMap[b.match_id] ?? null,
-  }));
 
   // ── Award bets (full fields for AwardBettingUI) ───────────────────────────
   const { data: awardBets } = user
@@ -204,31 +125,7 @@ export default async function PredictPage({ params }: PageProps) {
         <PredictClient
           locale={locale}
           user={user ? { id: user.id } : null}
-          gcBalance={gcBalance}
-          username={username}
           stats={{ totalBets, wonBets, lostBets, pendingBets, winRate, totalWon, totalStaked }}
-          quickMatches={quickMatches.map((m) => ({
-            id:          m.id,
-            homeTeam:    m.home_team,
-            awayTeam:    m.away_team,
-            kickoffTime: m.kickoff_time,
-            stage:       m.stage,
-            stageLabel:  zh ? (STAGE_LABELS_ZH[m.stage] ?? m.stage) : (STAGE_LABELS[m.stage] ?? m.stage),
-            groupName:   m.group_name ?? null,
-            matchNumber: m.match_number ?? null,
-            poolHome:    (m.pool_home  ?? 0) as number,
-            poolDraw:    (m.pool_draw  ?? 0) as number,
-            poolAway:    (m.pool_away  ?? 0) as number,
-            refOddsHome: (m.odds_home  ?? 2.00) as number,
-            refOddsDraw: (m.odds_draw  ?? 3.20) as number,
-            refOddsAway: (m.odds_away  ?? 2.80) as number,
-            status:      m.status,
-            homeScore:   m.home_score ?? null,
-            awayScore:   m.away_score ?? null,
-            homeColors:  getTeamColor(m.home_team),
-            awayColors:  getTeamColor(m.away_team),
-            existingBet: existingBetsMap[m.id] ?? null,
-          }))}
           betHistory={(betHistory ?? []).map((b) => {
             const match = b.matches;
             return {
@@ -249,29 +146,6 @@ export default async function PredictPage({ params }: PageProps) {
                 status:      match.status,
                 homeScore:   match.home_score ?? null,
                 awayScore:   match.away_score ?? null,
-              } : null,
-            };
-          })}
-          scoreBetHistory={scoreBetHistory.map((b) => {
-            const m = b.match;
-            return {
-              id:             b.id,
-              scoreHome:      b.score_home,
-              scoreAway:      b.score_away,
-              gcAmount:       Number(b.gc_amount),
-              oddsMultiplier: Number(b.odds_multiplier),
-              status:         b.status,
-              createdAt:      b.created_at,
-              match: m ? {
-                id:          m.id,
-                homeTeam:    m.home_team,
-                awayTeam:    m.away_team,
-                kickoffTime: m.kickoff_time,
-                stage:       m.stage,
-                stageLabel:  zh ? (STAGE_LABELS_ZH[m.stage] ?? m.stage) : (STAGE_LABELS[m.stage] ?? m.stage),
-                status:      m.status,
-                homeScore:   m.home_score ?? null,
-                awayScore:   m.away_score ?? null,
               } : null,
             };
           })}
