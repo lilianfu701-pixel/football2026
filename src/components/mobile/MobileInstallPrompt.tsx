@@ -150,7 +150,7 @@ export default function MobileInstallPrompt({
 
   if (installed) {
     return (
-      <div className="rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-sm font-bold text-emerald-100">
+      <div className="rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-[15px] font-bold text-emerald-100">
         <span className="inline-flex items-center gap-2">
           <Check className="h-4 w-4" />
           {t.installed}
@@ -167,7 +167,7 @@ export default function MobileInstallPrompt({
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-lg font-black leading-6 text-white">{t.title}</p>
-            <p className="mt-1 text-[13px] leading-5 text-slate-300">{t.subtitle}</p>
+            <p className="mt-1 text-[14px] leading-5 text-slate-300">{t.subtitle}</p>
           </div>
           {allowDismiss && (
             <button
@@ -184,41 +184,41 @@ export default function MobileInstallPrompt({
         <div className="mt-3 grid grid-cols-[7rem_1fr] items-center gap-3 rounded-lg border border-[#FFD700]/25 bg-black/25 p-2.5">
           <img src={QR_URL} alt={t.scanTitle} className="aspect-square w-28 rounded-md bg-white p-1" />
           <div className="min-w-0">
-            <p className="text-sm font-black text-[#FFD700]">{t.scanTitle}</p>
-            <p className="mt-1 text-[12px] leading-4 text-slate-300">{t.scanHint}</p>
-            <p className="mt-2 break-all text-[11px] font-bold leading-4 text-white">{MOBILE_URL}</p>
+            <p className="text-[15px] font-black text-[#FFD700]">{t.scanTitle}</p>
+            <p className="mt-1 text-[13px] leading-4 text-slate-300">{t.scanHint}</p>
+            <p className="mt-2 break-all text-[12px] font-bold leading-4 text-white">{MOBILE_URL}</p>
           </div>
         </div>
       </div>
 
       {platform === "android" ? (
         <div className="grid gap-3 p-3">
-          <p className="text-sm font-black text-[#FFD700]">{t.androidTitle}</p>
+          <p className="text-[15px] font-black text-[#FFD700]">{t.androidTitle}</p>
           {deferredPrompt && (
             <button
               type="button"
               onClick={install}
-              className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#FFD700] px-4 text-sm font-black text-[#081120]"
+              className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#FFD700] px-4 text-[15px] font-black text-[#081120]"
             >
               <Download className="h-4 w-4" />
               {t.install}
             </button>
           )}
-          <p className="flex gap-2 rounded-lg border border-white/10 bg-white/[0.04] p-3 text-[13px] leading-5 text-slate-200">
+          <p className="flex gap-2 rounded-lg border border-white/10 bg-white/[0.04] p-3 text-[14px] leading-5 text-slate-200">
             <MoreVertical className="mt-0.5 h-4 w-4 shrink-0 text-[#FFD700]" />
             {t.androidManual}
           </p>
         </div>
       ) : (
         <div className="grid gap-2.5 p-3">
-          <p className="text-sm font-black uppercase text-[#FFD700]">{t.iosTitle}</p>
+          <p className="text-[15px] font-black uppercase text-[#FFD700]">{t.iosTitle}</p>
           {t.steps.map((step, index) => (
             <article key={step} className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.045]">
               <div className="flex items-center gap-2 border-b border-white/10 px-2.5 py-2">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FFD700] text-[12px] font-black text-[#081120]">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FFD700] text-[13px] font-black text-[#081120]">
                   {index + 1}
                 </span>
-                <p className="text-[13px] font-bold leading-5 text-white">{step}</p>
+                <p className="text-[14px] font-bold leading-5 text-white">{step}</p>
               </div>
               <img
                 src={stepImages[index]}
@@ -230,7 +230,7 @@ export default function MobileInstallPrompt({
         </div>
       )}
 
-      <p className="border-t border-white/10 bg-[#2b1722] px-3 py-2.5 text-center text-[12px] leading-4 text-rose-100">
+      <p className="border-t border-white/10 bg-[#2b1722] px-3 py-2.5 text-center text-[13px] leading-4 text-rose-100">
         {t.footer}
       </p>
     </section>

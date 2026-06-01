@@ -523,26 +523,26 @@ function AppHeader({
             <Image src="/icons/levels/logo.png" alt={t.appTitle} fill className="object-cover" priority />
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-black leading-none">{t.appTitle}</p>
-            <p className="mt-1 truncate text-[12px] leading-none text-slate-500">m.football2026.net</p>
+            <p className="truncate text-[15px] font-black leading-none">{t.appTitle}</p>
+            <p className="mt-1 truncate text-[13px] leading-none text-slate-500">m.football2026.net</p>
           </div>
         </div>
         <Link href={canPersistActions ? `/${locale}/profile` : `/${locale}/m/login?next=${encodeURIComponent("/m?view=home")}`} className="shrink-0">
           {isLoggedIn ? (
             <span className="flex max-w-[10rem] items-center gap-1.5">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFD700] text-sm font-black text-[#081120]">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFD700] text-[15px] font-black text-[#081120]">
                 {displayName.slice(0, 1).toUpperCase()}
               </span>
               <span className="min-w-0 text-right">
-                <span className="flex items-center justify-end gap-1 text-[12px] font-black leading-none text-white">
+                <span className="flex items-center justify-end gap-1 text-[13px] font-black leading-none text-white">
                   <span className="truncate">{displayName}</span>
-                  {!canPersistActions && <span className="shrink-0 text-[10px] text-slate-500">{locale === "zh" ? "预览" : "Preview"}</span>}
+                  {!canPersistActions && <span className="shrink-0 text-[11px] text-slate-500">{locale === "zh" ? "预览" : "Preview"}</span>}
                 </span>
-                <span className="mt-1 block text-[10px] font-bold leading-none text-[#FFD700]">{formatBalance(balance)} GC</span>
+                <span className="mt-1 block text-[11px] font-bold leading-none text-[#FFD700]">{formatBalance(balance)} GC</span>
               </span>
             </span>
           ) : (
-            <span className="rounded-lg border border-[#FFD700]/25 bg-[#FFD700]/10 px-2.5 py-1.5 text-[12px] font-black text-[#FFD700]">{t.login}</span>
+            <span className="rounded-lg border border-[#FFD700]/25 bg-[#FFD700]/10 px-2.5 py-1.5 text-[13px] font-black text-[#FFD700]">{t.login}</span>
           )}
         </Link>
       </div>
@@ -589,12 +589,12 @@ function HomeView({
   return (
     <div className="grid gap-3">
       <section className="overflow-hidden rounded-xl border border-white/10 bg-[linear-gradient(145deg,#0d1a2b_0%,#10345b_58%,#14533b_100%)] p-3">
-        <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-[#FFD700]/25 bg-[#FFD700]/10 px-2 py-1 text-[11px] font-black text-[#FFD700]">
+        <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-[#FFD700]/25 bg-[#FFD700]/10 px-2 py-1 text-[12px] font-black text-[#FFD700]">
           <Sparkles className="h-3.5 w-3.5" />
           {locale === "zh" ? `${t.badge} ${daysLeft} 天` : `${t.badge} ${daysLeft} days`}
         </div>
         <h1 className="text-lg font-black leading-tight">{t.title}</h1>
-        <p className="mt-1 text-sm leading-5 text-slate-300">{t.subtitle}</p>
+        <p className="mt-1 text-[15px] leading-5 text-slate-300">{t.subtitle}</p>
       </section>
 
       <HomeScheduleSection
@@ -650,12 +650,12 @@ function HomeScheduleSection({
   return (
     <section className="rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
       <div className="mb-2 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-black leading-tight text-white">{title}</h2>
-        <span className="shrink-0 text-[12px] font-black text-[#FFD700]">{matches.length}</span>
+        <h2 className="text-[15px] font-black leading-tight text-white">{title}</h2>
+        <span className="shrink-0 text-[13px] font-black text-[#FFD700]">{matches.length}</span>
       </div>
 
       {matches.length === 0 ? (
-        <div className="rounded-lg border border-white/10 bg-white/[0.035] p-3 text-sm text-slate-400">{t.noMatches}</div>
+        <div className="rounded-lg border border-white/10 bg-white/[0.035] p-3 text-[15px] text-slate-400">{t.noMatches}</div>
       ) : (
         <div className="grid gap-2">
           {matches.map((match) => {
@@ -682,22 +682,22 @@ function HomeScheduleSection({
 function TopScorersSection({ locale, scorers }: { locale: string; scorers: MobileTopScorer[] }) {
   return (
     <section className="rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
-      <h2 className="mb-2 text-sm font-black text-white">{locale === "zh" ? "射手榜 Top 5" : "Top Scorers"}</h2>
+      <h2 className="mb-2 text-[15px] font-black text-white">{locale === "zh" ? "射手榜 Top 5" : "Top Scorers"}</h2>
       {scorers.length === 0 ? (
-        <p className="rounded-lg border border-white/10 bg-white/[0.035] p-3 text-sm text-slate-400">{locale === "zh" ? "暂无射手榜数据" : "No scorer data"}</p>
+        <p className="rounded-lg border border-white/10 bg-white/[0.035] p-3 text-[15px] text-slate-400">{locale === "zh" ? "暂无射手榜数据" : "No scorer data"}</p>
       ) : (
         <div className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.035]">
-          <div className="grid grid-cols-[1.5rem_1fr_2.4rem_2.4rem] gap-1 border-b border-white/10 px-2 py-1 text-[10px] font-bold text-slate-500">
+          <div className="grid grid-cols-[1.5rem_1fr_2.4rem_2.4rem] gap-1 border-b border-white/10 px-2 py-1 text-[11px] font-bold text-slate-500">
             <span>#</span><span>{locale === "zh" ? "球员" : "Player"}</span><span className="text-center">{locale === "zh" ? "进球" : "G"}</span><span className="text-center">{locale === "zh" ? "助攻" : "A"}</span>
           </div>
           {scorers.map((scorer, index) => (
-            <div key={scorer.id} className="grid grid-cols-[1.5rem_1fr_2.4rem_2.4rem] items-center gap-1 border-b border-white/5 px-2 py-1.5 text-[11px] last:border-b-0">
+            <div key={scorer.id} className="grid grid-cols-[1.5rem_1fr_2.4rem_2.4rem] items-center gap-1 border-b border-white/5 px-2 py-1.5 text-[12px] last:border-b-0">
               <span className={`font-black ${index === 0 ? "text-[#FFD700]" : "text-slate-500"}`}>{index + 1}</span>
               <span className="flex min-w-0 items-center gap-1.5">
                 <img src={getFlagUrl(scorer.team, 20)} alt="" className="h-3 w-4 shrink-0 rounded-[2px] object-cover" />
                 <span className="min-w-0">
                   <span className="block truncate font-black text-white">{locale === "zh" && scorer.playerNameZh ? scorer.playerNameZh : scorer.playerName}</span>
-                  <span className="block truncate text-[10px] text-slate-500">{getTeamName(scorer.team, locale)}</span>
+                  <span className="block truncate text-[11px] text-slate-500">{getTeamName(scorer.team, locale)}</span>
                 </span>
               </span>
               <span className="text-center font-black text-[#FFD700]">{scorer.goals}</span>
@@ -817,41 +817,41 @@ function MatchesView({
       <section className="sticky top-0 z-20 -mx-3 bg-[#081120]/95 px-3 pb-2 pt-1 backdrop-blur">
         <div className="grid grid-cols-[0.72fr_minmax(0,1.28fr)_3.2rem] gap-1.5">
           <div className="relative min-w-0">
-            <button type="button" onClick={() => { setGroupPanelOpen((open) => !open); setTeamPanelOpen(false); }} className="flex h-8 w-full items-center justify-between gap-1 rounded-md border border-white/10 bg-[#0d1a2b] px-1.5 text-left text-[12px] font-black text-white">
+            <button type="button" onClick={() => { setGroupPanelOpen((open) => !open); setTeamPanelOpen(false); }} className="flex h-8 w-full items-center justify-between gap-1 rounded-md border border-white/10 bg-[#0d1a2b] px-1.5 text-left text-[13px] font-black text-white">
               <span className="truncate">{groupFilter === "all" ? (locale === "zh" ? "全部组别" : "All groups") : (locale === "zh" ? `${groupFilter}组` : `Group ${groupFilter}`)}</span>
               <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition ${groupPanelOpen ? "rotate-180" : ""}`} />
             </button>
             {groupPanelOpen && (
               <div className="absolute left-0 right-0 top-9 z-40 rounded-lg border border-white/10 bg-[#0b1626] p-2 shadow-xl shadow-black/40">
-                <button type="button" onClick={() => applyGroupFilter("all")} className="mb-1.5 h-7 w-full rounded-md border border-white/10 bg-white/[0.035] px-2 text-left text-[12px] font-black text-slate-300">{locale === "zh" ? "全部组别" : "All groups"}</button>
+                <button type="button" onClick={() => applyGroupFilter("all")} className="mb-1.5 h-7 w-full rounded-md border border-white/10 bg-white/[0.035] px-2 text-left text-[13px] font-black text-slate-300">{locale === "zh" ? "全部组别" : "All groups"}</button>
                 <div className="grid grid-cols-2 gap-1.5">
-                  {groups.map((group) => <button key={group} type="button" onClick={() => applyGroupFilter(group)} className="h-8 rounded-md border border-white/10 bg-white/[0.035] px-2 text-left text-[12px] font-black text-slate-300">{locale === "zh" ? `${group}组` : `Group ${group}`}</button>)}
+                  {groups.map((group) => <button key={group} type="button" onClick={() => applyGroupFilter(group)} className="h-8 rounded-md border border-white/10 bg-white/[0.035] px-2 text-left text-[13px] font-black text-slate-300">{locale === "zh" ? `${group}组` : `Group ${group}`}</button>)}
                 </div>
               </div>
             )}
           </div>
           <div className="relative min-w-0">
-            <button type="button" onClick={() => { setTeamPanelOpen((open) => !open); setGroupPanelOpen(false); }} className="flex h-8 w-full items-center justify-between gap-1 rounded-md border border-white/10 bg-[#0d1a2b] px-1.5 text-left text-[12px] font-black text-white">
+            <button type="button" onClick={() => { setTeamPanelOpen((open) => !open); setGroupPanelOpen(false); }} className="flex h-8 w-full items-center justify-between gap-1 rounded-md border border-white/10 bg-[#0d1a2b] px-1.5 text-left text-[13px] font-black text-white">
               <span className="truncate">{teamFilters.length === 0 ? (locale === "zh" ? "全部球队" : "All teams") : selectedTeamNames}</span>
               <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition ${teamPanelOpen ? "rotate-180" : ""}`} />
             </button>
             {teamPanelOpen && (
               <div className="absolute left-0 right-0 top-9 z-40 max-h-56 overflow-y-auto rounded-lg border border-white/10 bg-[#0b1626] p-2 shadow-xl shadow-black/40">
                 <div className="mb-1.5 grid grid-cols-2 gap-1.5">
-                  <button type="button" onClick={() => { setTeamFilters([]); setTeamPanelOpen(false); }} className="h-7 rounded-md border border-white/10 bg-white/[0.035] px-2 text-left text-[12px] font-black text-slate-300">{locale === "zh" ? "全部球队" : "All teams"}</button>
-                  <button type="button" onClick={() => setTeamPanelOpen(false)} className="h-7 rounded-md bg-[#FFD700] px-2 text-[12px] font-black text-[#081120]">{locale === "zh" ? "完成" : "Done"}</button>
+                  <button type="button" onClick={() => { setTeamFilters([]); setTeamPanelOpen(false); }} className="h-7 rounded-md border border-white/10 bg-white/[0.035] px-2 text-left text-[13px] font-black text-slate-300">{locale === "zh" ? "全部球队" : "All teams"}</button>
+                  <button type="button" onClick={() => setTeamPanelOpen(false)} className="h-7 rounded-md bg-[#FFD700] px-2 text-[13px] font-black text-[#081120]">{locale === "zh" ? "完成" : "Done"}</button>
                 </div>
                 <div className="grid grid-cols-2 gap-1.5">
-                  {teams.map((team) => <button key={team} type="button" onClick={() => toggleTeamFilter(team)} className={`h-8 min-w-0 truncate rounded-md border px-1.5 text-left text-[12px] font-black ${teamFilters.includes(team) ? "border-[#FFD700]/60 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-white/[0.035] text-slate-300"}`}>{getTeamName(team, locale)}</button>)}
+                  {teams.map((team) => <button key={team} type="button" onClick={() => toggleTeamFilter(team)} className={`h-8 min-w-0 truncate rounded-md border px-1.5 text-left text-[13px] font-black ${teamFilters.includes(team) ? "border-[#FFD700]/60 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-white/[0.035] text-slate-300"}`}>{getTeamName(team, locale)}</button>)}
                 </div>
               </div>
             )}
           </div>
-          <button type="button" onClick={sortByTime} className={`h-8 rounded-md border px-1 text-[12px] font-black ${timeSort ? "border-[#FFD700]/60 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-[#0d1a2b] text-slate-300"}`}>{locale === "zh" ? "时间" : "Time"}</button>
+          <button type="button" onClick={sortByTime} className={`h-8 rounded-md border px-1 text-[13px] font-black ${timeSort ? "border-[#FFD700]/60 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-[#0d1a2b] text-slate-300"}`}>{locale === "zh" ? "时间" : "Time"}</button>
         </div>
       </section>
       {filteredMatches.length === 0 ? (
-        <div className="rounded-lg border border-white/10 bg-white/[0.035] p-3 text-sm text-slate-400">{t.noMatches}</div>
+        <div className="rounded-lg border border-white/10 bg-white/[0.035] p-3 text-[15px] text-slate-400">{t.noMatches}</div>
       ) : (
         filteredMatches.map((match) => {
           const expanded = expandedMatchId === match.id;
@@ -879,17 +879,17 @@ function MatchesView({
 
 function MatchAlignedRow({ locale, match }: { locale: string; match: MobileMatch }) {
   return (
-    <span className="grid min-w-0 grid-cols-[2.85rem_minmax(0,0.86fr)_2.35rem_minmax(0,0.86fr)] items-center gap-1 text-[12px] font-black text-white">
-      <span className="rounded-full bg-[#FFD700]/10 px-1 py-0.5 text-center text-[10px] text-[#FFD700]">{getStageLabel(match, locale)}</span>
+    <span className="grid min-w-0 grid-cols-[2.85rem_minmax(0,0.86fr)_2.35rem_minmax(0,0.86fr)] items-center gap-1 text-[13px] font-black text-white">
+      <span className="rounded-full bg-[#FFD700]/10 px-1 py-0.5 text-center text-[11px] text-[#FFD700]">{getStageLabel(match, locale)}</span>
       <span className="flex min-w-0 items-center gap-1"><img src={getFlagUrl(match.homeTeam, 20)} alt="" className="h-3 w-4 shrink-0 rounded-[2px] object-cover" /><span className="truncate">{getTeamName(match.homeTeam, locale)}</span></span>
-      <span className="text-center text-[10px] text-slate-500">VS</span>
+      <span className="text-center text-[11px] text-slate-500">VS</span>
       <span className="flex min-w-0 items-center justify-end gap-1"><img src={getFlagUrl(match.awayTeam, 20)} alt="" className="h-3 w-4 shrink-0 rounded-[2px] object-cover" /><span className="truncate text-right">{getTeamName(match.awayTeam, locale)}</span></span>
     </span>
   );
 }
 
 function MatchMetaLine({ locale, match, isLoggedIn, canPersistActions }: { locale: string; match: MobileMatch; isLoggedIn: boolean; canPersistActions: boolean }) {
-  return <span className="flex min-w-0 items-center gap-1.5 overflow-hidden text-[11px] leading-4 text-slate-500"><span className="shrink-0">{formatKickoff(match.kickoffTime, locale)}</span><span className="min-w-0 truncate">{getLocation(match, locale)}</span><span className="shrink-0">{formatCountdown(match.kickoffTime, locale)}</span><MobileFollowButton locale={locale} match={match} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} /></span>;
+  return <span className="flex min-w-0 items-center gap-1.5 overflow-hidden text-[12px] leading-4 text-slate-500"><span className="shrink-0">{formatKickoff(match.kickoffTime, locale)}</span><span className="min-w-0 truncate">{getLocation(match, locale)}</span><span className="shrink-0">{formatCountdown(match.kickoffTime, locale)}</span><MobileFollowButton locale={locale} match={match} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} /></span>;
 }
 
 function MobileFollowButton({ locale, match, isLoggedIn, canPersistActions }: { locale: string; match: MobileMatch; isLoggedIn: boolean; canPersistActions: boolean }) {
@@ -924,7 +924,7 @@ function MobileFollowButton({ locale, match, isLoggedIn, canPersistActions }: { 
     }
   }
 
-  return <button type="button" onClick={toggleFollow} onKeyDown={(event) => event.stopPropagation()} disabled={loading} title={!canPersistActions ? (locale === "zh" ? "请先完成登录" : "Please sign in") : undefined} className="ml-auto h-5 shrink-0 rounded-full border border-[#FFD700]/60 bg-transparent px-2 text-[11px] font-black leading-none text-[#FFD700] disabled:opacity-50">{following ? (locale === "zh" ? "已关注比赛" : "Following") : (locale === "zh" ? "关注比赛" : "Follow match")}</button>;
+  return <button type="button" onClick={toggleFollow} onKeyDown={(event) => event.stopPropagation()} disabled={loading} title={!canPersistActions ? (locale === "zh" ? "请先完成登录" : "Please sign in") : undefined} className="ml-auto h-5 shrink-0 rounded-full border border-[#FFD700]/60 bg-transparent px-2 text-[12px] font-black leading-none text-[#FFD700] disabled:opacity-50">{following ? (locale === "zh" ? "已关注比赛" : "Following") : (locale === "zh" ? "关注比赛" : "Follow match")}</button>;
 }
 
 function PredictView({
@@ -960,7 +960,7 @@ function PredictView({
 
       <section className="grid gap-2 rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
         {matches.length === 0 ? (
-          <p className="text-sm text-slate-400">{t.noMatches}</p>
+          <p className="text-[15px] text-slate-400">{t.noMatches}</p>
         ) : (
           matches.map((match) => {
             const label = getMatchTeams(locale, match);
@@ -975,8 +975,8 @@ function PredictView({
                     : "border-white/10 bg-white/[0.035] text-slate-300"
                 }`}
               >
-                <span className="text-sm font-black">{label}</span>
-                <span className="text-[12px] text-slate-500">{formatKickoff(match.kickoffTime, locale)}</span>
+                <span className="text-[15px] font-black">{label}</span>
+                <span className="text-[13px] text-slate-500">{formatKickoff(match.kickoffTime, locale)}</span>
               </button>
             );
           })
@@ -984,7 +984,7 @@ function PredictView({
       </section>
 
       <section className="rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
-        <p className="mb-2 text-sm font-black uppercase tracking-[0.14em] text-[#FFD700]">{t.chooseResult}</p>
+        <p className="mb-2 text-[15px] font-black uppercase tracking-[0.14em] text-[#FFD700]">{t.chooseResult}</p>
         <div className="grid grid-cols-3 gap-2">
           <ChoiceButton active={prediction === "home"} label={t.homeWin} onClick={() => setPrediction("home")} />
           <ChoiceButton active={prediction === "draw"} label={t.draw} onClick={() => setPrediction("draw")} />
@@ -998,7 +998,7 @@ function PredictView({
 
         <Link
           href={isLoggedIn ? `/${locale}/matches` : `/${locale}/m/login?next=${encodeURIComponent("/m?view=predict")}`}
-          className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#FFD700] px-4 text-sm font-black text-[#081120]"
+          className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#FFD700] px-4 text-[15px] font-black text-[#081120]"
         >
           {isLoggedIn ? t.submit : t.login}
           <ChevronRight className="h-4 w-4" />
@@ -1046,13 +1046,13 @@ function MineView({
       <section className="rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
         {isLoggedIn && userEmail && (
           <div className="mb-3 rounded-lg border border-[#FFD700]/20 bg-[#FFD700]/10 px-3 py-2">
-            <p className="text-[12px] font-black text-[#FFD700]">{canPersistActions ? t.loggedIn : (locale === "zh" ? "数据预览" : "Data preview")}</p>
-            <p className="mt-1 truncate text-sm font-bold text-white">{userEmail}</p>
+            <p className="text-[13px] font-black text-[#FFD700]">{canPersistActions ? t.loggedIn : (locale === "zh" ? "数据预览" : "Data preview")}</p>
+            <p className="mt-1 truncate text-[15px] font-bold text-white">{userEmail}</p>
           </div>
         )}
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm text-slate-400">{isLoggedIn ? t.balance : t.guestBalance}</p>
+            <p className="text-[15px] text-slate-400">{isLoggedIn ? t.balance : t.guestBalance}</p>
             <p className="mt-1 text-2xl font-black text-[#FFD700]">{isLoggedIn ? `${formatBalance(balance)} GC` : "100M GC"}</p>
           </div>
           {isLoggedIn ? (
@@ -1060,12 +1060,12 @@ function MineView({
               type="button"
               onClick={onCheckin}
               disabled={checkinState === "loading" || checkinState === "done"}
-              className="rounded-lg bg-emerald-400/15 px-3 py-2 text-sm font-black text-emerald-100 disabled:opacity-70"
+              className="rounded-lg bg-emerald-400/15 px-3 py-2 text-[15px] font-black text-emerald-100 disabled:opacity-70"
             >
               {checkinLabel}
             </button>
           ) : (
-            <Link href={`/${locale}/m/register?next=${encodeURIComponent("/m?view=mine")}`} className="rounded-lg bg-[#FFD700] px-3 py-2 text-sm font-black text-[#081120]">
+            <Link href={`/${locale}/m/register?next=${encodeURIComponent("/m?view=mine")}`} className="rounded-lg bg-[#FFD700] px-3 py-2 text-[15px] font-black text-[#081120]">
               {t.register}
             </Link>
           )}
@@ -1073,7 +1073,7 @@ function MineView({
       </section>
 
       <section className="grid gap-2 rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
-        <p className="text-sm font-black uppercase tracking-[0.14em] text-[#FFD700]">{t.appStatus}</p>
+        <p className="text-[15px] font-black uppercase tracking-[0.14em] text-[#FFD700]">{t.appStatus}</p>
         <MobileInstallPrompt locale={locale} />
       </section>
 
@@ -1097,26 +1097,26 @@ function InstallOnlyHome({ locale, t }: { locale: string; t: MobileCopy }) {
           </div>
           <div className="min-w-0">
             <p className="text-base font-black leading-none text-white">Football2026</p>
-            <p className="mt-1.5 text-sm leading-none text-slate-500">m.football2026.net</p>
+            <p className="mt-1.5 text-[15px] leading-none text-slate-500">m.football2026.net</p>
           </div>
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-[linear-gradient(145deg,#0b1a2d_0%,#10345b_58%,#14533b_100%)] p-4 shadow-2xl shadow-black/30">
           <h1 className="text-2xl font-black leading-tight">{t.installOnlyTitle}</h1>
-          <p className="mt-2 text-sm leading-5 text-slate-300">{t.installOnlySubtitle}</p>
+          <p className="mt-2 text-[15px] leading-5 text-slate-300">{t.installOnlySubtitle}</p>
 
           <div className="mt-4 rounded-xl border border-white/10 bg-[#081120]/70 p-3">
-            <p className="mb-3 text-[12px] font-black uppercase tracking-[0.14em] text-[#FFD700]">{t.iconPreview}</p>
+            <p className="mb-3 text-[13px] font-black uppercase tracking-[0.14em] text-[#FFD700]">{t.iconPreview}</p>
             <div className="flex items-center gap-3">
               <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl bg-black/25 p-1.5 shadow-lg shadow-black/20">
                 <div className="relative h-11 w-11 overflow-hidden rounded-xl">
                   <Image src="/icons/levels/logo.png" alt="Football2026" fill className="object-cover" priority />
                 </div>
-                <span className="w-full truncate text-center text-[10px] font-bold leading-none text-white">Football2026</span>
+                <span className="w-full truncate text-center text-[11px] font-bold leading-none text-white">Football2026</span>
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-black text-white">Football2026</p>
-                <p className="mt-1 text-sm leading-5 text-slate-300">{t.openFromIcon}</p>
+                <p className="text-[15px] font-black text-white">Football2026</p>
+                <p className="mt-1 text-[15px] leading-5 text-slate-300">{t.openFromIcon}</p>
               </div>
             </div>
           </div>
@@ -1126,11 +1126,11 @@ function InstallOnlyHome({ locale, t }: { locale: string; t: MobileCopy }) {
           </div>
         </div>
 
-        <p className="mt-4 rounded-lg border border-red-400/20 bg-red-400/10 px-3 py-2 text-center text-[12px] leading-4 text-red-100">
+        <p className="mt-4 rounded-lg border border-red-400/20 bg-red-400/10 px-3 py-2 text-center text-[13px] leading-4 text-red-100">
           {t.browserLimited}
         </p>
 
-        <div className="mt-auto pt-5 text-center text-[12px] text-slate-600">
+        <div className="mt-auto pt-5 text-center text-[13px] text-slate-600">
           Football2026 · GoalCoin
         </div>
       </section>
@@ -1153,10 +1153,10 @@ function MatchCard({
     <section className="rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <p className="text-[12px] font-black uppercase tracking-[0.14em] text-[#FFD700]">{getStageLabel(match, locale)}</p>
+          <p className="text-[13px] font-black uppercase tracking-[0.14em] text-[#FFD700]">{getStageLabel(match, locale)}</p>
           <h2 className="mt-1 text-base font-black">{getMatchTeams(locale, match)}</h2>
         </div>
-        <span className="rounded-full bg-white/8 px-2.5 py-1 text-[12px] font-bold text-slate-300">
+        <span className="rounded-full bg-white/8 px-2.5 py-1 text-[13px] font-bold text-slate-300">
           {formatKickoff(match.kickoffTime, locale)}
         </span>
       </div>
@@ -1170,7 +1170,7 @@ function MatchCard({
       <button
         type="button"
         onClick={onPredict}
-        className="mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-[#FFD700]/35 bg-[#FFD700]/12 text-sm font-black text-[#FFD700]"
+        className="mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-[#FFD700]/35 bg-[#FFD700]/12 text-[15px] font-black text-[#FFD700]"
       >
         <Flame className="h-4 w-4" />
         {t.predict}
@@ -1182,7 +1182,7 @@ function MatchCard({
 function SectionTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
     <div>
-      <p className="text-[12px] font-black uppercase tracking-[0.14em] text-[#FFD700]">{eyebrow}</p>
+      <p className="text-[13px] font-black uppercase tracking-[0.14em] text-[#FFD700]">{eyebrow}</p>
       <h1 className="mt-1 text-xl font-black leading-tight text-white">{title}</h1>
     </div>
   );
@@ -1191,8 +1191,8 @@ function SectionTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
 function InfoBox({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-white/10 bg-white/[0.045] p-2.5">
-      <p className="text-[12px] leading-4 text-slate-500">{label}</p>
-      <p className="mt-1 text-sm font-black text-white">{value}</p>
+      <p className="text-[13px] leading-4 text-slate-500">{label}</p>
+      <p className="mt-1 text-[15px] font-black text-white">{value}</p>
     </div>
   );
 }
@@ -1211,7 +1211,7 @@ function ActionLink({
       <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FFD700]/12 text-[#FFD700]">
         <Icon className="h-4 w-4" />
       </span>
-      <span className="text-sm font-black leading-4 text-white">{label}</span>
+      <span className="text-[15px] font-black leading-4 text-white">{label}</span>
     </Link>
   );
 }
@@ -1221,7 +1221,7 @@ function ChoiceButton({ active, label, onClick }: { active: boolean; label: stri
     <button
       type="button"
       onClick={onClick}
-      className={`min-h-10 rounded-lg border px-2 text-sm font-black ${
+      className={`min-h-10 rounded-lg border px-2 text-[15px] font-black ${
         active ? "border-[#FFD700] bg-[#FFD700] text-[#081120]" : "border-white/10 bg-white/[0.045] text-slate-300"
       }`}
     >
@@ -1243,14 +1243,14 @@ function OptionGroup({
 }) {
   return (
     <div>
-      <p className="mb-2 text-[12px] font-bold text-slate-500">{label}</p>
+      <p className="mb-2 text-[13px] font-bold text-slate-500">{label}</p>
       <div className="grid grid-cols-2 gap-1.5">
         {options.map((option) => (
           <button
             key={option}
             type="button"
             onClick={() => onChange(option)}
-            className={`min-h-8 rounded-md border px-2 text-sm font-black ${
+            className={`min-h-8 rounded-md border px-2 text-[15px] font-black ${
               value === option ? "border-[#FFD700]/70 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-white/[0.035] text-slate-400"
             }`}
           >
@@ -1266,7 +1266,7 @@ function ForumCard({ title, body, href }: { title: string; body: string; href: s
   return (
     <Link href={href} className="block rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
       <p className="text-base font-black text-white">{title}</p>
-      <p className="mt-1 text-sm leading-5 text-slate-400">{body}</p>
+      <p className="mt-1 text-[15px] leading-5 text-slate-400">{body}</p>
     </Link>
   );
 }
@@ -1310,7 +1310,7 @@ function BottomItem({
 }) {
   if (primary) {
     return (
-      <button type="button" onClick={() => onChange(view)} className="flex flex-col items-center gap-0.5 text-[11px] font-black text-[#FFD700]">
+      <button type="button" onClick={() => onChange(view)} className="flex flex-col items-center gap-0.5 text-[12px] font-black text-[#FFD700]">
         <span className={`-mt-6 flex h-14 w-14 items-center justify-center rounded-2xl border shadow-xl ${
           active
             ? "border-[#FFD700] bg-[#FFD700] text-[#081120] shadow-[#FFD700]/25"
@@ -1327,7 +1327,7 @@ function BottomItem({
     <button
       type="button"
       onClick={() => onChange(view)}
-      className={`flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1 text-[11px] font-bold ${
+      className={`flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1 text-[12px] font-bold ${
         active ? "text-[#FFD700]" : "text-slate-500"
       }`}
     >

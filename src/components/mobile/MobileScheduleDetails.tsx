@@ -106,7 +106,7 @@ export default function MobileScheduleDetails({ locale, match, isLoggedIn, canPe
       <FoldRow title="赛事帖子" summary={`${data?.forumPostCount ?? 0} 条讨论`} open={folds.posts} onToggle={() => toggle("posts")}>
         <InlineForumPanel locale={locale} post={data?.forumPost ?? null} canPersistActions={canPersistActions} />
       </FoldRow>
-      <Link href={`/${locale}/matches/${match.id}`} className="flex h-7 items-center justify-center gap-1 rounded-md border border-white/10 bg-white/[0.035] text-[11px] font-black text-slate-300">
+      <Link href={`/${locale}/matches/${match.id}`} className="flex h-7 items-center justify-center gap-1 rounded-md border border-white/10 bg-white/[0.035] text-[12px] font-black text-slate-300">
         完整赛事页 <ExternalLink className="h-3 w-3" />
       </Link>
     </div>
@@ -155,13 +155,13 @@ function SupportAndShare({ locale, match, canPersistActions, initialData }: { lo
 
   return (
     <section className="rounded-md border border-white/10 bg-white/[0.035] p-1.5">
-      <div className="mb-1 flex items-center justify-between text-[11px] font-black"><span className="text-[#FFD700]">支持谁</span><span className="text-slate-500">{total} 人投票</span></div>
+      <div className="mb-1 flex items-center justify-between text-[12px] font-black"><span className="text-[#FFD700]">支持谁</span><span className="text-slate-500">{total} 人投票</span></div>
       <div className="grid grid-cols-3 gap-1">
-        <button type="button" onClick={() => vote("home")} disabled={loading} className={`rounded border px-1 py-1.5 text-[11px] font-black ${myVote === "home" ? "border-[#FFD700]/70 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-white/[0.035] text-slate-200"}`}>{getTeamDisplayName(match.homeTeam, locale)} {homePct}%</button>
-        <button type="button" onClick={() => vote("neutral")} disabled={loading} className={`rounded border px-1 py-1.5 text-[11px] font-black ${myVote === "neutral" ? "border-slate-300/70 bg-slate-300/15 text-slate-200" : "border-white/10 bg-white/[0.035] text-slate-200"}`}>{locale === "zh" ? "中立" : "Neutral"} {neutralPct}%</button>
-        <button type="button" onClick={() => vote("away")} disabled={loading} className={`rounded border px-1 py-1.5 text-[11px] font-black ${myVote === "away" ? "border-purple-400/70 bg-purple-400/15 text-purple-300" : "border-white/10 bg-white/[0.035] text-slate-200"}`}>{getTeamDisplayName(match.awayTeam, locale)} {awayPct}%</button>
+        <button type="button" onClick={() => vote("home")} disabled={loading} className={`rounded border px-1 py-1.5 text-[12px] font-black ${myVote === "home" ? "border-[#FFD700]/70 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-white/[0.035] text-slate-200"}`}>{getTeamDisplayName(match.homeTeam, locale)} {homePct}%</button>
+        <button type="button" onClick={() => vote("neutral")} disabled={loading} className={`rounded border px-1 py-1.5 text-[12px] font-black ${myVote === "neutral" ? "border-slate-300/70 bg-slate-300/15 text-slate-200" : "border-white/10 bg-white/[0.035] text-slate-200"}`}>{locale === "zh" ? "中立" : "Neutral"} {neutralPct}%</button>
+        <button type="button" onClick={() => vote("away")} disabled={loading} className={`rounded border px-1 py-1.5 text-[12px] font-black ${myVote === "away" ? "border-purple-400/70 bg-purple-400/15 text-purple-300" : "border-white/10 bg-white/[0.035] text-slate-200"}`}>{getTeamDisplayName(match.awayTeam, locale)} {awayPct}%</button>
       </div>
-      {message && <p className="mt-1 text-[10px] text-rose-300">{message}</p>}
+      {message && <p className="mt-1 text-[11px] text-rose-300">{message}</p>}
       <MobileShareBar locale={locale} match={match} canReward={canPersistActions} />
     </section>
   );
@@ -208,7 +208,7 @@ function MobileShareBar({ locale, match, compact = false, canReward = false }: {
 
   return (
     <div className={`${compact ? "mt-1" : "mt-1.5"} flex flex-wrap items-center gap-1`}>
-      <span className="mr-auto text-[11px] font-black text-slate-400">分享 {reward && <b className="ml-1 text-emerald-400">{reward}</b>}</span>
+      <span className="mr-auto text-[12px] font-black text-slate-400">分享 {reward && <b className="ml-1 text-emerald-400">{reward}</b>}</span>
       <ShareChip label="分享" onClick={nativeShare} icon={<Share2 className="h-3 w-3" />} />
       <ShareChip label="微博" onClick={() => open(`https://service.weibo.com/share/share.php?url=${encodeURIComponent(url)}&title=${encodeURIComponent(text)}`)} />
       <ShareChip label="X" onClick={() => open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`)} />
@@ -222,7 +222,7 @@ function MobileShareBar({ locale, match, compact = false, canReward = false }: {
 }
 
 function ShareChip({ label, onClick, icon }: { label: string; onClick: () => void | Promise<void>; icon?: React.ReactNode }) {
-  return <button type="button" onClick={onClick} className="flex h-5 items-center gap-0.5 rounded border border-white/10 bg-white/[0.04] px-1.5 text-[10px] font-black text-slate-300">{icon}{label}</button>;
+  return <button type="button" onClick={onClick} className="flex h-5 items-center gap-0.5 rounded border border-white/10 bg-white/[0.04] px-1.5 text-[11px] font-black text-slate-300">{icon}{label}</button>;
 }
 
 function WinBet({ locale, match, canPersistActions, existingBet, detailLoading }: { locale: string; match: MobileMatch; canPersistActions: boolean; existingBet: ExistingBet | null; detailLoading: boolean }) {
@@ -268,7 +268,7 @@ function WinBet({ locale, match, canPersistActions, existingBet, detailLoading }
 
   return (
     <section className="rounded-md border border-white/10 bg-white/[0.035] p-1.5">
-      <div className="mb-1 flex justify-between text-[11px] font-black"><span className="text-[#FFD700]">输赢竞猜</span><span className="text-slate-500">余额 {formatGc(balance)} GC</span></div>
+      <div className="mb-1 flex justify-between text-[12px] font-black"><span className="text-[#FFD700]">输赢竞猜</span><span className="text-slate-500">余额 {formatGc(balance)} GC</span></div>
       <div className="grid grid-cols-3 gap-1">
         <BetChoice active={choice === "home"} disabled={locked} label={getTeamDisplayName(match.homeTeam, locale)} odds={match.oddsHome} onClick={() => setChoice("home")} />
         <BetChoice active={choice === "draw"} disabled={locked} label="平局" odds={match.oddsDraw} onClick={() => setChoice("draw")} />
@@ -276,12 +276,12 @@ function WinBet({ locale, match, canPersistActions, existingBet, detailLoading }
       </div>
       <QuickAmounts onPick={preset} onAll={() => setAmount(formatAmount(balance))} />
       <div className="mt-1 grid grid-cols-[1.25fr_.85fr_3rem] gap-1">
-        <input value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="numeric" className="h-7 min-w-0 rounded border border-white/10 bg-[#081120] px-1.5 text-[11px] text-white outline-none" />
-        <span className="flex min-w-0 items-center justify-center truncate rounded border border-white/10 bg-[#081120] px-1 text-[10px] text-slate-400">预计 {formatGc(Math.round(amountNum * odds))}</span>
-        <button type="button" onClick={submit} disabled={!choice || loading || success || locked} className="h-7 rounded bg-[#FFD700] text-[11px] font-black text-[#081120] disabled:bg-slate-700 disabled:text-slate-500">{existingBet ? "已提交" : "确认"}</button>
+        <input value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="numeric" className="h-7 min-w-0 rounded border border-white/10 bg-[#081120] px-1.5 text-[12px] text-white outline-none" />
+        <span className="flex min-w-0 items-center justify-center truncate rounded border border-white/10 bg-[#081120] px-1 text-[11px] text-slate-400">预计 {formatGc(Math.round(amountNum * odds))}</span>
+        <button type="button" onClick={submit} disabled={!choice || loading || success || locked} className="h-7 rounded bg-[#FFD700] text-[12px] font-black text-[#081120] disabled:bg-slate-700 disabled:text-slate-500">{existingBet ? "已提交" : "确认"}</button>
       </div>
-      {existingBet && <p className="mt-1 text-[10px] text-emerald-300">已参与：{existingBet.prediction === "home" ? getTeamDisplayName(match.homeTeam, locale) : existingBet.prediction === "away" ? getTeamDisplayName(match.awayTeam, locale) : "平局"} · {formatGc(existingBet.gcAmount)} GC</p>}
-      {message && <p className={`mt-1 text-[10px] ${success ? "text-emerald-400" : "text-rose-300"}`}>{message}</p>}
+      {existingBet && <p className="mt-1 text-[11px] text-emerald-300">已参与：{existingBet.prediction === "home" ? getTeamDisplayName(match.homeTeam, locale) : existingBet.prediction === "away" ? getTeamDisplayName(match.awayTeam, locale) : "平局"} · {formatGc(existingBet.gcAmount)} GC</p>}
+      {message && <p className={`mt-1 text-[11px] ${success ? "text-emerald-400" : "text-rose-300"}`}>{message}</p>}
       {success && <MobileShareBar locale={locale} match={match} compact canReward={canPersistActions} />}
     </section>
   );
@@ -327,56 +327,56 @@ function ScoreBet({ locale, match, canPersistActions, initialBets }: { locale: s
 
   return (
     <section className="rounded-md border border-white/10 bg-white/[0.035] p-1.5">
-      <div className="mb-1 flex justify-between text-[11px] font-black"><span className="text-[#FFD700]">比分竞猜</span><span className="text-slate-500">最低 1M GC</span></div>
+      <div className="mb-1 flex justify-between text-[12px] font-black"><span className="text-[#FFD700]">比分竞猜</span><span className="text-slate-500">最低 1M GC</span></div>
       <div className="grid grid-cols-[1fr_1.4rem_1fr] gap-1">
         <ScoreInput label={getTeamDisplayName(match.homeTeam, locale)} value={homeScore} onChange={setHomeScore} />
-        <span className="flex h-7 items-center justify-center text-sm font-black text-slate-500">:</span>
+        <span className="flex h-7 items-center justify-center text-[15px] font-black text-slate-500">:</span>
         <ScoreInput label={getTeamDisplayName(match.awayTeam, locale)} value={awayScore} onChange={setAwayScore} />
       </div>
       <QuickAmounts onPick={preset} onAll={() => setAmount(formatAmount(balance))} />
       <div className="mt-1 grid grid-cols-[1.25fr_.85fr_3rem] gap-1">
-        <input value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="numeric" className="h-7 min-w-0 rounded border border-white/10 bg-[#081120] px-1.5 text-[11px] text-white outline-none" />
-        <span className="flex min-w-0 items-center justify-center truncate rounded border border-white/10 bg-[#081120] px-1 text-[10px] text-slate-400">预计 {formatGc(netPayout(amountNum, odds))}</span>
-        <button type="button" onClick={submit} disabled={!scoreReady || loading} className="h-7 rounded bg-[#FFD700] text-[11px] font-black text-[#081120] disabled:bg-slate-700 disabled:text-slate-500">确认</button>
+        <input value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="numeric" className="h-7 min-w-0 rounded border border-white/10 bg-[#081120] px-1.5 text-[12px] text-white outline-none" />
+        <span className="flex min-w-0 items-center justify-center truncate rounded border border-white/10 bg-[#081120] px-1 text-[11px] text-slate-400">预计 {formatGc(netPayout(amountNum, odds))}</span>
+        <button type="button" onClick={submit} disabled={!scoreReady || loading} className="h-7 rounded bg-[#FFD700] text-[12px] font-black text-[#081120] disabled:bg-slate-700 disabled:text-slate-500">确认</button>
       </div>
-      {message && <p className={`mt-1 text-[10px] ${success ? "text-emerald-400" : "text-rose-300"}`}>{message}</p>}
-      {initialBets.length > 0 && <p className="mt-1 truncate text-[10px] text-emerald-300">已参与：{initialBets.map((bet) => `${bet.scoreHome}:${bet.scoreAway} ${formatGc(bet.gcAmount)} GC`).join(" · ")}</p>}
+      {message && <p className={`mt-1 text-[11px] ${success ? "text-emerald-400" : "text-rose-300"}`}>{message}</p>}
+      {initialBets.length > 0 && <p className="mt-1 truncate text-[11px] text-emerald-300">已参与：{initialBets.map((bet) => `${bet.scoreHome}:${bet.scoreAway} ${formatGc(bet.gcAmount)} GC`).join(" · ")}</p>}
       {success && <MobileShareBar locale={locale} match={match} compact canReward={canPersistActions} />}
     </section>
   );
 }
 
 function BetChoice({ active, disabled = false, label, odds, onClick }: { active: boolean; disabled?: boolean; label: string; odds: number | null; onClick: () => void }) {
-  return <button type="button" onClick={onClick} disabled={disabled} className={`h-9 min-w-0 truncate rounded border px-1 text-[11px] font-black disabled:opacity-70 ${active ? "border-[#FFD700]/70 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-[#081120] text-slate-300"}`}>{label}<span className="block text-[10px] font-bold text-slate-500">{(odds ?? 0).toFixed(2)}</span></button>;
+  return <button type="button" onClick={onClick} disabled={disabled} className={`h-9 min-w-0 truncate rounded border px-1 text-[12px] font-black disabled:opacity-70 ${active ? "border-[#FFD700]/70 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-[#081120] text-slate-300"}`}>{label}<span className="block text-[11px] font-bold text-slate-500">{(odds ?? 0).toFixed(2)}</span></button>;
 }
 
 function ScoreInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return <label className="grid h-7 min-w-0 grid-cols-[1fr_1.7rem] items-center rounded border border-white/10 bg-[#081120] pl-1.5 text-[10px] text-slate-400"><span className="truncate">{label}</span><input value={value} onChange={(event) => onChange(event.target.value.replace(/\D/g, "").slice(0, 2))} inputMode="numeric" className="h-full w-full bg-transparent text-center text-sm font-black text-white outline-none" /></label>;
+  return <label className="grid h-7 min-w-0 grid-cols-[1fr_1.7rem] items-center rounded border border-white/10 bg-[#081120] pl-1.5 text-[11px] text-slate-400"><span className="truncate">{label}</span><input value={value} onChange={(event) => onChange(event.target.value.replace(/\D/g, "").slice(0, 2))} inputMode="numeric" className="h-full w-full bg-transparent text-center text-[15px] font-black text-white outline-none" /></label>;
 }
 
 function QuickAmounts({ onPick, onAll }: { onPick: (value: number) => void; onAll: () => void }) {
-  return <div className="mt-1 grid grid-cols-5 gap-1">{PRESETS.map((value) => <button key={value} type="button" onClick={() => onPick(value)} className="h-5 rounded border border-white/10 bg-white/[0.035] text-[10px] font-black text-slate-400">{value * 100}%</button>)}<button type="button" onClick={onAll} className="h-5 rounded border border-white/10 bg-white/[0.035] text-[10px] font-black text-slate-400">ALL</button></div>;
+  return <div className="mt-1 grid grid-cols-5 gap-1">{PRESETS.map((value) => <button key={value} type="button" onClick={() => onPick(value)} className="h-5 rounded border border-white/10 bg-white/[0.035] text-[11px] font-black text-slate-400">{value * 100}%</button>)}<button type="button" onClick={onAll} className="h-5 rounded border border-white/10 bg-white/[0.035] text-[11px] font-black text-slate-400">ALL</button></div>;
 }
 
 function FoldRow({ title, summary, open, onToggle, children }: { title: string; summary: string; open: boolean; onToggle: () => void; children: React.ReactNode }) {
-  return <section className="overflow-hidden rounded-md border border-white/10 bg-white/[0.035]"><button type="button" onClick={onToggle} className="flex h-7 w-full items-center justify-between gap-2 px-2 text-left"><span className="shrink-0 text-[11px] font-black text-white">{title}</span><span className="ml-auto truncate text-[10px] text-slate-500">{summary}</span><ChevronDown className={`h-3 w-3 shrink-0 text-slate-500 transition ${open ? "rotate-180" : ""}`} /></button>{open && <div className="border-t border-white/10">{children}</div>}</section>;
+  return <section className="overflow-hidden rounded-md border border-white/10 bg-white/[0.035]"><button type="button" onClick={onToggle} className="flex h-7 w-full items-center justify-between gap-2 px-2 text-left"><span className="shrink-0 text-[12px] font-black text-white">{title}</span><span className="ml-auto truncate text-[11px] text-slate-500">{summary}</span><ChevronDown className={`h-3 w-3 shrink-0 text-slate-500 transition ${open ? "rotate-180" : ""}`} /></button>{open && <div className="border-t border-white/10">{children}</div>}</section>;
 }
 
 function HistoryPanel({ match, rows, loading }: { match: MobileMatch; rows: H2HRow[]; loading: boolean }) {
   if (loading) return <EmptyText>加载中...</EmptyText>;
   if (!rows.length) return <EmptyText>暂无历史交锋</EmptyText>;
-  return <div>{rows.map((row) => { const forward = row.home_team === match.homeTeam; return <div key={`${row.match_date}-${row.home_team}`} className="grid grid-cols-[1fr_2.4rem_2.4rem] gap-1 border-b border-white/5 px-2 py-1 text-[10px] text-slate-400 last:border-0"><span className="truncate">{row.match_date.slice(0, 4)} {row.tournament}</span><b className="text-center text-[#FFD700]">{forward ? row.home_score : row.away_score}</b><b className="text-center text-purple-300">{forward ? row.away_score : row.home_score}</b></div>; })}</div>;
+  return <div>{rows.map((row) => { const forward = row.home_team === match.homeTeam; return <div key={`${row.match_date}-${row.home_team}`} className="grid grid-cols-[1fr_2.4rem_2.4rem] gap-1 border-b border-white/5 px-2 py-1 text-[11px] text-slate-400 last:border-0"><span className="truncate">{row.match_date.slice(0, 4)} {row.tournament}</span><b className="text-center text-[#FFD700]">{forward ? row.home_score : row.away_score}</b><b className="text-center text-purple-300">{forward ? row.away_score : row.home_score}</b></div>; })}</div>;
 }
 
 function AiPanel({ locale, match, predictions, loading }: { locale: string; match: MobileMatch; predictions: AiPredictions | null; loading: boolean }) {
   if (loading) return <EmptyText>加载中...</EmptyText>;
   const rows = AI_MODELS.filter((model) => predictions?.[model.key]);
   if (!rows.length) return <EmptyText>暂无 AI 预测</EmptyText>;
-  return <div><div className="grid grid-cols-[1fr_3.5rem_3.5rem_3rem] gap-4 border-b border-white/10 px-3 py-1 text-[10px] font-black text-slate-500"><span>模型</span><span className="-translate-x-2 truncate text-center">{getTeamDisplayName(match.homeTeam, locale)}</span><span className="truncate text-center">{getTeamDisplayName(match.awayTeam, locale)}</span><span className="text-center">准确率</span></div>{rows.map((model) => <div key={model.key} className="grid grid-cols-[1fr_3.5rem_3.5rem_3rem] gap-4 border-b border-white/5 px-3 py-1 text-[10px] text-slate-400 last:border-0"><span>{model.name}</span><b className="-translate-x-2 text-center text-[#FFD700]">{predictions?.[model.key]?.home}</b><b className="text-center text-purple-300">{predictions?.[model.key]?.away}</b><span className="text-center text-slate-500">--</span></div>)}</div>;
+  return <div><div className="grid grid-cols-[1fr_3.5rem_3.5rem_3rem] gap-4 border-b border-white/10 px-3 py-1 text-[11px] font-black text-slate-500"><span>模型</span><span className="-translate-x-2 truncate text-center">{getTeamDisplayName(match.homeTeam, locale)}</span><span className="truncate text-center">{getTeamDisplayName(match.awayTeam, locale)}</span><span className="text-center">准确率</span></div>{rows.map((model) => <div key={model.key} className="grid grid-cols-[1fr_3.5rem_3.5rem_3rem] gap-4 border-b border-white/5 px-3 py-1 text-[11px] text-slate-400 last:border-0"><span>{model.name}</span><b className="-translate-x-2 text-center text-[#FFD700]">{predictions?.[model.key]?.home}</b><b className="text-center text-purple-300">{predictions?.[model.key]?.away}</b><span className="text-center text-slate-500">--</span></div>)}</div>;
 }
 
 function EmptyText({ children }: { children: React.ReactNode }) {
-  return <p className="p-2 text-[11px] text-slate-500">{children}</p>;
+  return <p className="p-2 text-[12px] text-slate-500">{children}</p>;
 }
 
 function InlineForumPanel({ locale, post, canPersistActions }: { locale: string; post: ForumPost | null; canPersistActions: boolean }) {
@@ -417,22 +417,22 @@ function InlineForumPanel({ locale, post, canPersistActions }: { locale: string;
     <div className="grid gap-1.5 p-2">
       <div className="rounded border border-white/10 bg-[#081120] p-2">
         <div className="flex items-center justify-between gap-2">
-          <h4 className="truncate text-[11px] font-black text-white">{post.title}</h4>
-          <span className="shrink-0 text-[10px] text-slate-500">{post.replyCount} 回复 · {post.likeCount} 赞</span>
+          <h4 className="truncate text-[12px] font-black text-white">{post.title}</h4>
+          <span className="shrink-0 text-[11px] text-slate-500">{post.replyCount} 回复 · {post.likeCount} 赞</span>
         </div>
-        <ForumHtml html={post.content} className="mt-1 text-[11px] leading-4 text-slate-300" />
+        <ForumHtml html={post.content} className="mt-1 text-[12px] leading-4 text-slate-300" />
       </div>
       {replies.map((reply) => (
         <div key={reply.id} className="rounded border border-white/10 bg-white/[0.025] px-2 py-1.5">
-          <ForumHtml html={reply.content} className="text-[11px] leading-4 text-slate-400" />
-          <p className="mt-1 text-[10px] text-slate-600">{reply.likeCount} 赞</p>
+          <ForumHtml html={reply.content} className="text-[12px] leading-4 text-slate-400" />
+          <p className="mt-1 text-[11px] text-slate-600">{reply.likeCount} 赞</p>
         </div>
       ))}
       <div className="grid grid-cols-[1fr_3rem] gap-1">
-        <input value={value} onChange={(event) => setValue(event.target.value)} placeholder="参与赛事讨论" className="h-7 min-w-0 rounded border border-white/10 bg-[#081120] px-2 text-[11px] text-white outline-none placeholder:text-slate-600" />
-        <button type="button" onClick={submit} disabled={!value.trim() || loading} className="h-7 rounded bg-[#FFD700] text-[11px] font-black text-[#081120] disabled:bg-slate-700 disabled:text-slate-500">回复</button>
+        <input value={value} onChange={(event) => setValue(event.target.value)} placeholder="参与赛事讨论" className="h-7 min-w-0 rounded border border-white/10 bg-[#081120] px-2 text-[12px] text-white outline-none placeholder:text-slate-600" />
+        <button type="button" onClick={submit} disabled={!value.trim() || loading} className="h-7 rounded bg-[#FFD700] text-[12px] font-black text-[#081120] disabled:bg-slate-700 disabled:text-slate-500">回复</button>
       </div>
-      {message && <p className="text-[10px] text-slate-400">{message}</p>}
+      {message && <p className="text-[11px] text-slate-400">{message}</p>}
     </div>
   );
 }
