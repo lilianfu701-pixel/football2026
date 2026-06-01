@@ -17,9 +17,10 @@ export default function ProfileSidebar({ locale, nickname, avatarUrl, gcBalance 
   const base     = `/${locale}/profile`;
 
   const NAV = [
-    { key: "",         icon: "🏠", label: "Overview",    labelZh: "个人概览" },
-    { key: "settings", icon: "⚙️", label: "Settings",    labelZh: "账户设置" },
-    { key: "topup",    icon: "💳", label: "Top Up GC",   labelZh: "充值 GC"  },
+    { key: "",             icon: "🏠", label: "Overview",     labelZh: "个人概览" },
+    { key: "transactions", icon: "🪙", label: "Transactions", labelZh: "GC 流水"  },
+    { key: "settings",     icon: "⚙️", label: "Settings",     labelZh: "账户设置" },
+    { key: "topup",        icon: "💳", label: "Top Up GC",    labelZh: "充值 GC"  },
   ];
 
   return (

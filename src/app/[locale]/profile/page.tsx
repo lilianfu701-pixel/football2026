@@ -9,6 +9,7 @@ import {
   formatGc,
 } from "@/lib/levels";
 import { getCountryByCode } from "@/lib/countries";
+import { gcTransactionLabel } from "@/lib/gcTransactionLabels";
 import DailyCheckin from "@/components/DailyCheckin";
 import ProfileCompletion from "@/components/ProfileCompletion";
 import { PROFILE_REWARDS } from "@/lib/profileRewards";
@@ -510,29 +511,18 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-white font-bold">GC 流水</h3>
-            <span className="text-gray-500 text-xs">Recent Transactions</span>
+            <Link
+              href={`/${locale}/profile/transactions`}
+              className="text-[#FFD700] text-xs hover:underline"
+            >
+              {zh ? "全部记录 →" : "View All →"}
+            </Link>
           </div>
 
           {recentTx && recentTx.length > 0 ? (
             <div className="space-y-2">
               {recentTx.map((tx) => {
                 const isPositive = tx.amount > 0;
-                const typeLabels: Record<string, string> = {
-                  topup:            zh ? "充值"       : "Top Up",
-                  daily_checkin:    zh ? "每日签到"   : "Daily Check-in",
-                  welcome_bonus:    zh ? "新人奖励"   : "Welcome Bonus",
-                  bet_placed:       zh ? "投注扣除"   : "Bet Placed",
-                  bet_won:          zh ? "投注赢利"   : "Bet Won",
-                  bet_refunded:     zh ? "投注退款"   : "Bet Refund",
-                  share_reward:     zh ? "分享奖励"   : "Share Reward",
-                  forum_post:       zh ? "发帖奖励"   : "Forum Post",
-                  forum_like:       zh ? "点赞奖励"   : "Forum Like",
-                  admin_award:      zh ? "管理员奖励" : "Admin Award",
-                  admin_deduct:     zh ? "管理员扣除" : "Admin Deduct",
-                  transfer_sent:    zh ? "转出 GC"    : "GC Sent",
-                  transfer_received:zh ? "收到 GC"    : "GC Received",
-                  profile_reward:   zh ? "资料奖励"   : "Profile Reward",
-                };
                 return (
                   <div
                     key={tx.id}
@@ -540,7 +530,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                   >
                     <div>
                       <p className="text-sm text-white">
-                        {typeLabels[tx.type] ?? tx.type}
+                        {gcTransactionLabel(tx.type, zh)}
                       </p>
                       <p className="text-xs text-gray-500">{tx.note}</p>
                     </div>
