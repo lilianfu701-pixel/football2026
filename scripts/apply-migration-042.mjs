@@ -11,7 +11,8 @@ const projectRef = "cxpzlpewoqtlduoizlix";
 const accessToken = env.SUPABASE_ACCESS_TOKEN;
 const dbUrl = `https://api.supabase.com/v1/projects/${projectRef}/database/query`;
 const authUrl = `https://api.supabase.com/v1/projects/${projectRef}/config/auth`;
-const mobileCallback = "https://m.football2026.net/auth/callback";
+const legacyMobileCallback = "https://m.football2026.net/auth/callback";
+const mobileCallback = "https://m.football2026.net/auth/callback**";
 
 if (!accessToken) {
   throw new Error("Missing SUPABASE_ACCESS_TOKEN in .env.local");
@@ -49,10 +50,13 @@ const authConfig = await request(authUrl);
 const allowedCallbacks = String(authConfig.uri_allow_list || "")
   .split(",")
   .map((url) => url.trim())
-  .filter(Boolean);
+  .filter((url) => Boolean(url) && url !== legacyMobileCallback);
 
 if (!allowedCallbacks.includes(mobileCallback)) {
   allowedCallbacks.push(mobileCallback);
+}
+
+if (allowedCallbacks.join(",") !== authConfig.uri_allow_list) {
   await request(authUrl, {
     method: "PATCH",
     body: JSON.stringify({ uri_allow_list: allowedCallbacks.join(",") }),

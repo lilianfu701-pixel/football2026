@@ -37,11 +37,13 @@ Scope:
 
 ## Authentication configuration
 
-Added this permitted OAuth callback URL:
+Added this permitted OAuth callback URL pattern:
 
-`https://m.football2026.net/auth/callback`
+`https://m.football2026.net/auth/callback**`
 
-This keeps mobile Google login callbacks on the mobile domain.
+This keeps mobile Google login callbacks on the mobile domain while allowing the
+validated locale and mobile return-path query parameters appended by the login
+page.
 
 ## Verification
 
@@ -53,3 +55,19 @@ After applying the migration:
 - Confirmed that the generated profile had a nickname, 100,000 GC balance, 100,000 GC total, numeric levels, and a referral code.
 - Rolled the smoke-test transaction back so no test account or profile remained.
 - Confirmed that the mobile callback URL is present in the Auth allowlist.
+
+## Android OAuth redirect follow-up
+
+The first allowlist entry used an exact callback path:
+
+`https://m.football2026.net/auth/callback`
+
+Android login exposed that the mobile login page appends validated `locale` and
+`next` query parameters. Supabase requires the complete `redirectTo` value to
+match an allowed redirect pattern. The allowlist entry was therefore narrowed
+to the same callback path with a suffix wildcard:
+
+`https://m.football2026.net/auth/callback**`
+
+This permits the mobile callback query parameters without allowing unrelated
+paths or domains.
