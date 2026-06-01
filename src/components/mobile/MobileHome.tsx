@@ -394,11 +394,19 @@ export default function MobileHome({
 
     updateMode();
     updateView();
-    media.addEventListener("change", updateMode);
+    if (typeof media.addEventListener === "function") {
+      media.addEventListener("change", updateMode);
+    } else {
+      media.addListener(updateMode);
+    }
     window.addEventListener("popstate", updateView);
 
     return () => {
-      media.removeEventListener("change", updateMode);
+      if (typeof media.removeEventListener === "function") {
+        media.removeEventListener("change", updateMode);
+      } else {
+        media.removeListener(updateMode);
+      }
       window.removeEventListener("popstate", updateView);
     };
   }, []);
