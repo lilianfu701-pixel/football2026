@@ -154,14 +154,27 @@ function TopupContent() {
   // ── PayPal handlers ─────────────────────────────────────────────────────
   async function createPayPalOrder() {
     setPayErr(null);
-    const res  = await fetch("/api/topup/paypal/create", {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ packageId: selected }),
-    });
-    const data = await res.json();
-    if (!res.ok || !data.orderID) throw new Error(data.error ?? "Create order failed");
-    return data.orderID as string;
+    try {
+      const res  = await fetch("/api/topup/paypal/create", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ packageId: selected }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.orderID) {
+        const msg = data.error ?? "Create order failed";
+        setPayErr(zh ? `创建订单失败：${msg}` : `Create order failed: ${msg}`);
+        throw new Error(msg);
+      }
+      return data.orderID as string;
+    } catch (err) {
+      // If we haven't set payErr yet (network-level failure), set it now
+      if (!payErr) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setPayErr(zh ? `网络错误：${msg}` : `Network error: ${msg}`);
+      }
+      throw err;
+    }
   }
 
   async function onPayPalApprove(data: { orderID: string }) {
@@ -453,8 +466,9 @@ function TopupContent() {
                     createOrder={createPayPalOrder}
                     onApprove={onPayPalApprove}
                     onError={(err) => {
-                      console.error("[PayPal error]", err);
-                      setPayErr(zh ? "PayPal 支付出错，请重试" : "PayPal error, please try again");
+                      console.error("[PayPal onError]", err);
+                      // Only show generic message if createOrder didn't already set a specific one
+                      setPayErr((prev) => prev ?? (zh ? "PayPal 支付出错，请重试" : "PayPal error, please try again"));
                     }}
                     onCancel={() => setPayErr(zh ? "PayPal 支付已取消" : "PayPal payment cancelled")}
                   />

@@ -23,8 +23,12 @@ export async function getPayPalToken(): Promise<string> {
     body: "grant_type=client_credentials",
     cache: "no-store",
   });
-  if (!res.ok) throw new Error(`PayPal token error: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`PayPal token error: ${res.status} ${body}`);
+  }
   const data = await res.json();
+  if (!data.access_token) throw new Error("PayPal token missing in response");
   return data.access_token as string;
 }
 
