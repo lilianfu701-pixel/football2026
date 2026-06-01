@@ -148,7 +148,7 @@ export default function MobileInstallPrompt({
 
   if (installed) {
     return (
-      <div className="rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-xs font-bold text-emerald-100">
+      <div className="rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-sm font-bold text-emerald-100">
         <span className="inline-flex items-center gap-2">
           <Check className="h-4 w-4" />
           {t.installed}
@@ -166,7 +166,7 @@ export default function MobileInstallPrompt({
       <div className="mb-2 flex items-start justify-between gap-3">
         <div>
           <p className="text-base font-black leading-5 text-white">{t.title}</p>
-          <p className="mt-1 text-[11px] leading-4 text-slate-300">{t.subtitle}</p>
+          <p className="mt-1 text-[12px] leading-4 text-slate-300">{t.subtitle}</p>
         </div>
         {allowDismiss && (
           <button
@@ -192,11 +192,11 @@ export default function MobileInstallPrompt({
       )}
 
       <div className="rounded-lg border border-[#FFD700]/20 bg-[#FFD700]/8 p-2.5">
-        <p className="mb-2 text-[11px] font-black uppercase tracking-[0.14em] text-[#FFD700]">{title}</p>
+        <p className="mb-2 text-[12px] font-black uppercase tracking-[0.14em] text-[#FFD700]">{title}</p>
         <div className="grid gap-1.5">
           {steps.map((step, index) => (
-            <div key={`${step.text}-${index}`} className="flex items-start gap-2 text-[11px] leading-4 text-slate-200">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#FFD700] text-[10px] font-black text-[#081120]">
+            <div key={`${step.text}-${index}`} className="flex items-start gap-2 text-[12px] leading-4 text-slate-200">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#FFD700] text-[11px] font-black text-[#081120]">
                 {index + 1}
               </span>
               <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[#FFD700]/20 text-[#FFD700]">

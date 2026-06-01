@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
 import { createServerClient } from "@supabase/ssr";
 import { routing } from "./i18n/routing";
+import { getSharedAuthCookieOptions } from "./lib/supabase/cookieOptions";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
@@ -114,6 +115,8 @@ function mergeSupabaseCookies(response: NextResponse, supabaseResponse: NextResp
 export async function proxy(request: NextRequest) {
   // Refresh Supabase auth session
   let supabaseResponse = NextResponse.next({ request });
+  const hostname = (request.headers.get("host") ?? "").split(":")[0];
+  const sharedCookieOptions = getSharedAuthCookieOptions(hostname);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -129,7 +132,7 @@ export async function proxy(request: NextRequest) {
           );
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, { ...options, ...sharedCookieOptions })
           );
         },
       },

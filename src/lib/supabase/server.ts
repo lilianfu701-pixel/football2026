@@ -1,10 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { getSharedAuthCookieOptions } from "@/lib/supabase/cookieOptions";
 
 // Build marker: env vars NEXT_PUBLIC_SUPABASE_* are now non-sensitive (build-time available).
 
 export async function createClient() {
   const cookieStore = await cookies();
+  const hostname = (await headers()).get("host")?.split(":")[0] ?? "";
+  const sharedCookieOptions = getSharedAuthCookieOptions(hostname);
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,7 +20,7 @@ export async function createClient() {
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
+              cookieStore.set(name, value, { ...options, ...sharedCookieOptions })
             );
           } catch {
             // The `setAll` method was called from a Server Component.
