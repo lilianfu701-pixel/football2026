@@ -585,8 +585,9 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
   const [propError, setPropError] = useState<string | null>(null);
   const [propToast,     setPropToast]     = useState<string | null>(null);
   const [globalEffects, setGlobalEffects] = useState<GlobalEffect[]>([]);
-  // User's own position on the map (updated via geolocation; fallback = left-centre)
-  const [userMapPos,    setUserMapPos]    = useState({ x: 50, y: 50 });
+  // Only show the user's marker after the browser returns a real position.
+  const [userMapPos,       setUserMapPos]       = useState<{ x: number; y: number } | null>(null);
+  const [locationStatus,   setLocationStatus]   = useState<"idle" | "locating" | "ready" | "unavailable">("idle");
 
   const channelRef    = useRef<RealtimeChannel | null>(null);
   const lastLaunchRef = useRef<number>(0);
@@ -600,18 +601,30 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
   // Inject CSS once
   useEffect(() => { injectFireworkStyles(); }, []);
 
-  // Resolve user's geographic position on the map (silent fallback on denial)
-  useEffect(() => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+  const requestUserLocation = useCallback(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setLocationStatus("unavailable");
+      return;
+    }
+    setLocationStatus("locating");
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
         const pos = coordsToMapPercent(coords.longitude, coords.latitude);
         setUserMapPos(pos);
+        setLocationStatus("ready");
       },
-      () => { /* permission denied — keep default */ },
+      () => {
+        setUserMapPos(null);
+        setLocationStatus("unavailable");
+      },
       { timeout: 5000, maximumAge: 3_600_000 },
     );
   }, []);
+
+  // Resolve the user's geographic position when the map is opened.
+  useEffect(() => {
+    requestUserLocation();
+  }, [requestUserLocation]);
 
   // (Audio is loaded on first play — no preload needed)
 
@@ -836,6 +849,19 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
           </div>
         </div>
 
+        {showCurrentUserMarker && (userVote === "home" || userVote === "away") && !userMapPos && (
+          <button
+            type="button"
+            onClick={requestUserLocation}
+            disabled={locationStatus === "locating"}
+            className="mb-3 rounded-md border border-[#FFD700]/35 bg-[#FFD700]/10 px-2 py-1 text-[11px] font-bold text-[#FFD700] disabled:opacity-60"
+          >
+            {locationStatus === "locating"
+              ? (zh ? "正在定位…" : "Locating…")
+              : (zh ? "允许定位后显示我的位置" : "Allow location to show my position")}
+          </button>
+        )}
+
         {/* Map */}
         <div
           data-map
@@ -905,7 +931,7 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
                 })}
               </ComposableMap>
 
-              {showCurrentUserMarker && (userVote === "home" || userVote === "away") && (
+              {showCurrentUserMarker && userMapPos && (userVote === "home" || userVote === "away") && (
                 <div
                   className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
                   style={{ left: `${userMapPos.x}%`, top: `${userMapPos.y}%`, zIndex: 25 }}
@@ -1058,8 +1084,8 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
                     {ge.type === "firework" && (() => {
                       const ox = 50;   // map centre — particles origin
                       const oy = 50;
-                      const fx = userMapPos.x;  // flash at user's geolocation
-                      const fy = userMapPos.y;
+                      const fx = userMapPos?.x ?? 50;  // flash at user's geolocation when available
+                      const fy = userMapPos?.y ?? 50;
                       return (
                         <>
                           {/* Launch flash at user's location */}
