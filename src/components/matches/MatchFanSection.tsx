@@ -631,8 +631,8 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
   // Keep soundOnRef in sync
   useEffect(() => { soundOnRef.current = soundOn; }, [soundOn]);
 
-  // Fetch fan votes
-  useEffect(() => {
+  // Fetch fan votes (extracted so a fresh vote elsewhere can trigger a reload)
+  const loadCountryVotes = useCallback(() => {
     fetch(`/api/match-votes-by-country?match_id=${matchId}`)
       .then((r) => r.json())
       .then((d) => {
@@ -654,6 +654,20 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
       })
       .catch(() => setLoading(false));
   }, [matchId]);
+
+  useEffect(() => { loadCountryVotes(); }, [loadCountryVotes]);
+
+  // A vote cast elsewhere on the page (e.g. the MatchHero support bar) is
+  // already persisted server-side, so reload the country aggregate to make the
+  // new vote appear on the map immediately — no full page reload needed.
+  useEffect(() => {
+    function onVoteChanged(e: Event) {
+      const detail = (e as CustomEvent<{ matchId: string | number }>).detail;
+      if (detail && String(detail.matchId) === String(matchId)) loadCountryVotes();
+    }
+    window.addEventListener("match-vote-changed", onVoteChanged);
+    return () => window.removeEventListener("match-vote-changed", onVoteChanged);
+  }, [matchId, loadCountryVotes]);
 
   // Supabase Realtime: receive any prop from others
   const spawnFirework = useCallback((

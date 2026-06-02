@@ -94,17 +94,26 @@ export default function MatchHero({
   const [votes, setVotes] = useState(initialVotes);
   const [myVote, setMyVote] = useState(initialMyVote);
   const [voting, setVoting] = useState(false);
+  // Login state resolved client-side. The desktop match page is statically
+  // generated (revalidate + generateStaticParams), so it cannot know the
+  // logged-in user at render time and passes loggedIn={false}. We recover it
+  // from the per-user state endpoint below.
+  const [clientLoggedIn, setClientLoggedIn] = useState(false);
 
-  // Self-fetch user vote on mount (for statically-generated match pages where initialMyVote is null)
+  // Self-fetch user state on mount (for statically-generated match pages)
   useEffect(() => {
-    if (initialMyVote !== null) return;  // server already provided vote — skip
     fetch(`/api/matches/${matchId}/user-state`)
       .then((r) => r.json())
       .then((d: { myVote: string | null; userId: string | null }) => {
-        if (d.userId) setMyVote(d.myVote);
+        if (d.userId) {
+          setClientLoggedIn(true);
+          if (initialMyVote === null) setMyVote(d.myVote);
+        }
       })
       .catch(() => {});
   }, [matchId, initialMyVote]);
+
+  const canVote = loggedIn || clientLoggedIn;
 
   const total = votes.home + votes.neutral + votes.away;
   const pct = (n: number) => total > 0 ? Math.round((n / total) * 100) : 0;
@@ -118,7 +127,7 @@ export default function MatchHero({
     : kickoffDate.toLocaleString("en-US", { month: "short", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit", timeZoneName: "short" });
 
   async function handleVote(vote: "home" | "neutral" | "away") {
-    if (!loggedIn || voting) return;
+    if (!canVote || voting) return;
     setVoting(true);
 
     // Optimistic update
@@ -144,7 +153,11 @@ export default function MatchHero({
         setMyVote(oldVote);
         setVotes(votes);
       } else {
-        // Refresh server data so fan map reflects the new vote
+        // Tell the fan map (sibling component) to reload so the new vote shows
+        // on the map immediately, then refresh server data.
+        window.dispatchEvent(
+          new CustomEvent("match-vote-changed", { detail: { matchId, vote } }),
+        );
         router.refresh();
       }
     } catch {
@@ -228,7 +241,7 @@ export default function MatchHero({
           {/* Home vote */}
           <button
             onClick={() => handleVote("home")}
-            disabled={!loggedIn || voting}
+            disabled={!canVote || voting}
             className="flex-1 py-1.5 rounded-xl text-xs font-bold border transition-all disabled:opacity-50"
             style={myVote === "home" ? {
               backgroundColor: hexOp(hc.primary, 0.15),
@@ -256,7 +269,7 @@ export default function MatchHero({
           {/* Neutral vote — stays blue, it's team-agnostic */}
           <button
             onClick={() => handleVote("neutral")}
-            disabled={!loggedIn || voting}
+            disabled={!canVote || voting}
             className={`flex-[0.7] py-1.5 rounded-xl text-xs font-bold border transition-all ${
               myVote === "neutral"
                 ? "bg-blue-500/15 border-blue-500/40 text-blue-400 shadow-lg shadow-blue-500/10"
@@ -278,7 +291,7 @@ export default function MatchHero({
           {/* Away vote */}
           <button
             onClick={() => handleVote("away")}
-            disabled={!loggedIn || voting}
+            disabled={!canVote || voting}
             className="flex-1 py-1.5 rounded-xl text-xs font-bold border transition-all disabled:opacity-50"
             style={myVote === "away" ? {
               backgroundColor: hexOp(ac.primary, 0.15),
@@ -304,7 +317,7 @@ export default function MatchHero({
           </button>
         </div>
 
-        {!loggedIn && (
+        {!canVote && (
           <p className="text-[10px] text-gray-600 text-center mt-1.5">
             {zh ? "登录后参与投票" : "Login to vote"}
           </p>
