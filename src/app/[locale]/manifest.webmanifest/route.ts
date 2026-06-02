@@ -2,13 +2,13 @@ import { routing } from "@/i18n/routing";
 
 const names = {
   zh: {
-    name: "Football2026 世界杯竞猜",
+    name: "Football2026 世界杯助威",
     shortName: "Football2026",
-    description: "世界杯竞猜、GoalCoin、赛程和排行榜",
-    predict: "立即竞猜",
+    description: "世界杯助威预测、GoalCoin、赛程和排行榜",
+    predict: "立即助威",
     matches: "今日赛程",
     checkin: "每日签到",
-    bets: "我的竞猜",
+    bets: "我的预测",
   },
   en: {
     name: "Football2026 World Cup Predictions",

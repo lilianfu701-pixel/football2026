@@ -152,7 +152,7 @@ export default function ScorePredictionPanel({
       return;
     }
     if (amount < MIN_BET) {
-      setError(zh ? `最低押注 ${formatGc(MIN_BET)} GC` : `Min bet ${formatGc(MIN_BET)} GC`);
+      setError(zh ? `最低消耗 ${formatGc(MIN_BET)} GC` : `Min bet ${formatGc(MIN_BET)} GC`);
       return;
     }
     if (amount > gcBalance) {
@@ -210,7 +210,7 @@ export default function ScorePredictionPanel({
         });
 
         setSuccess(zh
-          ? `✅ ${parsedHome}:${parsedAway} 押注成功！赔率 ${fmtOdds(odds)}`
+          ? `✅ ${parsedHome}:${parsedAway} 预测成功！倍率 ${fmtOdds(odds)}`
           : `✅ ${parsedHome}:${parsedAway} placed at ${fmtOdds(odds)}`
         );
         setHomeScore("");
@@ -271,7 +271,7 @@ export default function ScorePredictionPanel({
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-bold text-white">
-          {zh ? "🎯 竞猜比分" : "🎯 Score Prediction"}
+          {zh ? "🎯 比分预测" : "🎯 Score Prediction"}
         </h3>
         {myBets.length > 0 && (
           <span className="text-xs text-gray-500">
@@ -321,7 +321,7 @@ export default function ScorePredictionPanel({
       {scoreReady && liveOdds && (
         <div className="mt-3 flex items-center justify-between bg-[#0A1628] rounded-xl px-4 py-2.5">
           <div>
-            <p className="text-[10px] text-gray-500">{zh ? "赔率" : "Odds"}</p>
+            <p className="text-[10px] text-gray-500">{zh ? "倍率" : "Odds"}</p>
             <p className="text-[#FFD700] font-black text-lg leading-none mt-0.5">{fmtOdds(liveOdds)}</p>
           </div>
           <div className="text-right">
@@ -412,13 +412,13 @@ export default function ScorePredictionPanel({
             : !scoreReady
             ? (zh ? "请填写比分" : "Enter a score first")
             : liveOdds
-            ? (zh ? `以 ${fmtOdds(liveOdds)} 押注 ${parsedHome}:${parsedAway} →` : `Bet ${parsedHome}:${parsedAway} at ${fmtOdds(liveOdds)} →`)
-            : (zh ? "确认押注 →" : "Place Bet →")}
+            ? (zh ? `以 ${fmtOdds(liveOdds)} 预测 ${parsedHome}:${parsedAway} →` : `Predict ${parsedHome}:${parsedAway} at ${fmtOdds(liveOdds)} →`)
+            : (zh ? "确认预测 →" : "Place Prediction →")}
         </button>
 
         <p className="text-[10px] text-gray-600 text-center leading-relaxed">
           {zh
-            ? "赔率由泊松模型科学计算，含15%庄家优势。GoalCoin 为虚拟积分，不具备实际价值。"
+            ? "倍率由泊松模型科学计算，含15%庄家优势。GoalCoin 为虚拟积分，不具备实际价值。"
             : "Odds calculated via Poisson model with 15% house margin. GC is virtual entertainment currency."}
         </p>
       </div>
@@ -447,8 +447,8 @@ export default function ScorePredictionPanel({
           {/* Column headers */}
           <div className="grid grid-cols-[2.5rem_2.5rem_3.5rem_3.5rem_1fr] gap-x-2 px-1 mb-1">
             <span className="text-[10px] text-gray-600">{zh ? "比分" : "Score"}</span>
-            <span className="text-[10px] text-gray-600">{zh ? "赔率" : "Odds"}</span>
-            <span className="text-[10px] text-gray-600">{zh ? "押注" : "Bet"}</span>
+            <span className="text-[10px] text-gray-600">{zh ? "倍率" : "Odds"}</span>
+            <span className="text-[10px] text-gray-600">{zh ? "消耗" : "Bet"}</span>
             <span className="text-[10px] text-gray-600">{zh ? "若中" : "Win"}</span>
             <span className="text-[10px] text-gray-600 text-right">{zh ? "状态" : "Status"}</span>
           </div>

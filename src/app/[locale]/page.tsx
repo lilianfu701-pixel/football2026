@@ -315,7 +315,7 @@ export default async function HomePage({ params }: HomePageProps) {
             </div>
             <Link href={`/${locale}/matches`}
               className="bg-[#FFD700] text-[#0A1628] font-black px-5 py-2.5 rounded-xl text-sm hover:bg-[#FFC200] transition-all">
-              ⚽ {zh ? "立即竞猜" : "Predict Now"}
+              ⚽ {zh ? "立即助威" : "Predict Now"}
             </Link>
           </div>
         </section>
@@ -323,7 +323,7 @@ export default async function HomePage({ params }: HomePageProps) {
 
       {phase === "post" && (
         <section className="bg-[#050D1E] border-b border-[#FFD700]/20 py-8 text-center">
-          <p className="text-4xl font-black text-[#FFD700]">🏆 {zh ? "感谢参与 2026 世界杯竞猜！" : "Thanks for playing Football 2026!"}</p>
+          <p className="text-4xl font-black text-[#FFD700]">🏆 {zh ? "感谢参与 2026 世界杯助威！" : "Thanks for playing Football 2026!"}</p>
           <p className="text-gray-400 mt-2 text-lg">{zh ? "决赛已结束，查看最终排行榜" : "The final is over — check the final standings"}</p>
           <Link href={`/${locale}/leaderboard`}
             className="inline-block mt-5 bg-[#FFD700] text-[#0A1628] font-black px-8 py-3 rounded-2xl hover:bg-[#FFC200] transition-all">

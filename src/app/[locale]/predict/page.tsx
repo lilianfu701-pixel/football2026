@@ -92,10 +92,10 @@ export default async function PredictPage({ params }: PageProps) {
         {/* Page title */}
         <div className="mb-6">
           <h1 className="text-2xl font-black text-white">
-            🎯 {zh ? "竞猜中心" : "Prediction Hub"}
+            🎯 {zh ? "预测中心" : "Prediction Hub"}
           </h1>
           <p className="text-gray-500 text-sm mt-1">
-            {zh ? "押注比赛、追踪战绩、赢取 GoalCoin" : "Place bets, track results, win GoalCoins"}
+            {zh ? "预测比赛、追踪战绩、赢取 GoalCoin" : "Predict matches, track results, win GoalCoins"}
           </p>
         </div>
 
@@ -104,10 +104,10 @@ export default async function PredictPage({ params }: PageProps) {
           <div className="bg-[#0F2040] border border-[#FFD700]/20 rounded-2xl p-6 text-center mb-6">
             <div className="text-4xl mb-3">🔒</div>
             <p className="text-white font-bold text-lg mb-1">
-              {zh ? "登录后开始竞猜" : "Login to Start Predicting"}
+              {zh ? "登录后开始预测" : "Login to Start Predicting"}
             </p>
             <p className="text-gray-500 text-sm mb-5">
-              {zh ? "注册免费领取 10 万 GC，马上开始押注！" : "Register free, get 100K GC, start betting now!"}
+              {zh ? "注册免费领取 10 万 GC，马上开始助威！" : "Register free, get 100K GC, start predicting now!"}
             </p>
             <div className="flex gap-3 justify-center">
               <Link href={`/${locale}/auth/login`}
@@ -151,7 +151,7 @@ export default async function PredictPage({ params }: PageProps) {
           })}
         />
 
-        {/* ── 大奖竞猜 — 直接嵌入 ───────────────────────────────────────────── */}
+        {/* ── 大奖预测 — 直接嵌入 ───────────────────────────────────────────── */}
         <AwardBettingUI
           locale={locale}
           userId={user?.id ?? null}

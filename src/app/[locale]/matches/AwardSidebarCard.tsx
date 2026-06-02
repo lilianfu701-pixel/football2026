@@ -34,7 +34,7 @@ export default function AwardSidebarCard({ locale, bets, phase }: Props) {
       {/* Header */}
       <div className="px-5 pt-4 pb-3 border-b border-[#1E3A5F] flex items-center justify-between bg-gradient-to-r from-[#FFD700]/8 to-transparent">
         <div>
-          <p className="text-sm font-black text-white">🏅 {zh ? "大奖竞猜" : "Award Bets"}</p>
+          <p className="text-sm font-black text-white">🏅 {zh ? "大奖预测" : "Award Bets"}</p>
           <p className="text-[10px] font-semibold mt-0.5" style={{ color: phaseLabel.color }}>
             {phaseLabel.text}
           </p>
@@ -86,8 +86,8 @@ export default function AwardSidebarCard({ locale, bets, phase }: Props) {
           }`}
         >
           {phase !== "closed"
-            ? `${meta_icon(bets)} ${zh ? "前往押注大奖" : "Place Award Bets"}`
-            : (zh ? "查看大奖竞猜" : "View Award Bets")}
+            ? `${meta_icon(bets)} ${zh ? "前往大奖预测" : "Place Award Bets"}`
+            : (zh ? "查看大奖预测" : "View Award Bets")}
         </Link>
       </div>
     </div>

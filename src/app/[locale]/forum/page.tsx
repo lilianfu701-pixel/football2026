@@ -29,7 +29,7 @@ const GROUP_META: Record<string, {
   bgFrom: string;
 }> = {
   match:   { orderIdx: 0, labelEn: "Match & Competition", labelZh: "赛事竞技", accent: "border-[#FFD700]", bgFrom: "from-[#FFD700]/5" },
-  predict: { orderIdx: 1, labelEn: "GC Predictions",      labelZh: "GC竞猜",   accent: "border-[#4F46E5]", bgFrom: "from-[#4F46E5]/5" },
+  predict: { orderIdx: 1, labelEn: "GC Predictions",      labelZh: "GC预测",   accent: "border-[#4F46E5]", bgFrom: "from-[#4F46E5]/5" },
   news:    { orderIdx: 2, labelEn: "News & Media",         labelZh: "资讯动态", accent: "border-[#EF4444]", bgFrom: "from-[#EF4444]/5" },
   special: { orderIdx: 3, labelEn: "2026 Special",         labelZh: "2026专题", accent: "border-[#10B981]", bgFrom: "from-[#10B981]/5" },
 };

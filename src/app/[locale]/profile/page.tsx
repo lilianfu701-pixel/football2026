@@ -451,7 +451,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
 
           {/* Bet Stats */}
           <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5">
-            <h3 className="text-white font-bold text-base mb-4">竞猜统计</h3>
+            <h3 className="text-white font-bold text-base mb-4">预测统计</h3>
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: "Total Bets", value: totalBets, icon: "🎯" },
@@ -556,7 +556,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
         {/* Recent Bets */}
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-white font-bold">竞猜历史</h3>
+            <h3 className="text-white font-bold">预测历史</h3>
             <Link
               href={`/${locale}/profile/bets`}
               className="text-[#FFD700] text-xs hover:underline"
@@ -642,7 +642,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
             {(["overview", "bets", "my-posts", "my-replies", "bookmarks", "my-ratings"] as const).map((t) => {
               const labels = {
                 "overview":   zh ? "📊 概览"    : "📊 Overview",
-                "bets":       zh ? "🎯 竞猜"    : "🎯 Bets",
+                "bets":       zh ? "🎯 预测"    : "🎯 Bets",
                 "my-posts":   zh ? "📝 主题"    : "📝 Posts",
                 "my-replies": zh ? "💬 回复"    : "💬 Replies",
                 "bookmarks":  zh ? "🔖 收藏"    : "🔖 Saved",
@@ -671,9 +671,9 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
               <div className="flex gap-1 bg-[#0A1628] border border-[#1E3A5F] rounded-xl p-1">
                 {(["match", "score", "award"] as const).map((bt) => {
                   const btLabels = {
-                    match: zh ? "比赛竞猜" : "Match Bets",
-                    score: zh ? "比分竞猜" : "Score Bets",
-                    award: zh ? "大奖竞猜" : "Award Bets",
+                    match: zh ? "比赛预测" : "Match Bets",
+                    score: zh ? "比分预测" : "Score Bets",
+                    award: zh ? "大奖预测" : "Award Bets",
                   };
                   const counts = { match: allBets.length, score: scoreBets.length, award: awardBets?.length ?? 0 };
                   return (
@@ -696,8 +696,8 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
               {betsTab === "match" && (
                 allBets.length === 0 ? (
                   <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-12 text-center">
-                    <p className="text-gray-500 text-sm">{zh ? "还没有比赛竞猜记录" : "No match bets yet"}</p>
-                    <Link href={`/${locale}/predict`} className="inline-block mt-3 text-[#FFD700] text-xs hover:underline">{zh ? "去押注 →" : "Place a bet →"}</Link>
+                    <p className="text-gray-500 text-sm">{zh ? "还没有比赛预测记录" : "No match bets yet"}</p>
+                    <Link href={`/${locale}/predict`} className="inline-block mt-3 text-[#FFD700] text-xs hover:underline">{zh ? "去预测 →" : "Place a bet →"}</Link>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -740,8 +740,8 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
               {betsTab === "score" && (
                 scoreBets.length === 0 ? (
                   <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-12 text-center">
-                    <p className="text-gray-500 text-sm">{zh ? "还没有比分竞猜记录" : "No score bets yet"}</p>
-                    <Link href={`/${locale}/predict`} className="inline-block mt-3 text-[#FFD700] text-xs hover:underline">{zh ? "去押注 →" : "Place a bet →"}</Link>
+                    <p className="text-gray-500 text-sm">{zh ? "还没有比分预测记录" : "No score bets yet"}</p>
+                    <Link href={`/${locale}/predict`} className="inline-block mt-3 text-[#FFD700] text-xs hover:underline">{zh ? "去预测 →" : "Place a bet →"}</Link>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -780,8 +780,8 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
               {betsTab === "award" && (
                 (awardBets?.length ?? 0) === 0 ? (
                   <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-12 text-center">
-                    <p className="text-gray-500 text-sm">{zh ? "还没有大奖竞猜记录" : "No award bets yet"}</p>
-                    <Link href={`/${locale}/awards`} className="inline-block mt-3 text-[#FFD700] text-xs hover:underline">{zh ? "去押注 →" : "Place a bet →"}</Link>
+                    <p className="text-gray-500 text-sm">{zh ? "还没有大奖预测记录" : "No award bets yet"}</p>
+                    <Link href={`/${locale}/awards`} className="inline-block mt-3 text-[#FFD700] text-xs hover:underline">{zh ? "去预测 →" : "Place a bet →"}</Link>
                   </div>
                 ) : (
                   <div className="space-y-2">

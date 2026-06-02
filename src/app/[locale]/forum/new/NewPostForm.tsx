@@ -214,7 +214,7 @@ export default function NewPostForm({
           onChange={setContent}
           zh={zh}
           placeholder={zh
-            ? "分享你的想法、分析、竞猜观点…支持图片上传和 YouTube 视频嵌入"
+            ? "分享你的想法、分析、预测观点…支持图片上传和 YouTube 视频嵌入"
             : "Share your thoughts, analysis, predictions… supports image uploads and YouTube embeds"}
         />
       </div>

@@ -56,7 +56,7 @@ function formatGc(amount: number): string {
   return String(amount);
 }
 
-/** 取选项对应的参考赔率 */
+/** 取选项对应的参考倍率 */
 function refOdds(
   selection: "home" | "draw" | "away",
   refHome: number, refDraw: number, refAway: number,
@@ -149,8 +149,8 @@ export default function PredictionPanel({
   }
 
   async function handleSubmit() {
-    if (!selected) { setError(zh ? "请先选择竞猜结果" : "Please select a prediction"); return; }
-    if (amount < MIN_BET) { setError(zh ? `最低押注 ${formatGc(MIN_BET)} GC` : `Minimum bet is ${formatGc(MIN_BET)} GC`); return; }
+    if (!selected) { setError(zh ? "请先选择预测结果" : "Please select a prediction"); return; }
+    if (amount < MIN_BET) { setError(zh ? `最低消耗 ${formatGc(MIN_BET)} GC` : `Minimum bet is ${formatGc(MIN_BET)} GC`); return; }
     if (amount > gcBalance) { setError(zh ? "GC余额不足" : "Insufficient GoalCoins"); return; }
 
     setLoading(true);
@@ -243,7 +243,7 @@ export default function PredictionPanel({
         <div className="bg-[#0F2040] border border-[#FFD700]/40 rounded-2xl p-6 text-center">
           <div className="text-4xl mb-3">🎉</div>
           <p className="text-white font-bold text-lg mb-1">
-            {zh ? "押注成功！" : "Prediction Placed!"}
+            {zh ? "预测成功！" : "Prediction Placed!"}
           </p>
           <p className="text-gray-400 text-sm mb-2">
             {zh ? "你的预测：" : "You predicted "}
@@ -275,7 +275,7 @@ export default function PredictionPanel({
               disabled={cancelling}
               className="mt-2 w-full py-2 rounded-xl border border-red-500/25 text-red-400/70 hover:text-red-400 hover:border-red-400/50 text-xs font-bold transition-colors disabled:opacity-40"
             >
-              {cancelling ? (zh ? "取消中…" : "Cancelling…") : (zh ? "🗑 取消这次押注" : "🗑 Cancel this bet")}
+              {cancelling ? (zh ? "取消中…" : "Cancelling…") : (zh ? "🗑 取消这次预测" : "🗑 Cancel this bet")}
             </button>
           )}
         </div>
@@ -303,7 +303,7 @@ export default function PredictionPanel({
   return (
     <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-4">
       <h3 className="text-sm font-bold text-white mb-3">
-        {zh ? "🎯 输赢竞猜" : "🎯 Match Prediction"}
+        {zh ? "🎯 输赢预测" : "🎯 Match Prediction"}
       </h3>
 
       {/* ── Outcome options — compact ────────────────────────────────────── */}
@@ -360,10 +360,10 @@ export default function PredictionPanel({
         /* ── Existing bet summary ─────────────────────────────────────── */
         <div className="space-y-3">
 
-          {/* 押注 / 预计获得 / 状态 — 横排一行 */}
+          {/* 预测 / 预计获得 / 状态 — 横排一行 */}
           <div className="grid grid-cols-3 gap-1 bg-[#0A1628] rounded-xl px-3 py-2.5">
             <div className="flex flex-col items-center">
-              <span className="text-[10px] text-gray-500 mb-0.5">{zh ? "押注" : "Bet"}</span>
+              <span className="text-[10px] text-gray-500 mb-0.5">{zh ? "消耗" : "Bet"}</span>
               <span className="text-xs font-black text-white">🪙 {formatGc(existingBet!.gc_amount)}</span>
             </div>
             <div className="flex flex-col items-center border-x border-[#1E3A5F]">
@@ -521,7 +521,7 @@ export default function PredictionPanel({
                 <p className="text-green-400 font-black text-lg">🪙 {formatGc(estPayout)} GC</p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-gray-500">{zh ? "赔率" : "Odds"}</p>
+                <p className="text-xs text-gray-500">{zh ? "倍率" : "Odds"}</p>
                 <p className="text-[#FFD700] font-bold text-lg">×{estMult.toFixed(2)}</p>
               </div>
             </div>
@@ -541,9 +541,9 @@ export default function PredictionPanel({
             {loading
               ? (zh ? "提交中…" : "Placing…")
               : !selected
-              ? (zh ? "请先选择竞猜结果" : "Select an outcome first")
+              ? (zh ? "请先选择预测结果" : "Select an outcome first")
               : zh
-              ? `确认竞猜 · ${selected === "home" ? (homeTeamZh ?? homeTeam) : selected === "away" ? (awayTeamZh ?? awayTeam) : "平局"} →`
+              ? `确认预测 · ${selected === "home" ? (homeTeamZh ?? homeTeam) : selected === "away" ? (awayTeamZh ?? awayTeam) : "平局"} →`
               : `Predict · ${selected === "home" ? homeTeam : selected === "away" ? awayTeam : "Draw"} →`}
           </button>
 

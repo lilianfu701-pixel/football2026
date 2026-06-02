@@ -208,7 +208,7 @@ export async function GET(req: NextRequest) {
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ fontSize: 15, color: "rgba(255,255,255,0.5)", fontWeight: 600 }}>
-                {zh ? "押注" : "Bet"}
+                {zh ? "消耗" : "Bet"}
               </span>
               <span style={{ fontSize: 17, fontWeight: 900, color: "#FFD700" }}>
                 {fmt(gc)} GC
@@ -253,7 +253,7 @@ export async function GET(req: NextRequest) {
               @{user}
             </span>
             <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>
-              {zh ? "加入竞猜 · 赢取 GoalCoin" : "Join Football2026 · Win GoalCoin"}
+              {zh ? "加入助威 · 赢取 GoalCoin" : "Join Football2026 · Win GoalCoin"}
             </span>
           </div>
         </div>
@@ -262,7 +262,7 @@ export async function GET(req: NextRequest) {
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
             <span style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>
-              {zh ? "扫码参与竞猜" : "Scan to join the game"}
+              {zh ? "扫码参与助威" : "Scan to join the game"}
             </span>
             <span style={{ fontSize: 13, color: "#FFD700", fontWeight: 800, letterSpacing: 0.5 }}>
               football2026.net

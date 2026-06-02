@@ -48,11 +48,11 @@ export async function generateMetadata({
     : gc;
 
   const title = zh
-    ? `${user} 在 Football2026 押注了 ${home} vs ${away}！`
+    ? `${user} 在 Football2026 预测了 ${home} vs ${away}！`
     : `${user} predicted ${home} vs ${away} on Football2026!`;
 
   const description = zh
-    ? `预测：${pickLabel[pick] ?? pick} · 押注 ${gcFmt} GC · 赔率 ${odds}× · 快来加入2026世界杯竞猜！`
+    ? `预测：${pickLabel[pick] ?? pick} · 消耗 ${gcFmt} GC · 倍率 ${odds}× · 快来加入2026世界杯助威！`
     : `Pick: ${pickLabel[pick] ?? pick} · ${gcFmt} GC staked · ${odds}× odds${stage ? ` · ${stage}` : ""} · Join the World Cup 2026 prediction game!`;
 
   // Rebuild OG image params from whatever was passed
@@ -141,7 +141,7 @@ export default async function ShareBetPage({
         <div className="mt-6 text-center space-y-1">
           <p className="text-white font-black text-lg">
             {zh
-              ? `${user} 押注了 ${home} vs ${away}`
+              ? `${user} 预测了 ${home} vs ${away}`
               : `${user} predicted ${home} vs ${away}`}
           </p>
           <p className="text-[#FFD700] font-bold">

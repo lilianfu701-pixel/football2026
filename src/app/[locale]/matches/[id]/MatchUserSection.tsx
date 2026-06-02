@@ -66,7 +66,7 @@ export default function MatchUserSection({
       <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5 text-center mb-4">
         <div className="text-3xl mb-2">🏁</div>
         <p className="text-gray-400 text-sm">
-          {zh ? "比赛已结束，竞猜已关闭。" : "This match has ended. Predictions are closed."}
+          {zh ? "比赛已结束，预测已关闭。" : "This match has ended. Predictions are closed."}
         </p>
         {bet && !loading && (
           <div className={`mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold ${
@@ -103,9 +103,9 @@ export default function MatchUserSection({
     return (
       <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-6 text-center mb-4">
         <div className="text-3xl mb-3">🔒</div>
-        <p className="text-white font-bold mb-1">{zh ? "登录即可参与竞猜" : "Login to Predict"}</p>
+        <p className="text-white font-bold mb-1">{zh ? "登录即可参与预测" : "Login to Predict"}</p>
         <p className="text-gray-500 text-sm mb-5">
-          {zh ? "注册账号，参与竞猜，赢取GoalCoin！" : "Sign in to place your prediction and earn GoalCoins"}
+          {zh ? "注册账号，参与预测，赢取GoalCoin！" : "Sign in to place your prediction and earn GoalCoins"}
         </p>
         <div className="flex gap-3 justify-center">
           <Link href={`/${locale}/auth/login`}

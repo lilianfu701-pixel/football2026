@@ -25,7 +25,7 @@ const FILTERS: { key: string; labelZh: string; labelEn: string; types: string[] 
   { key: "income",   labelZh: "收入",     labelEn: "Income",    types: null },
   { key: "expense",  labelZh: "支出",     labelEn: "Expense",   types: null },
   { key: "topup",    labelZh: "充值",     labelEn: "Top Up",    types: ["topup"] },
-  { key: "bet",      labelZh: "竞猜",     labelEn: "Bets",      types: ["bet_placed", "bet_won", "bet_refunded"] },
+  { key: "bet",      labelZh: "预测",     labelEn: "Bets",      types: ["bet_placed", "bet_won", "bet_refunded"] },
   { key: "reward",   labelZh: "奖励",     labelEn: "Rewards",   types: ["daily_checkin", "welcome_bonus", "share_reward", "forum_post", "forum_like", "profile_reward"] },
   { key: "transfer", labelZh: "转账",     labelEn: "Transfers", types: ["transfer_sent", "transfer_received"] },
 ];

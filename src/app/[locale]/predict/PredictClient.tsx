@@ -68,7 +68,7 @@ export default function PredictClient({ locale, user, stats, betHistory }: Props
   async function cancelBet(betId: string) {
     if (cancellingId) return;
     const confirmed = window.confirm(
-      zh ? "确定取消这笔押注吗？押注金额将退还到你的余额。" : "Cancel this bet? Your stake will be refunded."
+      zh ? "确定取消这笔预测吗？消耗金额将退还到你的余额。" : "Cancel this prediction? Your stake will be refunded."
     );
     if (!confirmed) return;
 
@@ -116,7 +116,7 @@ export default function PredictClient({ locale, user, stats, betHistory }: Props
       {user && (
         <div>
           <h2 className="text-base font-black text-white mb-3">
-            📋 {zh ? "我的押注记录" : "My Bet History"}
+            📋 {zh ? "我的预测记录" : "My Prediction History"}
           </h2>
 
           {/* Tab bar */}
@@ -154,7 +154,7 @@ export default function PredictClient({ locale, user, stats, betHistory }: Props
             <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-8 text-center">
               <p className="text-gray-500 text-sm">
                 {historyTab === "all"
-                  ? (zh ? "还没有押注记录，去比赛页面押注吧！" : "No bets yet — visit a match to place one!")
+                  ? (zh ? "还没有预测记录，去比赛页面预测吧！" : "No predictions yet — visit a match to place one!")
                   : (zh ? "该分类暂无记录" : "No records in this category")}
               </p>
               {historyTab === "all" && (
@@ -223,7 +223,7 @@ export default function PredictClient({ locale, user, stats, betHistory }: Props
                           {zh ? "胜率" : "Win rate"} {winPct}%
                         </span>
                         <span className="text-[10px] text-gray-500">
-                          {zh ? "押注" : "Stake"} {fmt(bet.gcAmount)} GC · ×{(bet.odds ?? 0).toFixed(2)}
+                          {zh ? "消耗" : "Stake"} {fmt(bet.gcAmount)} GC · ×{(bet.odds ?? 0).toFixed(2)}
                         </span>
                       </div>
                       <div className="shrink-0 text-right">
@@ -253,7 +253,7 @@ export default function PredictClient({ locale, user, stats, betHistory }: Props
                           disabled={cancellingId === bet.id}
                           className="flex-1 text-center text-xs font-bold text-red-400 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 hover:border-red-500/50 rounded-lg py-2 transition-colors disabled:opacity-50"
                         >
-                          {cancellingId === bet.id ? (zh ? "取消中…" : "Cancelling…") : (zh ? "取消押注" : "Cancel Bet")}
+                          {cancellingId === bet.id ? (zh ? "取消中…" : "Cancelling…") : (zh ? "取消预测" : "Cancel Prediction")}
                         </button>
                       )}
                     </div>
@@ -269,7 +269,7 @@ export default function PredictClient({ locale, user, stats, betHistory }: Props
       {user && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: zh ? "押注场次"  : "Total Bets",    value: stats.totalBets,              color: "text-white",        emoji: "🎯" },
+            { label: zh ? "预测场次"  : "Total Bets",    value: stats.totalBets,              color: "text-white",        emoji: "🎯" },
             { label: zh ? "胜率"      : "Win Rate",       value: `${stats.winRate}%`,           color: stats.winRate >= 60 ? "text-green-400" : stats.winRate >= 40 ? "text-yellow-400" : "text-red-400", emoji: "📈" },
             { label: zh ? "累计赢得"  : "Total Won",      value: `${fmt(stats.totalWon)} GC`,  color: "text-green-400",    emoji: "🪙" },
             { label: zh ? "进行中"    : "In Progress",    value: stats.pendingBets,             color: "text-blue-400",     emoji: "⏳" },
