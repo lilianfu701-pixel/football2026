@@ -9,20 +9,21 @@ interface Package {
   id:        string;
   gc:        number;
   label:     string;
-  price:     string;
-  priceUsdt: number;
+  priceUsd:  string;   // charged by Card / PayPal / USDT
+  priceCny:  string;   // reference for CNY users
+  priceUsdt: number;   // exact USDT amount
   bonus:     number;
   popular?:  boolean;
   best?:     boolean;
 }
 
 const PACKAGES: Package[] = [
-  { id: "s1",  gc: 100_000,    label: "10万",   price: "¥6",   priceUsdt: 1.00,  bonus: 0  },
-  { id: "s2",  gc: 300_000,    label: "30万",   price: "¥15",  priceUsdt: 2.00,  bonus: 10 },
-  { id: "s3",  gc: 600_000,    label: "60万",   price: "¥25",  priceUsdt: 3.50,  bonus: 20, popular: true },
-  { id: "s4",  gc: 1_000_000,  label: "100万",  price: "¥38",  priceUsdt: 5.50,  bonus: 30 },
-  { id: "s5",  gc: 3_000_000,  label: "300万",  price: "¥88",  priceUsdt: 12.00, bonus: 50, best: true },
-  { id: "s6",  gc: 10_000_000, label: "1000万", price: "¥238", priceUsdt: 33.00, bonus: 80 },
+  { id: "s1",  gc: 100_000,    label: "10万",   priceUsd: "$1.99",  priceCny: "≈¥14",  priceUsdt: 1.99,  bonus: 0  },
+  { id: "s2",  gc: 300_000,    label: "30万",   priceUsd: "$4.99",  priceCny: "≈¥34",  priceUsdt: 4.99,  bonus: 10 },
+  { id: "s3",  gc: 600_000,    label: "60万",   priceUsd: "$8.99",  priceCny: "≈¥61",  priceUsdt: 8.99,  bonus: 20, popular: true },
+  { id: "s4",  gc: 1_000_000,  label: "100万",  priceUsd: "$13.99", priceCny: "≈¥95",  priceUsdt: 13.99, bonus: 30 },
+  { id: "s5",  gc: 3_000_000,  label: "300万",  priceUsd: "$34.99", priceCny: "≈¥238", priceUsdt: 34.99, bonus: 50, best: true },
+  { id: "s6",  gc: 10_000_000, label: "1000万", priceUsd: "$99.99", priceCny: "≈¥680", priceUsdt: 99.99, bonus: 80 },
 ];
 
 const FREE_WAYS = [
@@ -40,7 +41,7 @@ function formatGcBig(n: number): string {
   return `${n} GC`;
 }
 
-type PayMethod = "wechat" | "alipay" | "paddle" | "paypal" | "usdt";
+type PayMethod = "paddle" | "paypal" | "usdt";
 
 // ── Main content (needs Suspense for useSearchParams) ────────────────────────
 function TopupContent() {
@@ -51,7 +52,7 @@ function TopupContent() {
   const zh           = locale === "zh";
 
   const [selected,   setSelected]   = useState<string | null>(null);
-  const [payMethod,  setPayMethod]  = useState<PayMethod>("wechat");
+  const [payMethod,  setPayMethod]  = useState<PayMethod>("paddle");
   const [paying,     setPaying]     = useState(false);
   const [payErr,     setPayErr]     = useState<string | null>(null);
   const [tab,        setTab]        = useState<"buy" | "free">("buy");
@@ -102,30 +103,6 @@ function TopupContent() {
 
   const pkg    = PACKAGES.find((p) => p.id === selected);
   const totalGc = pkg ? Math.floor(pkg.gc * (1 + pkg.bonus / 100)) : 0;
-
-  // ── 微信 / 支付宝 handler ────────────────────────────────────────────────
-  async function handleXunhu(payment: "wechat" | "alipay") {
-    if (!selected || paying) return;
-    setPaying(true);
-    setPayErr(null);
-    try {
-      const res  = await fetch("/api/topup/xunhupay", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ packageId: selected, payment, locale }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.url) {
-        setPayErr(data.error ?? (zh ? "创建订单失败，请重试" : "Failed to create order"));
-        setPaying(false);
-        return;
-      }
-      window.location.href = data.url;
-    } catch {
-      setPayErr(zh ? "网络错误，请重试" : "Network error, please retry");
-      setPaying(false);
-    }
-  }
 
   // ── Paddle handler ──────────────────────────────────────────────────────
   async function handlePaddle() {
@@ -282,8 +259,9 @@ function TopupContent() {
                       </span>
                     )}
                     <span className={`text-lg font-black mt-1 ${isSelected ? "text-[#FFD700]" : "text-gray-200"}`}>
-                      {p.price}
+                      {p.priceUsd}
                     </span>
+                    <span className="text-[10px] text-gray-600">{p.priceCny}</span>
                   </button>
                 );
               })}
@@ -295,41 +273,6 @@ function TopupContent() {
                 <p className="text-xs text-gray-500 mb-2 font-medium">
                   {zh ? "选择支付方式" : "Payment method"}
                 </p>
-                {/* Row 1: 微信 + 支付宝 */}
-                <div className="grid grid-cols-2 gap-2 mb-2">
-                  {/* WeChat Pay */}
-                  <button
-                    onClick={() => setPayMethod("wechat")}
-                    className={`flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-xl border-2 transition-all text-xs font-bold ${
-                      payMethod === "wechat"
-                        ? "bg-[#07C160]/15 border-[#07C160] text-white"
-                        : "bg-[#0F2040] border-[#1E3A5F] text-gray-400 hover:border-gray-500"
-                    }`}
-                  >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.295.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c-.GOD-.547-.093-1.103-.093-1.67 0-3.979 3.741-7.225 8.352-7.225.247 0 .49.012.73.03C16.498 4.99 12.886 2.188 8.69 2.188zm-2.747 3.74a1.123 1.123 0 1 1 0 2.246 1.123 1.123 0 0 1 0-2.247zm5.494 0a1.123 1.123 0 1 1 0 2.246 1.123 1.123 0 0 1 0-2.247z"/>
-                      <path d="M24 14.972c0-3.49-3.402-6.325-7.588-6.325-4.187 0-7.589 2.836-7.589 6.325 0 3.49 3.402 6.325 7.589 6.325.89 0 1.744-.13 2.539-.365a.772.772 0 0 1 .641.087l1.703.998a.29.29 0 0 0 .149.048c.147 0 .267-.12.267-.267 0-.065-.026-.126-.043-.19l-.35-1.327a.529.529 0 0 1 .19-.596C23.046 18.637 24 16.89 24 14.972zm-10.064-.714a1.005 1.005 0 1 1 0-2.01 1.005 1.005 0 0 1 0 2.01zm4.952 0a1.005 1.005 0 1 1 0-2.01 1.005 1.005 0 0 1 0 2.01z"/>
-                    </svg>
-                    <span>{zh ? "微信支付" : "WeChat Pay"}</span>
-                  </button>
-
-                  {/* Alipay */}
-                  <button
-                    onClick={() => setPayMethod("alipay")}
-                    className={`flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-xl border-2 transition-all text-xs font-bold ${
-                      payMethod === "alipay"
-                        ? "bg-[#1677FF]/15 border-[#1677FF] text-white"
-                        : "bg-[#0F2040] border-[#1E3A5F] text-gray-400 hover:border-gray-500"
-                    }`}
-                  >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M21.422 15.358c-3.83-1.153-6.055-1.84-6.055-1.84.982-1.836 1.698-3.959 1.955-6.237H13V5.868h4.762V4.842H13V2h-2.595v2.842H5.666v1.026h4.739V7.28H6.444v1.001h9.075c-.21 1.591-.736 3.08-1.498 4.369-2.388-.657-4.664-1.142-6.411-.7-3.33.841-4.247 3.49-3.866 5.354.425 2.07 2.303 3.48 4.627 3.48 2.751 0 5.396-1.96 7.24-5.119 2.08.812 4.718 1.927 6.389 2.724V15.358zm-12.58 2.892c-1.727 0-3.092-.939-3.35-2.23-.38-1.907 1.025-3.108 2.534-3.108.88 0 2.098.284 3.623.75-1.44 2.803-3.188 4.588-4.807 4.588z"/>
-                    </svg>
-                    <span>{zh ? "支付宝" : "Alipay"}</span>
-                  </button>
-                </div>
-
-                {/* Row 2: Card + PayPal + USDT */}
                 <div className="grid grid-cols-3 gap-2">
                   {/* Paddle (Card) */}
                   <button
@@ -389,40 +332,6 @@ function TopupContent() {
                 <span className="text-red-400 text-sm">⚠</span>
                 <p className="text-red-400 text-sm flex-1">{payErr}</p>
                 <button onClick={() => setPayErr(null)} className="text-red-400/60 hover:text-red-400 text-xs">✕</button>
-              </div>
-            )}
-
-            {/* ── 微信 / 支付宝 button ── */}
-            {(payMethod === "wechat" || payMethod === "alipay") && selected && (
-              <button
-                onClick={() => handleXunhu(payMethod as "wechat" | "alipay")}
-                disabled={paying}
-                className={`w-full py-3.5 rounded-2xl font-black text-base transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg ${
-                  payMethod === "wechat"
-                    ? "bg-[#07C160] text-white hover:bg-[#06ad56] shadow-[#07C160]/20"
-                    : "bg-[#1677FF] text-white hover:bg-[#1166ee] shadow-[#1677FF]/20"
-                }`}
-              >
-                {paying ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    {zh ? "跳转中…" : "Redirecting…"}
-                  </span>
-                ) : payMethod === "wechat" ? (
-                  zh ? "💚 微信支付" : "💚 WeChat Pay"
-                ) : (
-                  zh ? "💙 支付宝支付" : "💙 Alipay"
-                )}
-              </button>
-            )}
-
-            {(payMethod === "wechat" || payMethod === "alipay") && !selected && (
-              <div className={`w-full py-3.5 rounded-2xl font-black text-base text-center opacity-40 cursor-not-allowed border ${
-                payMethod === "wechat"
-                  ? "bg-[#07C160]/10 border-[#07C160]/30 text-[#07C160]"
-                  : "bg-[#1677FF]/10 border-[#1677FF]/30 text-[#1677FF]"
-              }`}>
-                {zh ? "请先选择充值套餐" : "Select a package first"}
               </div>
             )}
 
@@ -604,11 +513,9 @@ function TopupContent() {
             {/* Payment info */}
             <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
               <span className="text-[10px] text-gray-600">{zh ? "支持：" : "Accepted:"}</span>
-              <span className="text-[10px] text-gray-500 bg-[#0F2040] border border-[#1E3A5F] px-2.5 py-1 rounded-md font-medium">💚 {zh ? "微信" : "WeChat"}</span>
-              <span className="text-[10px] text-gray-500 bg-[#0F2040] border border-[#1E3A5F] px-2.5 py-1 rounded-md font-medium">💙 {zh ? "支付宝" : "Alipay"}</span>
               <span className="text-[10px] text-gray-500 bg-[#0F2040] border border-[#1E3A5F] px-2.5 py-1 rounded-md font-medium">💳 {zh ? "银行卡" : "Card"}</span>
               <span className="text-[10px] text-gray-500 bg-[#0F2040] border border-[#1E3A5F] px-2.5 py-1 rounded-md font-medium">🅿 PayPal</span>
-              <span className="text-[10px] text-gray-500 bg-[#0F2040] border border-[#1E3A5F] px-2.5 py-1 rounded-md font-medium">⬡ USDT</span>
+              <span className="text-[10px] text-gray-500 bg-[#0F2040] border border-[#1E3A5F] px-2.5 py-1 rounded-md font-medium">⬡ USDT TRC-20</span>
             </div>
 
             <p className="text-[10px] text-gray-600 text-center mt-3 leading-relaxed">
