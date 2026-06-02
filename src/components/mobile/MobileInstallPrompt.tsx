@@ -28,7 +28,7 @@ const QR_URL = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${
 const copy = {
   zh: {
     title: "添加 Football2026 到桌面",
-    subtitle: "添加完成后，下次直接点击手机桌面图标进入竞猜。",
+    subtitle: "添加完成后，下次直接点击手机桌面图标进入助威。",
     installed: "已通过桌面快捷方式打开",
     install: "一键安装",
     later: "稍后",

@@ -81,21 +81,21 @@ const copy = {
   zh: {
     appTitle: "Football2026",
     badge: "世界杯开幕倒计时",
-    title: "世界杯竞猜",
-    subtitle: "比赛、赛程、赔率和竞猜信息集中查看。",
+    title: "世界杯助威",
+    subtitle: "比赛、赛程和预测信息集中查看。",
     register: "注册领 10万 GC",
-    predict: "马上竞猜",
+    predict: "马上预测",
     login: "登录",
     loggedIn: "已登录",
     balance: "GC 余额",
     guestBalance: "新用户礼包",
     prizePool: "奖池",
-    odds: "赔率",
+    odds: "倍率",
     kickoff: "开赛",
     group: "小组",
     noMatches: "暂无可显示比赛",
     installOnlyTitle: "先把 Football2026 添加到桌面",
-    installOnlySubtitle: "浏览器模式只用于安装。添加后像 App 一样从桌面图标打开，才能使用完整竞猜、签到和消息功能。",
+    installOnlySubtitle: "浏览器模式只用于安装。添加后像 App 一样从桌面图标打开，才能使用完整预测、签到和消息功能。",
     iconPreview: "桌面图标预览",
     openFromIcon: "安装后从这个图标进入",
     browserLimited: "当前网页版功能已精简，请优先添加桌面快捷方式。",
@@ -106,14 +106,14 @@ const copy = {
     checkinAgain: "今天已经领取过",
     checkinLogin: "登录后领取",
     matches: "赛程",
-    myBets: "我的竞猜",
+    myBets: "我的预测",
     leaderboard: "排行榜",
     forum: "社区",
     invite: "邀请",
-    awards: "冠军竞猜",
+    awards: "冠军预测",
     bottomHome: "首页",
     bottomMatches: "赛程",
-    bottomPredict: "竞猜",
+    bottomPredict: "预测",
     bottomForum: "社区",
     bottomMine: "我的",
     upcomingMatches: "即将到来的四场比赛",
@@ -1031,7 +1031,7 @@ function ForumView({ locale, t }: { locale: string; t: MobileCopy }) {
     <div className="grid gap-3">
       <SectionTitle eyebrow={t.forumHot} title={t.forum} />
       <ForumCard title={locale === "zh" ? "赛前情报" : "Pre-match intel"} body={locale === "zh" ? "阵容、伤病、盘口变化集中查看。" : "Lineups, injuries, and market movement."} href={`/${locale}/forum`} />
-      <ForumCard title={locale === "zh" ? "竞猜晒单" : "Prediction slips"} body={locale === "zh" ? "分享你的判断，也看高手怎么选。" : "Share your picks and follow sharp calls."} href={`/${locale}/forum`} />
+      <ForumCard title={locale === "zh" ? "预测晒单" : "Prediction slips"} body={locale === "zh" ? "分享你的判断，也看高手怎么选。" : "Share your picks and follow sharp calls."} href={`/${locale}/forum`} />
       <ForumCard title={locale === "zh" ? "GoalCoin 攻略" : "GoalCoin tips"} body={locale === "zh" ? "签到、邀请、奖励和升级路线。" : "Check-ins, invites, rewards, and levels."} href={`/${locale}/forum`} />
     </div>
   );

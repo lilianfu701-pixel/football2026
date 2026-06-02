@@ -248,25 +248,25 @@ function WinBet({ locale, match, canPersistActions, existingBet, detailLoading }
 
   function preset(value: number) {
     const next = Math.floor(balance * value);
-    if (next < MIN_BET) setMessage("最低下注 10K GC");
+    if (next < MIN_BET) setMessage("最低消耗 10K GC");
     setAmount(formatAmount(next));
   }
 
   async function submit() {
     if (!choice || loading) return;
     if (!canPersistActions) { redirectToMobileLogin(locale); return; }
-    if (amountNum < MIN_BET) { setMessage("最低下注 10K GC"); return; }
+    if (amountNum < MIN_BET) { setMessage("最低消耗 10K GC"); return; }
     setLoading(true);
     setMessage("");
     try {
       const response = await fetch("/api/bets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ match_id: match.id, prediction: choice, gc_amount: amountNum }) });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "下注失败");
+      if (!response.ok) throw new Error(data.error ?? "预测失败");
       setBalance(Math.max(0, balance - amountNum));
       setSuccess(true);
-      setMessage("竞猜成功");
+      setMessage("预测成功");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "下注失败");
+      setMessage(error instanceof Error ? error.message : "预测失败");
     } finally {
       setLoading(false);
     }
@@ -274,7 +274,7 @@ function WinBet({ locale, match, canPersistActions, existingBet, detailLoading }
 
   return (
     <section className="rounded-md border border-white/10 bg-white/[0.035] p-1.5">
-      <div className="mb-1 flex justify-between text-[12px] font-black"><span className="text-[#FFD700]">输赢竞猜</span><span className="text-slate-500">余额 {formatGc(balance)} GC</span></div>
+      <div className="mb-1 flex justify-between text-[12px] font-black"><span className="text-[#FFD700]">输赢预测</span><span className="text-slate-500">余额 {formatGc(balance)} GC</span></div>
       <div className="grid grid-cols-3 gap-1">
         <BetChoice active={choice === "home"} disabled={locked} label={getTeamDisplayName(match.homeTeam, locale)} odds={match.oddsHome} onClick={() => setChoice("home")} />
         <BetChoice active={choice === "draw"} disabled={locked} label="平局" odds={match.oddsDraw} onClick={() => setChoice("draw")} />
@@ -307,25 +307,25 @@ function ScoreBet({ locale, match, canPersistActions, initialBets }: { locale: s
 
   function preset(value: number) {
     const next = Math.floor(balance * value);
-    if (next < MIN_BET) setMessage("最低下注 10K GC");
+    if (next < MIN_BET) setMessage("最低消耗 10K GC");
     setAmount(formatAmount(next));
   }
 
   async function submit() {
     if (!scoreReady || loading) return;
     if (!canPersistActions) { redirectToMobileLogin(locale); return; }
-    if (amountNum < MIN_BET) { setMessage("最低下注 10K GC"); return; }
+    if (amountNum < MIN_BET) { setMessage("最低消耗 10K GC"); return; }
     setLoading(true);
     setMessage("");
     try {
       const response = await fetch("/api/score-bets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ match_id: match.id, score_home: Number(homeScore), score_away: Number(awayScore), gc_amount: amountNum }) });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "下注失败");
+      if (!response.ok) throw new Error(data.error ?? "预测失败");
       setBalance(Math.max(0, balance - amountNum));
       setSuccess(true);
-      setMessage("比分竞猜成功");
+      setMessage("比分预测成功");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "下注失败");
+      setMessage(error instanceof Error ? error.message : "预测失败");
     } finally {
       setLoading(false);
     }
@@ -333,7 +333,7 @@ function ScoreBet({ locale, match, canPersistActions, initialBets }: { locale: s
 
   return (
     <section className="rounded-md border border-white/10 bg-white/[0.035] p-1.5">
-      <div className="mb-1 flex justify-between text-[12px] font-black"><span className="text-[#FFD700]">比分竞猜</span><span className="text-slate-500">最低 10K GC</span></div>
+      <div className="mb-1 flex justify-between text-[12px] font-black"><span className="text-[#FFD700]">比分预测</span><span className="text-slate-500">最低 10K GC</span></div>
       <div className="grid grid-cols-[1fr_1.4rem_1fr] gap-1">
         <ScoreInput label={getTeamDisplayName(match.homeTeam, locale)} value={homeScore} onChange={setHomeScore} />
         <span className="flex h-7 items-center justify-center text-[15px] font-black text-slate-500">:</span>
