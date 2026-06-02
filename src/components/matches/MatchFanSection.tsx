@@ -141,6 +141,7 @@ interface Props {
   zh?:        boolean;
   loggedIn?:  boolean;
   userVote?:  "home" | "neutral" | "away" | null;
+  showCurrentUserMarker?: boolean;
 }
 
 const MAX_DOTS_PER_COUNTRY = 60;
@@ -574,7 +575,7 @@ async function playPropSound(type: PropType, volume = 0.85): Promise<void> {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColors, awayColors, zh, loggedIn, userVote }: Props) {
+export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColors, awayColors, zh, loggedIn, userVote, showCurrentUserMarker = false }: Props) {
   const [dots,      setDots]      = useState<VoterDot[]>([]);
   const [totals,    setTotals]    = useState({ home: 0, neutral: 0, away: 0 });
   const [tooltip,   setTooltip]   = useState<TooltipState | null>(null);
@@ -903,6 +904,25 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
                   );
                 })}
               </ComposableMap>
+
+              {showCurrentUserMarker && (userVote === "home" || userVote === "away") && (
+                <div
+                  className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+                  style={{ left: `${userMapPos.x}%`, top: `${userMapPos.y}%`, zIndex: 25 }}
+                >
+                  <span
+                    className="absolute -inset-2 rounded-full animate-ping"
+                    style={{ backgroundColor: userVote === "home" ? homeColors.primary : awayColors.primary, opacity: 0.42 }}
+                  />
+                  <span
+                    className="relative block h-3 w-3 rounded-full border border-white/80"
+                    style={{
+                      backgroundColor: userVote === "home" ? homeColors.primary : awayColors.primary,
+                      boxShadow: `0 0 12px 4px ${userVote === "home" ? homeColors.primary : awayColors.primary}99`,
+                    }}
+                  />
+                </div>
+              )}
 
               {/* ── Props overlay (fireworks / blaze / rally / boo) ─────────── */}
               {fireworks.map((fw) => {

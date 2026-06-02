@@ -10,6 +10,7 @@ import { calcScoreOdds, netPayout } from "@/lib/scoreOdds";
 import { getTeamColor } from "@/lib/teamColors";
 import type { MobileMatch } from "@/components/mobile/MobileHome";
 import { redirectToMobileLogin } from "@/components/mobile/mobileAuth";
+import { nextMobileVoteMapState, type MobileVoteMapState } from "@/components/mobile/mobileVoteMapSync";
 
 const MIN_BET = 10_000;
 const DEFAULT_AMOUNT = "10,000";
@@ -59,6 +60,7 @@ export default function MobileScheduleDetails({ locale, match, isLoggedIn, canPe
   const [data, setData] = useState<DetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [folds, setFolds] = useState<Record<FoldKey, boolean>>({ map: true, posts: false });
+  const [mapVoteState, setMapVoteState] = useState<MobileVoteMapState>({ vote: null, revision: 0 });
 
   useEffect(() => {
     let active = true;
@@ -72,17 +74,29 @@ export default function MobileScheduleDetails({ locale, match, isLoggedIn, canPe
     return () => { active = false; };
   }, [match.id]);
 
+  useEffect(() => {
+    if (!data) return;
+    setMapVoteState((current) => current.vote === data.myVote
+      ? current
+      : { vote: data.myVote, revision: current.revision + 1 });
+  }, [data]);
+
   function toggle(key: FoldKey) {
     setFolds((current) => ({ ...current, [key]: !current[key] }));
   }
 
+  function handleVoteSaved(vote: VoteChoice) {
+    setMapVoteState((current) => nextMobileVoteMapState(current, vote));
+  }
+
   return (
     <div className="grid gap-1.5 border-t border-[#FFD700]/20 bg-[#102f2a] p-1.5">
-      <SupportAndShare locale={locale} match={match} canPersistActions={canPersistActions} initialData={data} />
+      <SupportAndShare locale={locale} match={match} canPersistActions={canPersistActions} initialData={data} onVoteSaved={handleVoteSaved} />
       <WinBet locale={locale} match={match} canPersistActions={canPersistActions} existingBet={data?.existingBet ?? null} detailLoading={loading} />
       <ScoreBet locale={locale} match={match} canPersistActions={canPersistActions} initialBets={data?.scoreBets ?? []} />
       <FoldRow title="球迷地图" summary={`${data?.countries.length ?? 0} 个国家`} open={folds.map} onToggle={() => toggle("map")}>
         <MatchFanSection
+          key={`${match.id}-${mapVoteState.revision}`}
           matchId={match.id}
           homeTeam={getTeamDisplayName(match.homeTeam, locale)}
           awayTeam={getTeamDisplayName(match.awayTeam, locale)}
@@ -90,7 +104,8 @@ export default function MobileScheduleDetails({ locale, match, isLoggedIn, canPe
           awayColors={getTeamColor(match.awayTeam)}
           zh={locale === "zh"}
           loggedIn={canPersistActions}
-          userVote={data?.myVote ?? null}
+          userVote={mapVoteState.vote}
+          showCurrentUserMarker
         />
       </FoldRow>
       <FoldRow title="赛事帖子" summary={`${data?.forumPostCount ?? 0} 条讨论`} open={folds.posts} onToggle={() => toggle("posts")}>
@@ -103,7 +118,7 @@ export default function MobileScheduleDetails({ locale, match, isLoggedIn, canPe
   );
 }
 
-function SupportAndShare({ locale, match, canPersistActions, initialData }: { locale: string; match: MobileMatch; canPersistActions: boolean; initialData: DetailData | null }) {
+function SupportAndShare({ locale, match, canPersistActions, initialData, onVoteSaved }: { locale: string; match: MobileMatch; canPersistActions: boolean; initialData: DetailData | null; onVoteSaved: (vote: VoteChoice) => void }) {
   const [counts, setCounts] = useState({ home: 0, neutral: 0, away: 0 });
   const [myVote, setMyVote] = useState<VoteChoice | null>(null);
   const [message, setMessage] = useState("");
@@ -129,6 +144,7 @@ function SupportAndShare({ locale, match, canPersistActions, initialData }: { lo
       const response = await fetch("/api/match-vote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ match_id: match.id, vote: choice }) });
       if (!response.ok) throw new Error("vote failed");
       setMessage("");
+      onVoteSaved(choice);
     } catch {
       setCounts(counts);
       setMyVote(previous);
