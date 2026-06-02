@@ -96,7 +96,7 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
 
   function handlePlaceBet() {
     const amount = effectiveAmount();
-    if (amount < MIN_BET) { setFeedback({ type: "err", msg: zh ? `最低押注 ${formatGc(MIN_BET)} GC` : `Minimum bet is ${formatGc(MIN_BET)} GC` }); return; }
+    if (amount < MIN_BET) { setFeedback({ type: "err", msg: zh ? `最低消耗 ${formatGc(MIN_BET)} GC` : `Minimum is ${formatGc(MIN_BET)} GC` }); return; }
     if (amount > localGc) { setFeedback({ type: "err", msg: zh ? "GC 余额不足" : "Insufficient GC" }); return; }
     if (!betModal) return;
 
@@ -133,13 +133,13 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
         const newBal = localGc - amount;
         setLocalGc(newBal);
         setCtxBalance(newBal); // keep navbar in sync
-        setFeedback({ type: "ok", msg: zh ? `✅ 押注成功！` : "✅ Bet placed!" });
+        setFeedback({ type: "ok", msg: zh ? `✅ 预测成功！` : "✅ Prediction placed!" });
         setTimeout(() => { setBetModal(null); setFeedback(null); }, 1200);
       } else {
         const errMap: Record<string, string> = {
           insufficient_gc:    zh ? "GC 余额不足" : "Insufficient GC",
-          max_picks_reached:  zh ? "每项大奖最多押注 5 名球员" : "Max 5 picks per award",
-          betting_closed:     zh ? "竞猜已截止" : "Betting is closed",
+          max_picks_reached:  zh ? "每项大奖最多预测 5 名球员" : "Max 5 picks per award",
+          betting_closed:     zh ? "预测已截止" : "Predictions closed",
           not_authenticated:  zh ? "请先登录" : "Please log in",
           player_not_found:   zh ? "球员数据异常" : "Player not found",
           gc_deduction_failed:zh ? "GC 扣除失败，请重试" : "GC deduction failed",
@@ -166,10 +166,10 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
   }
 
   const phaseConfig = {
-    pre:      { label: zh ? "⭐ 开赛前"    : "⭐ Pre-Tournament", color: "#FFD700", sublabel: zh ? `截止 6月11日开赛前，赔率 ${odds}×`  : `Before Jun 11 kick-off · ${odds}× odds` },
-    group:    { label: zh ? "🔥 小组赛阶段" : "🔥 Group Stage",    color: "#FB923C", sublabel: zh ? `小组赛结束前，赔率 ${odds}×`         : `Before group stage ends · ${odds}× odds` },
-    knockout: { label: zh ? "🏆 淘汰赛阶段" : "🏆 Knockout Stage",  color: "#34D399", sublabel: zh ? `决赛结束前，赔率 ${odds}×`           : `Before final ends · ${odds}× odds`       },
-    closed:   { label: zh ? "🔒 竞猜已截止" : "🔒 Closed",          color: "#6B7280", sublabel: zh ? "不再接受新押注"                      : "No new bets accepted"                    },
+    pre:      { label: zh ? "⭐ 开赛前"    : "⭐ Pre-Tournament", color: "#FFD700", sublabel: zh ? "截止 6月11日开赛前，预测开放中"   : "Before Jun 11 kick-off · Predictions Open" },
+    group:    { label: zh ? "🔥 小组赛阶段" : "🔥 Group Stage",    color: "#FB923C", sublabel: zh ? "小组赛结束前，预测开放中"            : "Before group stage ends · Predictions Open" },
+    knockout: { label: zh ? "🏆 淘汰赛阶段" : "🏆 Knockout Stage",  color: "#34D399", sublabel: zh ? "决赛结束前，预测开放中"              : "Before final ends · Predictions Open"       },
+    closed:   { label: zh ? "🔒 预测已截止" : "🔒 Closed",          color: "#6B7280", sublabel: zh ? "不再接受新预测"                      : "No new predictions"                         },
   }[phase];
 
   // Effective closed state per award
@@ -181,7 +181,7 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
 
         {/* ── Section Header ── */}
         <div className="mb-5 mt-8 flex items-center gap-2">
-          <h2 className="text-base font-black text-white">🏅 {zh ? "大奖竞猜" : "Award Predictions"}</h2>
+          <h2 className="text-base font-black text-white">🏅 {zh ? "大奖预测" : "Award Predictions"}</h2>
           <span className="text-xs text-gray-500">
             {zh ? "每项最多 5 名球员" : "max 5 picks each"}
           </span>
@@ -226,7 +226,7 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
         {myBetsForAward.length > 0 && (
           <div className="mb-5 bg-[#0F2040] border border-[#FFD700]/20 rounded-2xl p-4">
             <p className="text-xs font-bold text-[#FFD700] uppercase tracking-widest mb-3">
-              {zh ? "我的押注" : "My Picks"} ({myBetsForAward.length}/5)
+              {zh ? "我的预测" : "My Picks"} ({myBetsForAward.length}/5)
             </p>
             <div className="space-y-2">
               {myBetsForAward.map((bet) => {
@@ -256,7 +256,7 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
                         onClick={() => handleCancel(bet.id)}
                         disabled={isPending}
                         className="ml-2 text-gray-600 hover:text-red-400 transition-colors text-xs shrink-0"
-                        title={zh ? "取消押注" : "Cancel"}
+                        title={zh ? "取消预测" : "Cancel"}
                       >✕</button>
                     )}
                   </div>
@@ -323,7 +323,7 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
                 {/* Bet info if existing */}
                 {hasBet && (
                   <div className="mt-2 pt-2 border-t border-[#1E3A5F]">
-                    <p className="text-[10px] text-gray-500">{zh ? "押注" : "Bet"}</p>
+                    <p className="text-[10px] text-gray-500">{zh ? "预测消耗" : "GC Used"}</p>
                     <p className="text-sm font-black text-[#FFD700]">{formatGc(bet.gc_amount)}</p>
                     <p className="text-[10px] text-gray-600">{bet.odds_multiplier}× = {formatGc(bet.gc_amount * bet.odds_multiplier)}</p>
                   </div>
@@ -340,14 +340,14 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
                           : "bg-[#1E3A5F] text-gray-300 hover:bg-[#7C6FE0]/30 hover:text-white border border-[#1E3A5F] hover:border-[#7C6FE0]/50"
                       }`}
                     >
-                      {hasBet ? (zh ? "+ 加注" : "+ Add") : (zh ? "押注" : "Bet")}
+                      {hasBet ? (zh ? "+ 加预测" : "+ Add") : (zh ? "支持" : "Predict")}
                     </button>
                   ) : (
                     <Link
                       href={`/${locale}/auth/login`}
                       className="mt-3 block w-full py-1.5 rounded-xl text-xs font-black text-center bg-[#FFD700] text-[#0A1628] hover:bg-[#FFC200] transition-colors"
                     >
-                      {zh ? "登录押注" : "Login to Bet"}
+                      {zh ? "登录预测" : "Login to Predict"}
                     </Link>
                   )
                 )}
@@ -391,7 +391,7 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
               <div className="bg-[#0A1628] rounded-xl px-4 py-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-gray-400">{zh ? "当前赔率" : "Current Odds"}</p>
+                    <p className="text-xs text-gray-400">{zh ? "预测奖励" : "Prediction Reward"}</p>
                     <p className="text-[10px] mt-0.5" style={{ color: phaseConfig.color }}>
                       {phaseConfig.label}
                     </p>
@@ -492,7 +492,7 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
                 disabled={isPending || isBettingClosed}
                 className="flex-1 bg-[#FFD700] text-[#0A1628] font-black py-2.5 rounded-xl text-sm hover:bg-[#FFC200] transition-colors disabled:opacity-50"
               >
-                {isPending ? "…" : (zh ? "确认押注" : "Confirm Bet")}
+                {isPending ? "…" : (zh ? "确认预测" : "Confirm Prediction")}
               </button>
               <button
                 onClick={() => { setBetModal(null); setFeedback(null); }}

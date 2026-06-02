@@ -30,8 +30,8 @@ const LOCALE_META: Record<string, { title: string; description: string }> = {
     description: "Football2026 is the ultimate World Cup 2026 prediction game. Predict football 2026 match results, earn GoalCoins, climb the leaderboard. Free to play soccer worldcup 2026 prediction platform.",
   },
   zh: {
-    title: "Football2026 — 2026世界杯竞猜游戏 | 足球世界杯预测平台",
-    description: "Football2026是最好玩的2026世界杯竞猜平台。预测比赛结果，赢取GoalCoin，登上排行榜。免费参与world cup 2026 football soccer预测游戏。",
+    title: "Football2026 — 2026世界杯助威游戏 | 足球世界杯预测平台",
+    description: "Football2026是最好玩的2026世界杯助威平台。预测比赛结果，获得GoalCoin道具，登上排行榜。免费参与world cup 2026 football soccer预测游戏。",
   },
   es: {
     title: "Football2026 — Predicción Copa del Mundo 2026 | Soccer Worldcup 2026",

@@ -53,7 +53,7 @@ const PLATFORMS = (url: string, text: string) => [
   },
   {
     name: "Email",    bg: "#6B7280", emoji: "✉",
-    href: `mailto:?subject=${encodeURIComponent("Football2026 竞猜")}&body=${encodeURIComponent(text + "\n\n" + url)}`,
+    href: `mailto:?subject=${encodeURIComponent("Football2026 预测")}&body=${encodeURIComponent(text + "\n\n" + url)}`,
   },
 ];
 
@@ -113,8 +113,8 @@ export default function ShareBetModal({
   }[pick];
 
   const shareText = zh
-    ? `🏆 我在 Football2026 押了 ${homeTeamZh ?? homeTeam} vs ${awayTeamZh ?? awayTeam}！预测：${pickDisplay}，押注 ${formatGc(gcAmount)} GC，扫码参与竞猜！`
-    : `🏆 I just predicted ${homeTeam} vs ${awayTeam} on Football2026! Pick: ${pickDisplay} · ${formatGc(gcAmount)} GC staked. Scan the QR to join!`;
+    ? `🏆 我在 Football2026 预测了 ${homeTeamZh ?? homeTeam} vs ${awayTeamZh ?? awayTeam}！预测：${pickDisplay}，消耗 ${formatGc(gcAmount)} GC，扫码一起助威！`
+    : `🏆 I just predicted ${homeTeam} vs ${awayTeam} on Football2026! Pick: ${pickDisplay} · ${formatGc(gcAmount)} GC used. Scan the QR to join!`;
 
   useEffect(() => {
     setCanNativeShare(typeof navigator !== "undefined" && !!navigator.share);

@@ -134,7 +134,7 @@ export default function CountdownHero({ locale, zh, isLoggedIn, totalMatches }: 
           {[
             { n: "48",            label: zh ? "场比赛" : "Matches" },
             { n: "32",            label: zh ? "支球队" : "Teams" },
-            { n: totalMatches > 0 ? String(totalMatches) : "∞", label: zh ? "场可竞猜" : "Predictions" },
+            { n: totalMatches > 0 ? String(totalMatches) : "∞", label: zh ? "场可预测" : "Predictions" },
           ].map((s) => (
             <div key={s.label} className="text-center">
               <div
@@ -154,7 +154,7 @@ export default function CountdownHero({ locale, zh, isLoggedIn, totalMatches }: 
             href={`/${locale}/matches`}
             className="inline-flex items-center justify-center gap-2 bg-[#FFD700] text-[#0A1628] font-black px-8 py-3.5 rounded-2xl text-base hover:bg-[#FFC200] transition-all hover:scale-[1.02] shadow-lg shadow-[#FFD700]/20"
           >
-            ⚽ {zh ? "立即竞猜" : "Predict Now"}
+            ⚽ {zh ? "立即助威" : "Predict Now"}
           </Link>
           <Link
             href={`/${locale}/matches`}

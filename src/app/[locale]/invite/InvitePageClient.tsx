@@ -52,7 +52,7 @@ export default function InvitePageClient({
     : `${siteUrl}/${locale}/auth/register`;
 
   const shareText = zh
-    ? `🎉 加入 Football2026，免费注册即得 100,000 GC，一起竞猜世界杯！`
+    ? `🎉 加入 Football2026，免费注册即得 100,000 GC，一起助威世界杯！`
     : `🎉 Join Football2026! Sign up free & get 100,000 GC. Let's predict the World Cup together!`;
 
   async function copyLink() {

@@ -165,7 +165,7 @@ function SuccessContent() {
               href={`/${locale}/matches`}
               className="block w-full py-3 bg-[#0F2040] border border-[#1E3A5F] text-gray-300 font-bold rounded-2xl text-sm hover:border-gray-500 transition-colors"
             >
-              {zh ? "去竞猜比赛" : "Go Predict Matches"}
+              {zh ? "去预测比赛" : "Go Predict Matches"}
             </Link>
           </div>
         </div>

@@ -234,13 +234,13 @@ export default async function GlobalSidebar({ locale }: Props) {
       {user && sp && (
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
           <div className="px-5 pt-4 pb-3 bg-gradient-to-r from-[#7C6FE0]/10 to-transparent border-b border-[#1E3A5F]">
-            <p className="text-sm font-black text-white">🎯 {zh ? "我的竞猜" : "My Predictions"}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{zh ? "本届世界杯竞猜战绩" : "World Cup 2026 betting record"}</p>
+            <p className="text-sm font-black text-white">🎯 {zh ? "我的预测" : "My Predictions"}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{zh ? "本届世界杯预测战绩" : "World Cup 2026 prediction record"}</p>
           </div>
           <div className="px-5 py-4 space-y-3">
             <div className="grid grid-cols-2 gap-2.5">
               <div className="bg-[#0A1628] rounded-xl px-3 py-3 text-center border border-[#1E3A5F]">
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1.5 leading-none">{zh ? "押注场次" : "Total Bets"}</p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1.5 leading-none">{zh ? "预测场次" : "Total Bets"}</p>
                 <p className="text-2xl font-black text-white leading-none">{totalBets}</p>
               </div>
               <div className="bg-[#0A1628] rounded-xl px-3 py-3 text-center border border-green-500/20">
@@ -262,7 +262,7 @@ export default async function GlobalSidebar({ locale }: Props) {
                 }} />
               </div>
               {totalBets === 0 && (
-                <p className="text-[10px] text-gray-600 mt-1.5 text-center">{zh ? "还没有竞猜记录" : "No bets placed yet"}</p>
+                <p className="text-[10px] text-gray-600 mt-1.5 text-center">{zh ? "还没有预测记录" : "No predictions yet"}</p>
               )}
             </div>
             <div className="flex items-center justify-between px-1 py-1">
@@ -299,7 +299,7 @@ export default async function GlobalSidebar({ locale }: Props) {
         const hotTopics = zh ? [
           { title: "阿根廷能否成功卫冕世界杯？",     href: "breaking", views: "2.4K" },
           { title: "梅西 C 罗最后一届世界杯？",       href: "stars",    views: "1.8K" },
-          { title: "2026 金靴奖竞猜热门人选",         href: "predict",  views: "1.3K" },
+          { title: "2026 金靴奖预测热门人选",         href: "predict",  views: "1.3K" },
           { title: "4-3-3 vs 5-3-2 谁更适合本届杯赛", href: "tactical", views: "980"  },
           { title: "你最期待哪场比赛？",              href: "match",    views: "762"  },
         ] : [
