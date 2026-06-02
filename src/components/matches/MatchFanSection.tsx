@@ -100,10 +100,10 @@ interface TooltipState {
 type PropType = "firework" | "goal" | "rally" | "boo";
 
 const PROP_COSTS: Record<PropType, string> = {
-  firework: "5M",
-  goal:     "10M",
-  rally:    "2M",
-  boo:      "5M",
+  firework: "50K",
+  goal:     "100K",
+  rally:    "200K",
+  boo:      "50K",
 };
 
 interface FireworkItem {
@@ -589,6 +589,15 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
   const [userMapPos,       setUserMapPos]       = useState<{ x: number; y: number } | null>(null);
   const [locationStatus,   setLocationStatus]   = useState<"idle" | "locating" | "ready" | "unavailable">("idle");
 
+  // Per-user state resolved client-side. The desktop match page is statically
+  // generated and passes loggedIn=false / userVote=null, so props (fireworks
+  // etc.) would stay locked even for a logged-in fan. Recover the real state
+  // from the user-state endpoint and prefer it when the props are evaluated.
+  const [clientLoggedIn, setClientLoggedIn] = useState(false);
+  const [clientVote,     setClientVote]     = useState<"home" | "neutral" | "away" | null>(null);
+  const effectiveLoggedIn = loggedIn || clientLoggedIn;
+  const effectiveUserVote = userVote ?? clientVote;
+
   const channelRef    = useRef<RealtimeChannel | null>(null);
   const lastLaunchRef = useRef<number>(0);
   const [channelReady,  setChannelReady]  = useState(false);
@@ -657,13 +666,30 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
 
   useEffect(() => { loadCountryVotes(); }, [loadCountryVotes]);
 
+  // Recover the logged-in user's real state on a statically-generated page.
+  useEffect(() => {
+    fetch(`/api/matches/${matchId}/user-state`)
+      .then((r) => r.json())
+      .then((d: { myVote: "home" | "neutral" | "away" | null; userId: string | null }) => {
+        if (d.userId) {
+          setClientLoggedIn(true);
+          setClientVote(d.myVote);
+        }
+      })
+      .catch(() => {});
+  }, [matchId]);
+
   // A vote cast elsewhere on the page (e.g. the MatchHero support bar) is
   // already persisted server-side, so reload the country aggregate to make the
-  // new vote appear on the map immediately — no full page reload needed.
+  // new vote appear on the map immediately — no full page reload needed. Also
+  // adopt the new vote locally so the props unlock right away.
   useEffect(() => {
     function onVoteChanged(e: Event) {
-      const detail = (e as CustomEvent<{ matchId: string | number }>).detail;
-      if (detail && String(detail.matchId) === String(matchId)) loadCountryVotes();
+      const detail = (e as CustomEvent<{ matchId: string | number; vote?: "home" | "neutral" | "away" }>).detail;
+      if (detail && String(detail.matchId) === String(matchId)) {
+        if (detail.vote) setClientVote(detail.vote);
+        loadCountryVotes();
+      }
     }
     window.addEventListener("match-vote-changed", onVoteChanged);
     return () => window.removeEventListener("match-vote-changed", onVoteChanged);
@@ -725,9 +751,9 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
 
   // ── Launch any prop ─────────────────────────────────────────────────────────
   async function launchFirework(propType: PropType = "firework") {
-    if (launching || !loggedIn) return;
+    if (launching || !effectiveLoggedIn) return;
     // Block neutral or unvoted users
-    if (!userVote || userVote === "neutral") {
+    if (!effectiveUserVote || effectiveUserVote === "neutral") {
       setPropError(zh ? "请先选择支持的队伍才能使用道具" : "Please support a team first to use props");
       return;
     }
@@ -1390,7 +1416,7 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
           </div>
 
           {/* Neutral / unvoted lock notice */}
-          {loggedIn && (!userVote || userVote === "neutral") && (
+          {effectiveLoggedIn && (!effectiveUserVote || effectiveUserVote === "neutral") && (
             <div className="mb-2.5 flex items-center gap-2 bg-[#1A2D4A] border border-[#FFD700]/20 rounded-xl px-3 py-2">
               <span className="text-sm shrink-0">⚠️</span>
               <p className="text-[11px] text-[#FFD700]/80 leading-snug">
@@ -1410,14 +1436,14 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
                 { type: "boo"      as PropType, emoji: "😤", zh: "嘘声",   en: "Boo"      },
               ] as { type: PropType; emoji: string; zh: string; en: string }[]
             ).map((prop) => {
-              const hasSide  = loggedIn && (userVote === "home" || userVote === "away");
+              const hasSide  = effectiveLoggedIn && (effectiveUserVote === "home" || effectiveUserVote === "away");
               const canUse   = hasSide && !launching && cooldownLeft === 0;
               const isBoo    = prop.type === "boo";
               const borderOn = isBoo ? "border-red-500/50 hover:border-red-500 hover:bg-red-500/10"
                                      : "border-[#FFD700]/50 hover:border-[#FFD700] hover:bg-[#FFD700]/10";
-              const disabledTitle = !loggedIn
+              const disabledTitle = !effectiveLoggedIn
                 ? (zh ? "登录后使用" : "Login to use")
-                : (!userVote || userVote === "neutral")
+                : (!effectiveUserVote || effectiveUserVote === "neutral")
                   ? (zh ? "请先选择支持队伍" : "Support a team first")
                   : undefined;
               return (
@@ -1451,7 +1477,7 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
             <p className="text-[11px] text-red-400 mt-2 font-bold">{propError}</p>
           )}
 
-          {!loggedIn && (
+          {!effectiveLoggedIn && (
             <p className="text-[10px] text-gray-600 mt-2">
               {zh ? "登录后可使用道具" : "Login to use props"}
             </p>

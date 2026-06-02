@@ -8,10 +8,10 @@ const centroidMap = new Map(COUNTRY_CENTROIDS.map((c) => [c.code, c]));
 type PropType = "firework" | "goal" | "rally" | "boo";
 
 const PROP_COSTS: Record<PropType, number> = {
-  firework: 5_000_000,
-  goal:     10_000_000,
-  rally:    2_000_000,
-  boo:      5_000_000,
+  firework: 50_000,
+  goal:     100_000,
+  rally:    200_000,
+  boo:      50_000,
 };
 
 export async function POST(request: NextRequest) {
