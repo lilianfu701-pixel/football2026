@@ -598,6 +598,7 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
   const effectiveLoggedIn = loggedIn || clientLoggedIn;
   const effectiveUserVote = userVote ?? clientVote;
 
+  const locationWatchRef = useRef<number | null>(null);
   const channelRef    = useRef<RealtimeChannel | null>(null);
   const lastLaunchRef = useRef<number>(0);
   const [channelReady,  setChannelReady]  = useState(false);
@@ -615,25 +616,40 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
       setLocationStatus("unavailable");
       return;
     }
+    if (locationWatchRef.current != null) {
+      navigator.geolocation.clearWatch(locationWatchRef.current);
+      locationWatchRef.current = null;
+    }
     setLocationStatus("locating");
-    navigator.geolocation.getCurrentPosition(
+    locationWatchRef.current = navigator.geolocation.watchPosition(
       ({ coords }) => {
         const pos = coordsToMapPercent(coords.longitude, coords.latitude);
         setUserMapPos(pos);
         setLocationStatus("ready");
       },
       () => {
+        if (locationWatchRef.current != null) {
+          navigator.geolocation.clearWatch(locationWatchRef.current);
+          locationWatchRef.current = null;
+        }
         setUserMapPos(null);
         setLocationStatus("unavailable");
       },
-      { timeout: 5000, maximumAge: 3_600_000 },
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 300_000 },
     );
   }, []);
 
-  // Resolve the user's geographic position when the map is opened.
+  // Resolve and keep the user's geographic position updated on mobile only.
   useEffect(() => {
+    if (!showCurrentUserMarker) return;
     requestUserLocation();
-  }, [requestUserLocation]);
+    return () => {
+      if (typeof navigator !== "undefined" && navigator.geolocation && locationWatchRef.current != null) {
+        navigator.geolocation.clearWatch(locationWatchRef.current);
+        locationWatchRef.current = null;
+      }
+    };
+  }, [requestUserLocation, showCurrentUserMarker]);
 
   // (Audio is loaded on first play — no preload needed)
 
@@ -900,6 +916,11 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
               ? (zh ? "正在定位…" : "Locating…")
               : (zh ? "允许定位后显示我的位置" : "Allow location to show my position")}
           </button>
+        )}
+        {showCurrentUserMarker && (userVote === "home" || userVote === "away") && userMapPos && (
+          <p className="mb-3 text-[11px] font-bold text-emerald-300">
+            {zh ? "已获取当前位置" : "Current location detected"}
+          </p>
         )}
 
         {/* Map */}

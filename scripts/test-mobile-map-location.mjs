@@ -18,5 +18,25 @@ assert.match(
   /onClick=\{requestUserLocation\}/,
   "The mobile map must offer a location retry action",
 );
+assert.match(
+  source,
+  /if \(!showCurrentUserMarker\) return;/,
+  "Desktop maps must not request geolocation when the mobile marker is disabled",
+);
+assert.match(
+  source,
+  /navigator\.geolocation\.watchPosition\(/,
+  "The mobile map must keep the phone position updated while it is open",
+);
+assert.match(
+  source,
+  /enableHighAccuracy: true/,
+  "The mobile map must request a high-accuracy phone position",
+);
+assert.match(
+  source,
+  /navigator\.geolocation\.clearWatch\(locationWatchRef\.current\)/,
+  "The mobile map must stop watching the position when it closes",
+);
 
 console.log("mobile map location checks passed");
