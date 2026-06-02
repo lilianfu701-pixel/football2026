@@ -61,8 +61,8 @@ export default async function AdminBetsPage({ params }: Props) {
         <div className="flex items-center gap-3">
           <span className="text-3xl">🎯</span>
           <div>
-            <h1 className="text-2xl font-black">{zh ? "投注管理" : "Bets Management"}</h1>
-            <p className="text-gray-400 text-sm">{zh ? "所有投注记录，最近 100 条" : "All bets — recent 100"}</p>
+            <h1 className="text-2xl font-black">{zh ? "预测管理" : "Predictions Management"}</h1>
+            <p className="text-gray-400 text-sm">{zh ? "所有预测记录，最近 100 条" : "All predictions — recent 100"}</p>
           </div>
         </div>
       </div>
@@ -87,7 +87,7 @@ export default async function AdminBetsPage({ params }: Props) {
       {/* Bets table */}
       <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
         <div className="px-5 py-3.5 border-b border-[#1E3A5F]">
-          <h2 className="font-black text-sm">{zh ? "最近 100 条投注" : "Recent 100 Bets"}</h2>
+          <h2 className="font-black text-sm">{zh ? "最近 100 条预测" : "Recent 100 Predictions"}</h2>
         </div>
 
         <div className="overflow-x-auto">
@@ -98,7 +98,7 @@ export default async function AdminBetsPage({ params }: Props) {
                 <th className="px-4 py-2.5 text-left font-semibold">{zh ? "用户" : "User"}</th>
                 <th className="px-4 py-2.5 text-left font-semibold">{zh ? "比赛" : "Match"}</th>
                 <th className="px-4 py-2.5 text-left font-semibold">{zh ? "选项" : "Pick"}</th>
-                <th className="px-4 py-2.5 text-right font-semibold">{zh ? "投注 GC" : "Bet GC"}</th>
+                <th className="px-4 py-2.5 text-right font-semibold">{zh ? "消耗 GC" : "GC Used"}</th>
                 <th className="px-4 py-2.5 text-right font-semibold">{zh ? "派彩 GC" : "Payout GC"}</th>
                 <th className="px-4 py-2.5 text-center font-semibold">{zh ? "状态" : "Status"}</th>
               </tr>
@@ -107,7 +107,7 @@ export default async function AdminBetsPage({ params }: Props) {
               {bets.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-gray-600 text-sm">
-                    {zh ? "暂无投注记录" : "No bets yet"}
+                    {zh ? "暂无预测记录" : "No predictions yet"}
                   </td>
                 </tr>
               )}

@@ -37,9 +37,9 @@ export default async function AdminFinancePage({ params }: Props) {
   function txLabel(type: string) {
     const map: Record<string, string> = {
       topup:          zh ? "充值"      : "Topup",
-      bet_placed:     zh ? "投注扣除"  : "Bet Placed",
-      bet_refunded:   zh ? "投注退款"  : "Bet Refund",
-      bet_won:        zh ? "投注赢利"  : "Bet Won",
+      bet_placed:     zh ? "预测消耗"  : "Prediction",
+      bet_refunded:   zh ? "预测退还"  : "Prediction Refund",
+      bet_won:        zh ? "预测奖励"  : "Prediction Reward",
       daily_checkin:  zh ? "每日签到"  : "Daily Check-in",
       share_reward:   zh ? "分享奖励"  : "Share Reward",
       forum_post:     zh ? "发帖奖励"  : "Forum Post",

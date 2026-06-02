@@ -13,7 +13,7 @@ const NAV = [
   { key: "",         icon: "🏠", label: "Dashboard",   labelZh: "控制台" },
   { key: "users",    icon: "👤", label: "Users",        labelZh: "用户管理" },
   { key: "matches",  icon: "⚽", label: "Matches",      labelZh: "赛事管理" },
-  { key: "bets",     icon: "🎯", label: "Bets",         labelZh: "投注管理" },
+  { key: "bets",     icon: "🎯", label: "Predictions",  labelZh: "预测管理" },
   { key: "finance",  icon: "💰", label: "Finance",      labelZh: "财务管理" },
   { key: "reports",  icon: "🚩", label: "Reports",      labelZh: "举报审核" },
   { key: "gc-tools", icon: "🪙", label: "GC Tools",     labelZh: "GC 工具" },

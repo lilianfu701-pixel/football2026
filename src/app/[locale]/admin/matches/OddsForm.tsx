@@ -25,7 +25,7 @@ export default function OddsForm({ matchId, initialHome, initialDraw, initialAwa
     const d = parseFloat(draw);
     const a = parseFloat(away);
     if ([h, d, a].some((v) => isNaN(v) || v < 1.01)) {
-      setError(zh ? "赔率需 ≥ 1.01" : "Odds must be ≥ 1.01");
+      setError(zh ? "倍率需 ≥ 1.01" : "Multiplier must be ≥ 1.01");
       return;
     }
     setError(null);
@@ -48,7 +48,7 @@ export default function OddsForm({ matchId, initialHome, initialDraw, initialAwa
   return (
     <div className="flex flex-wrap items-center gap-2 mt-2">
       <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest shrink-0">
-        {zh ? "赔率（Bet365）" : "Odds (Bet365)"}
+        {zh ? "预测倍率" : "Prediction Multiplier"}
       </span>
 
       {/* Home */}
@@ -96,7 +96,7 @@ export default function OddsForm({ matchId, initialHome, initialDraw, initialAwa
             : "bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20"
         }`}
       >
-        {saving ? "…" : saved ? (zh ? "已保存 ✓" : "Saved ✓") : (zh ? "保存赔率" : "Save Odds")}
+        {saving ? "…" : saved ? (zh ? "已保存 ✓" : "Saved ✓") : (zh ? "保存倍率" : "Save")}
       </button>
 
       {error && <span className="text-xs text-red-400">{error}</span>}

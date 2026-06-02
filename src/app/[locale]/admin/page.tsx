@@ -103,7 +103,7 @@ export default async function AdminDashboard({ params }: Props) {
         <StatCard icon="⚽" label={zh ? "比赛数量" : "Matches"}
           value={matchesRes.count ?? 0}
           href={`/${locale}/admin/matches`} />
-        <StatCard icon="🎯" label={zh ? "待结算投注" : "Active Bets"}
+        <StatCard icon="🎯" label={zh ? "待结算预测" : "Active Predictions"}
           value={(betsRes.count ?? 0).toLocaleString()}
           sub={`Pool: ${formatGc(totalBetPool)} GC`}
           href={`/${locale}/admin/bets`} />
@@ -172,7 +172,7 @@ export default async function AdminDashboard({ params }: Props) {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {[
           { href: `/${locale}/admin/matches`,  icon: "⚽", label: zh ? "更新比分" : "Update Scores",  desc: zh ? "比赛结果、AI 预测"  : "Match results & AI" },
-          { href: `/${locale}/admin/bets`,     icon: "🎯", label: zh ? "投注管理" : "Manage Bets",    desc: zh ? "查看投注、结算奖励"  : "View & settle bets" },
+          { href: `/${locale}/admin/bets`,     icon: "🎯", label: zh ? "预测管理" : "Predictions",    desc: zh ? "查看预测、结算奖励"  : "View & settle predictions" },
           { href: `/${locale}/admin/gc-tools`, icon: "🪙", label: zh ? "GC 工具"  : "GC Tools",       desc: zh ? "手动奖励或调整余额"  : "Award or adjust GC" },
           { href: `/${locale}/admin/finance`,  icon: "💰", label: zh ? "财务记录" : "Finance",        desc: zh ? "充值与流水记录"       : "Topup & tx history" },
           { href: `/${locale}/admin/users`,    icon: "👤", label: zh ? "用户管理" : "User Management", desc: zh ? "封号、管理员权限"    : "Ban, admin perms" },
