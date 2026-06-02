@@ -11,8 +11,8 @@ import { getTeamColor } from "@/lib/teamColors";
 import type { MobileMatch } from "@/components/mobile/MobileHome";
 import { redirectToMobileLogin } from "@/components/mobile/mobileAuth";
 
-const MIN_BET = 1_000_000;
-const DEFAULT_AMOUNT = "1,000,000";
+const MIN_BET = 10_000;
+const DEFAULT_AMOUNT = "10,000";
 const PRESETS = [0.05, 0.1, 0.2, 0.5] as const;
 
 type VoteChoice = "home" | "neutral" | "away";
@@ -232,14 +232,14 @@ function WinBet({ locale, match, canPersistActions, existingBet, detailLoading }
 
   function preset(value: number) {
     const next = Math.floor(balance * value);
-    if (next < MIN_BET) setMessage("最低下注 1M GC");
+    if (next < MIN_BET) setMessage("最低下注 10K GC");
     setAmount(formatAmount(next));
   }
 
   async function submit() {
     if (!choice || loading) return;
     if (!canPersistActions) { redirectToMobileLogin(locale); return; }
-    if (amountNum < MIN_BET) { setMessage("最低下注 1M GC"); return; }
+    if (amountNum < MIN_BET) { setMessage("最低下注 10K GC"); return; }
     setLoading(true);
     setMessage("");
     try {
@@ -291,14 +291,14 @@ function ScoreBet({ locale, match, canPersistActions, initialBets }: { locale: s
 
   function preset(value: number) {
     const next = Math.floor(balance * value);
-    if (next < MIN_BET) setMessage("最低下注 1M GC");
+    if (next < MIN_BET) setMessage("最低下注 10K GC");
     setAmount(formatAmount(next));
   }
 
   async function submit() {
     if (!scoreReady || loading) return;
     if (!canPersistActions) { redirectToMobileLogin(locale); return; }
-    if (amountNum < MIN_BET) { setMessage("最低下注 1M GC"); return; }
+    if (amountNum < MIN_BET) { setMessage("最低下注 10K GC"); return; }
     setLoading(true);
     setMessage("");
     try {
@@ -317,7 +317,7 @@ function ScoreBet({ locale, match, canPersistActions, initialBets }: { locale: s
 
   return (
     <section className="rounded-md border border-white/10 bg-white/[0.035] p-1.5">
-      <div className="mb-1 flex justify-between text-[12px] font-black"><span className="text-[#FFD700]">比分竞猜</span><span className="text-slate-500">最低 1M GC</span></div>
+      <div className="mb-1 flex justify-between text-[12px] font-black"><span className="text-[#FFD700]">比分竞猜</span><span className="text-slate-500">最低 10K GC</span></div>
       <div className="grid grid-cols-[1fr_1.4rem_1fr] gap-1">
         <ScoreInput label={getTeamDisplayName(match.homeTeam, locale)} value={homeScore} onChange={setHomeScore} />
         <span className="flex h-7 items-center justify-center text-[15px] font-black text-slate-500">:</span>
