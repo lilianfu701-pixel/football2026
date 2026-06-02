@@ -458,7 +458,7 @@ export default function MobileHome({
   return (
     <main className="-mt-16 min-h-screen bg-[#081120] pb-[calc(5.75rem+env(safe-area-inset-bottom))] text-white">
       {activeView !== "matches" && (
-        <AppHeader locale={locale} t={t} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} userEmail={userEmail} userDisplayName={userDisplayName} balance={balance} />
+        <AppHeader locale={locale} t={t} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} userEmail={userEmail} userDisplayName={userDisplayName} balance={balance} onOpenView={openView} />
       )}
 
       <section className="mx-auto max-w-md px-3 py-3">
@@ -513,6 +513,7 @@ function AppHeader({
   userEmail,
   userDisplayName,
   balance,
+  onOpenView,
 }: {
   locale: string;
   t: MobileCopy;
@@ -521,8 +522,26 @@ function AppHeader({
   userEmail?: string;
   userDisplayName?: string;
   balance: number;
+  onOpenView: (view: MobileView) => void;
 }) {
   const displayName = userDisplayName ?? userEmail?.split("@")[0] ?? "User";
+  const accountSummary = isLoggedIn ? (
+    <span className="flex max-w-[10rem] items-center gap-1.5">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFD700] text-[15px] font-black text-[#081120]">
+        {displayName.slice(0, 1).toUpperCase()}
+      </span>
+      <span className="min-w-0 text-right">
+        <span className="flex items-center justify-end gap-1 text-[13px] font-black leading-none text-white">
+          <span className="truncate">{displayName}</span>
+          {!canPersistActions && <span className="shrink-0 text-[11px] text-slate-500">{locale === "zh" ? "预览" : "Preview"}</span>}
+        </span>
+        <span className="mt-1 block text-[11px] font-bold leading-none text-[#FFD700]">{formatBalance(balance)} GC</span>
+      </span>
+    </span>
+  ) : (
+    <span className="rounded-lg border border-[#FFD700]/25 bg-[#FFD700]/10 px-2.5 py-1.5 text-[13px] font-black text-[#FFD700]">{t.login}</span>
+  );
+
   return (
     <header className="sticky top-0 z-30 border-b border-white/10 bg-[#081120]/95 px-3 py-2.5 backdrop-blur">
       <div className="mx-auto flex max-w-md items-center justify-between gap-3">
@@ -535,24 +554,15 @@ function AppHeader({
             <p className="mt-1 truncate text-[13px] leading-none text-slate-500">m.football2026.net</p>
           </div>
         </div>
-        <Link href={canPersistActions ? `/${locale}/profile` : `/${locale}/m/login?next=${encodeURIComponent("/m?view=home")}`} className="shrink-0">
-          {isLoggedIn ? (
-            <span className="flex max-w-[10rem] items-center gap-1.5">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFD700] text-[15px] font-black text-[#081120]">
-                {displayName.slice(0, 1).toUpperCase()}
-              </span>
-              <span className="min-w-0 text-right">
-                <span className="flex items-center justify-end gap-1 text-[13px] font-black leading-none text-white">
-                  <span className="truncate">{displayName}</span>
-                  {!canPersistActions && <span className="shrink-0 text-[11px] text-slate-500">{locale === "zh" ? "预览" : "Preview"}</span>}
-                </span>
-                <span className="mt-1 block text-[11px] font-bold leading-none text-[#FFD700]">{formatBalance(balance)} GC</span>
-              </span>
-            </span>
-          ) : (
-            <span className="rounded-lg border border-[#FFD700]/25 bg-[#FFD700]/10 px-2.5 py-1.5 text-[13px] font-black text-[#FFD700]">{t.login}</span>
-          )}
-        </Link>
+        {canPersistActions ? (
+          <button type="button" onClick={() => onOpenView("mine")} className="shrink-0">
+            {accountSummary}
+          </button>
+        ) : (
+          <Link href={`/${locale}/m/login?next=${encodeURIComponent("/m?view=home")}`} className="shrink-0">
+            {accountSummary}
+          </Link>
+        )}
       </div>
     </header>
   );
