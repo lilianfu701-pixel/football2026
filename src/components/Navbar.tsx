@@ -73,6 +73,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
   const navLinks = [
     { href: `/${locale}`, label: t("home") },
     { href: `/${locale}/matches`, label: t("matches") },
+    { href: `/${locale}/schedule`, label: t("schedule") },
     { href: `/${locale}/predict`, label: t("predict") },
     { href: `/${locale}/leaderboard`, label: t("leaderboard") },
     { href: `/${locale}/invite`, label: t("invite") },

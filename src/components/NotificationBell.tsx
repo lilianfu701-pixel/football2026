@@ -241,17 +241,15 @@ export default function NotificationBell({ locale }: Props) {
           </div>
 
           {/* Footer */}
-          {notifs.length > 0 && (
-            <div className="px-4 py-2.5 border-t border-[#1E3A5F]/70 text-center">
-              <Link
-                href={`/${locale}/forum`}
-                onClick={() => setOpen(false)}
-                className="text-[11px] text-gray-500 hover:text-[#FFD700] transition-colors font-medium"
-              >
-                {zh ? "前往论坛查看详情 →" : "Go to forum →"}
-              </Link>
-            </div>
-          )}
+          <div className="px-4 py-2.5 border-t border-[#1E3A5F]/70 text-center">
+            <Link
+              href={`/${locale}/notifications`}
+              onClick={() => setOpen(false)}
+              className="text-[11px] text-[#FFD700]/70 hover:text-[#FFD700] transition-colors font-bold"
+            >
+              {zh ? "查看全部通知 →" : "View all notifications →"}
+            </Link>
+          </div>
         </div>
       )}
     </div>

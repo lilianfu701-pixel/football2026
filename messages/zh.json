@@ -1,13 +1,14 @@
 {
   "site": {
     "name": "Football2026",
-    "tagline": "2026世界杯竞猜平台",
-    "description": "在Football2026预测比赛结果，赢取GoalCoin，畅玩2026世界杯竞猜游戏。"
+    "tagline": "2026世界杯助威预测平台",
+    "description": "在Football2026预测比赛结果，赢取GoalCoin，畅玩2026世界杯助威游戏。"
   },
   "nav": {
     "home": "首页",
     "matches": "赛事",
-    "predict": "竞猜",
+    "schedule": "赛程",
+    "predict": "预测",
     "forum": "论坛",
     "leaderboard": "排行榜",
     "invite": "邀请",
@@ -23,7 +24,7 @@
     "hours": "时",
     "minutes": "分",
     "seconds": "秒",
-    "cta_predict": "立即竞猜",
+    "cta_predict": "立即助威",
     "cta_schedule": "查看赛程",
     "register_bonus": "立即注册，免费获得20,000,000 GC！"
   },
@@ -34,12 +35,12 @@
     "claim": "立即领取"
   },
   "predict": {
-    "title": "我要竞猜",
+    "title": "我要预测",
     "win": "赢",
     "draw": "平",
-    "odds": "赔率",
+    "odds": "倍率",
     "pool": "奖池",
-    "confirm": "确认竞猜",
+    "confirm": "确认预测",
     "cancel": "取消",
     "deadline": "截止时间",
     "min_bet": "最低100 GC",
