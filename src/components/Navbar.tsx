@@ -30,7 +30,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
   const { balance: gcBalance } = useGcBalance();
   const langRef     = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const isMobileInstallPage = pathname === `/${locale}/m`;
+  const isMobileRoute = pathname === `/${locale}/m` || pathname.startsWith(`/${locale}/m/`);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
     return () => document.removeEventListener("mousedown", handleClick);
   }, [langOpen, userMenuOpen]);
 
-  if (isMobileInstallPage) return null;
+  if (isMobileRoute) return null;
 
   const supabase = createClient();
 

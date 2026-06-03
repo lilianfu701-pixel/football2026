@@ -391,12 +391,15 @@ export default async function GlobalSidebar({ locale }: Props) {
         </p>
         <div className="space-y-1">
           {[
-            { href: `/${locale}/schedule`,      icon: "🗓️", label: zh ? "赛程 & 积分榜" : "Schedule & Standings" },
+            { href: `/${locale}/missions`,        icon: "🎖️", label: zh ? "任务 & 成就" : "Missions & Achievements" },
+            { href: `/${locale}/rewards`,         icon: "🪙", label: zh ? "GC 奖励说明" : "GC Rewards Guide" },
+            { href: `/${locale}/feed`,            icon: "🌐", label: zh ? "好友动态" : "Following Feed" },
+            { href: `/${locale}/schedule`,        icon: "🗓️", label: zh ? "赛程 & 积分榜" : "Schedule & Standings" },
             { href: `/${locale}/profile/checkin`, icon: "📅", label: zh ? "每日签到领 GC" : "Daily Check-in" },
-            { href: `/${locale}/help`,           icon: "❓", label: zh ? "帮助中心 / FAQ" : "Help Center / FAQ" },
-            { href: `/${locale}/notifications`,  icon: "🔔", label: zh ? "通知中心" : "Notifications" },
-            { href: `/${locale}/terms`,          icon: "📋", label: zh ? "服务条款" : "Terms of Service" },
-            { href: `/${locale}/privacy`,        icon: "🔒", label: zh ? "隐私政策" : "Privacy Policy" },
+            { href: `/${locale}/help`,            icon: "❓", label: zh ? "帮助中心 / FAQ" : "Help Center / FAQ" },
+            { href: `/${locale}/notifications`,   icon: "🔔", label: zh ? "通知中心" : "Notifications" },
+            { href: `/${locale}/terms`,           icon: "📋", label: zh ? "服务条款" : "Terms of Service" },
+            { href: `/${locale}/privacy`,         icon: "🔒", label: zh ? "隐私政策" : "Privacy Policy" },
           ].map((item) => (
             <Link
               key={item.href}
