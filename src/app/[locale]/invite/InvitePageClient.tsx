@@ -311,7 +311,7 @@ export default function InvitePageClient({
                   {zh ? "登录后开始邀请" : "Login to Start Inviting"}
                 </p>
                 <p className="text-gray-500 text-xs mt-0.5">
-                  {zh ? "每邀一人双方各得 2000 万 GC" : "Both sides earn 20M GC per invite"}
+                  {zh ? "每邀一人双方各得 50 万 GC" : "Both sides earn 500K GC per invite"}
                 </p>
               </div>
               <div className="flex gap-2 shrink-0">

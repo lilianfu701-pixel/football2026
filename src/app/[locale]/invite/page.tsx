@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import InvitePageClient from "./InvitePageClient";
+import { PER_INVITE_GC } from "@/lib/inviteMilestones";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -14,43 +15,92 @@ export default async function InvitePage({ params }: PageProps) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  // ── Parallel fetches ──────────────────────────────────────────────────────
-  const [profileRes, claimsRes, boardRes] = await Promise.all([
-    user
-      ? supabase
-          .from("users")
-          .select("nickname, invite_count, invite_gc, referred_by, gc_balance")
-          .eq("id", user.id)
-          .single()
-      : Promise.resolve({ data: null }),
+  // ── My profile (real schema: invites are tracked via `referred_by`, there is
+  //    no invite_count/invite_gc column on the users table) ─────────────────────
+  const { data: myRow } = user
+    ? await supabase
+        .from("users")
+        .select("nickname, referral_code, referred_by, gc_balance")
+        .eq("id", user.id)
+        .maybeSingle()
+    : { data: null };
 
+  // An invitee's `referred_by` stores the referrer's nickname OR referral_code.
+  const myKeys = [myRow?.nickname, myRow?.referral_code].filter(
+    (v): v is string => Boolean(v),
+  );
+
+  // ── Parallel: milestone claims + every invited user's referrer key ───────────
+  const [claimsRes, refRowsRes] = await Promise.all([
     user
       ? supabase
           .from("invite_milestone_claims")
           .select("milestone")
           .eq("user_id", user.id)
-      : Promise.resolve({ data: [] }),
+      : Promise.resolve({ data: [] as { milestone: number }[] }),
 
-    supabase
-      .from("users")
-      .select("nickname, invite_count, invite_gc, country_code, avatar_url")
-      .gt("invite_count", 0)
-      .order("invite_count", { ascending: false })
-      .limit(50),
+    supabase.from("users").select("referred_by").not("referred_by", "is", null),
   ]);
 
-  const myProfileRaw = profileRes.data ?? null;
-  const myProfile = myProfileRaw
-    ? { ...myProfileRaw, username: myProfileRaw.nickname ?? "Player" }
-    : null;
+  // Tally invites per referrer key across the whole user base.
+  const countByKey: Record<string, number> = {};
+  for (const r of (refRowsRes.data ?? []) as { referred_by: string | null }[]) {
+    const k = r.referred_by;
+    if (k) countByKey[k] = (countByKey[k] ?? 0) + 1;
+  }
+
+  const myInviteCount = myKeys.reduce((sum, k) => sum + (countByKey[k] ?? 0), 0);
   const claimedMilestones = (claimsRes.data ?? []).map((c) => c.milestone as number);
-  const leaderboard = (boardRes.data ?? []).map((r) => ({
-    username:    (r.nickname    as string | null) ?? "Player",
-    inviteCount: r.invite_count as number,
-    inviteGc:    r.invite_gc    as number,
-    countryCode: (r.country_code as string | null) ?? null,
-    avatarUrl:   (r.avatar_url  as string | null) ?? null,
-  }));
+
+  const myProfile = myRow
+    ? {
+        username:     myRow.nickname ?? "Player",
+        invite_count: myInviteCount,
+        invite_gc:    myInviteCount * PER_INVITE_GC,
+        referred_by:  myRow.referred_by ?? null,
+        gc_balance:   myRow.gc_balance ?? 0,
+      }
+    : null;
+
+  // ── Leaderboard: resolve display info for the top referrer keys ───────────────
+  const topKeys = Object.entries(countByKey)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 80)
+    .map(([k]) => k);
+
+  type BoardRow = {
+    nickname: string | null; referral_code: string | null;
+    country_code: string | null; avatar_url: string | null;
+  };
+  const referrers: BoardRow[] = [];
+  if (topKeys.length) {
+    const [byNick, byCode] = await Promise.all([
+      supabase.from("users").select("nickname, referral_code, country_code, avatar_url").in("nickname", topKeys),
+      supabase.from("users").select("nickname, referral_code, country_code, avatar_url").in("referral_code", topKeys),
+    ]);
+    const seen = new Set<string>();
+    for (const u of [...((byNick.data ?? []) as BoardRow[]), ...((byCode.data ?? []) as BoardRow[])]) {
+      const id = u.nickname ?? u.referral_code ?? "";
+      if (id && !seen.has(id)) { seen.add(id); referrers.push(u); }
+    }
+  }
+
+  const leaderboard = referrers
+    .map((u) => {
+      const viaNick = u.nickname ? (countByKey[u.nickname] ?? 0) : 0;
+      const viaCode = u.referral_code && u.referral_code !== u.nickname ? (countByKey[u.referral_code] ?? 0) : 0;
+      const inviteCount = viaNick + viaCode;
+      return {
+        username:    u.nickname ?? "Player",
+        inviteCount,
+        inviteGc:    inviteCount * PER_INVITE_GC,
+        countryCode: u.country_code ?? null,
+        avatarUrl:   u.avatar_url ?? null,
+      };
+    })
+    .filter((e) => e.inviteCount > 0)
+    .sort((a, b) => b.inviteCount - a.inviteCount)
+    .slice(0, 50);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://football2026.net";
 
