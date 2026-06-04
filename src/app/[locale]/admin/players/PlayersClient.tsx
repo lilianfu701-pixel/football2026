@@ -293,6 +293,8 @@ export default function PlayersClient({
   const [loading,  setLoading]  = useState(false);
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState("");
+  const [enriching, setEnriching] = useState(false);
+  const [enrichMsg, setEnrichMsg] = useState("");
   const [editPlayer, setEditPlayer] = useState<PlayerRow | null | "new">(null);
   const [delConfirm, setDelConfirm] = useState<number | null>(null);
   const [, startTransition] = useTransition();
@@ -334,6 +336,55 @@ export default function PlayersClient({
       }
     } finally {
       setImporting(false);
+    }
+  };
+
+  const doEnrich = async (force: boolean) => {
+    setEnriching(true);
+    setEnrichMsg(zh ? "开始从维基百科回填…" : "Starting Wikipedia backfill…");
+    let totalPhotos = 0;
+    let totalBios = 0;
+    let afterId = 0;
+    let guard = 0; // safety cap on loop iterations
+    try {
+      while (guard++ < 50) {
+        const res = await fetch("/api/admin/players/enrich", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ force, afterId }),
+        });
+        const json = (await res.json()) as {
+          updated_photos?: number;
+          updated_bios?: number;
+          remaining?: number;
+          next_after_id?: number;
+          done?: boolean;
+          error?: string;
+        };
+        if (!res.ok) {
+          setEnrichMsg(`Error: ${json.error ?? "unknown"}`);
+          break;
+        }
+        totalPhotos += json.updated_photos ?? 0;
+        totalBios += json.updated_bios ?? 0;
+        afterId = json.next_after_id ?? afterId;
+        setEnrichMsg(
+          zh
+            ? `回填中… 已更新头像 ${totalPhotos}、简介 ${totalBios}，剩余 ${json.remaining ?? 0}`
+            : `Enriching… photos ${totalPhotos}, bios ${totalBios}, remaining ${json.remaining ?? 0}`,
+        );
+        if (json.done) {
+          setEnrichMsg(
+            zh
+              ? `✓ 完成！更新头像 ${totalPhotos} 张、简介 ${totalBios} 条`
+              : `✓ Done! Updated ${totalPhotos} photos, ${totalBios} bios`,
+          );
+          break;
+        }
+      }
+      await search(q, team, pos, page);
+    } finally {
+      setEnriching(false);
     }
   };
 
@@ -387,6 +438,36 @@ export default function PlayersClient({
           className="px-4 py-2 bg-[#FFD700] text-[#0A1628] font-black rounded-xl text-sm hover:bg-[#FFC200] disabled:opacity-50 shrink-0">
           {importing ? (zh ? "导入中…" : "Importing…") : (zh ? "执行导入" : "Run Import")}
         </button>
+      </div>
+
+      {/* Wikipedia enrich banner */}
+      <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-4 flex flex-wrap items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-white">
+            {zh ? "🖼️ 从维基百科回填头像和简介" : "🖼️ Backfill photos & bios from Wikipedia"}
+          </p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {zh
+              ? "自动抓取球员照片和中英文简介。仅补充空缺字段，不覆盖已手动编辑的内容。冷门球员可能无结果。"
+              : "Auto-fetches player photos + EN/ZH bios. Fills only empty fields (won't overwrite manual edits). Less-known players may have no match."}
+          </p>
+          {enrichMsg && <p className="text-xs text-green-400 mt-1">{enrichMsg}</p>}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => doEnrich(false)}
+            disabled={enriching || importing}
+            className="px-4 py-2 bg-[#FFD700] text-[#0A1628] font-black rounded-xl text-sm hover:bg-[#FFC200] disabled:opacity-50">
+            {enriching ? (zh ? "回填中…" : "Enriching…") : (zh ? "补全空缺" : "Fill Missing")}
+          </button>
+          <button
+            onClick={() => doEnrich(true)}
+            disabled={enriching || importing}
+            title={zh ? "重新抓取全部（覆盖现有头像和简介）" : "Re-fetch all (overwrites existing)"}
+            className="px-4 py-2 border border-[#FFD700]/40 text-[#FFD700] font-black rounded-xl text-sm hover:bg-[#FFD700]/10 disabled:opacity-50">
+            {zh ? "全部重抓" : "Re-fetch All"}
+          </button>
+        </div>
       </div>
 
       {/* Filters + Add */}
