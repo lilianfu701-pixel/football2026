@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 // GET /api/match-votes-by-country?match_id=xxx
-// Returns vote breakdown by country_code
+// Returns vote breakdown by country_code.
+// Uses the service client so the aggregation counts EVERY user's vote — RLS on
+// `users` only exposes the caller's own row, which would otherwise hide the full
+// fan distribution from guests (and show logged-in users only their own vote).
+// Only aggregated country/vote counts are returned, so no PII is exposed.
 export async function GET(req: NextRequest) {
   const match_id = req.nextUrl.searchParams.get("match_id");
   if (!match_id) return NextResponse.json({ error: "match_id required" }, { status: 400 });
 
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   // Fetch all votes for this match, join users to get country_code
   const { data, error } = await supabase
