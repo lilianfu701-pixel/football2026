@@ -26,13 +26,17 @@ function apiBase() {
   return process.env.PADDLE_SANDBOX === "true" ? SANDBOX_API : PADDLE_API;
 }
 
-/** Create a Paddle checkout transaction and return the checkout URL */
-export async function createPaddleCheckout(opts: {
-  priceId:   string;
-  userId:    string;
-  gcAmount:  number;
-  email?:    string;
-  successUrl: string;
+/**
+ * Create a Paddle Billing transaction (server-side, trusted custom_data) and
+ * return its transaction ID. The client opens Paddle's inline overlay with this
+ * ID via Paddle.js — which does NOT require a Default Payment Link in the
+ * dashboard (that requirement only applies to the hosted checkout-URL flow).
+ * GC is credited by the transaction.completed webhook using custom_data.
+ */
+export async function createPaddleTransaction(opts: {
+  priceId:  string;
+  userId:   string;
+  gcAmount: number;
 }): Promise<string> {
   const apiKey = process.env.PADDLE_API_KEY;
   if (!apiKey) throw new Error("PADDLE_API_KEY not configured");
@@ -43,8 +47,6 @@ export async function createPaddleCheckout(opts: {
       user_id:   opts.userId,
       gc_amount: String(opts.gcAmount),
     },
-    customer_email: opts.email,
-    success_url: opts.successUrl,
   };
 
   const res = await fetch(`${apiBase()}/transactions`, {
@@ -57,13 +59,13 @@ export async function createPaddleCheckout(opts: {
   });
 
   const data = await res.json() as {
-    data?: { checkout?: { url?: string } };
+    data?: { id?: string };
     error?: { detail?: string };
   };
 
-  if (!res.ok || !data.data?.checkout?.url) {
-    throw new Error(data.error?.detail ?? "Failed to create Paddle checkout");
+  if (!res.ok || !data.data?.id) {
+    throw new Error(data.error?.detail ?? "Failed to create Paddle transaction");
   }
 
-  return data.data.checkout.url;
+  return data.data.id;
 }

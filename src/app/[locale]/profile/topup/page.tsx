@@ -1,9 +1,26 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Script from "next/script";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+
+// ── Paddle.js global typing ──────────────────────────────────────────────────
+interface PaddleEvent {
+  name?: string;
+  data?: { custom_data?: { gc_amount?: string | number } | null };
+}
+interface PaddleGlobal {
+  Environment?: { set: (env: "sandbox" | "production") => void };
+  Initialize: (opts: { token: string; eventCallback?: (e: PaddleEvent) => void }) => void;
+  Checkout: { open: (opts: { transactionId: string }) => void };
+}
+declare global {
+  interface Window {
+    Paddle?: PaddleGlobal;
+  }
+}
 
 interface Package {
   id:        string;
@@ -61,6 +78,27 @@ function TopupContent() {
   const [txHash,     setTxHash]     = useState("");
   const [copied,     setCopied]     = useState<"addr" | "amount" | null>(null);
 
+  // Paddle.js readiness
+  const paddleReady = useRef(false);
+  function initPaddle() {
+    if (paddleReady.current || !window.Paddle) return;
+    const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
+    if (!token) return; // surfaced as an error when the user tries to pay
+    if (process.env.NEXT_PUBLIC_PADDLE_SANDBOX === "true" && window.Paddle.Environment) {
+      window.Paddle.Environment.set("sandbox");
+    }
+    window.Paddle.Initialize({
+      token,
+      // GC is credited by the webhook (source of truth); pass gc for display only.
+      eventCallback: (event) => {
+        if (event.name !== "checkout.completed") return;
+        const gc = event.data?.custom_data?.gc_amount ?? "";
+        router.replace(`/${locale}/profile/topup/success?type=paddle&gc=${gc}`);
+      },
+    });
+    paddleReady.current = true;
+  }
+
   // Toast if user cancelled out of Stripe
   const cancelled = searchParams.get("cancelled") === "1";
   useEffect(() => {
@@ -104,9 +142,14 @@ function TopupContent() {
   const pkg    = PACKAGES.find((p) => p.id === selected);
   const totalGc = pkg ? Math.floor(pkg.gc * (1 + pkg.bonus / 100)) : 0;
 
-  // ── Paddle handler ──────────────────────────────────────────────────────
+  // ── Paddle handler (inline overlay via Paddle.js) ─────────────────────────
   async function handlePaddle() {
     if (!selected || paying) return;
+    initPaddle();
+    if (!paddleReady.current || !window.Paddle) {
+      setPayErr(zh ? "支付组件未就绪，请稍后重试" : "Checkout not ready, please retry");
+      return;
+    }
     setPaying(true);
     setPayErr(null);
     try {
@@ -116,12 +159,13 @@ function TopupContent() {
         body:    JSON.stringify({ packageId: selected, locale }),
       });
       const data = await res.json();
-      if (!res.ok || !data.url) {
+      if (!res.ok || !data.transactionId) {
         setPayErr(data.error ?? (zh ? "创建订单失败，请重试" : "Failed to create order"));
         setPaying(false);
         return;
       }
-      window.location.href = data.url;
+      window.Paddle.Checkout.open({ transactionId: data.transactionId });
+      setPaying(false); // overlay is now open; release the button
     } catch {
       setPayErr(zh ? "网络错误，请重试" : "Network error, please retry");
       setPaying(false);
@@ -179,6 +223,12 @@ function TopupContent() {
 
   return (
     <div className="min-h-screen bg-[#0A1628] text-white pb-24">
+      {/* Paddle.js — powers the inline card checkout overlay */}
+      <Script
+        src="https://cdn.paddle.com/paddle/v2/paddle.js"
+        strategy="afterInteractive"
+        onLoad={initPaddle}
+      />
       <div className="max-w-2xl mx-auto px-4 pt-6">
 
         {/* Header */}
