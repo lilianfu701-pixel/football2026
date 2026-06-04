@@ -60,6 +60,23 @@ function formatGcBig(n: number): string {
 
 type PayMethod = "paddle" | "paypal" | "usdt";
 
+// Inlined at build time. Empty if the env var wasn't set when the bundle was built
+// (locally: restart `next dev`; on Vercel: add the var then redeploy).
+const PADDLE_TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? "";
+
+// Wait up to `tries * stepMs` for the async Paddle.js script to appear on window.
+function waitForPaddle(tries = 20, stepMs = 150): Promise<boolean> {
+  return new Promise((resolve) => {
+    let n = 0;
+    const tick = () => {
+      if (typeof window !== "undefined" && window.Paddle) return resolve(true);
+      if (n++ >= tries) return resolve(false);
+      setTimeout(tick, stepMs);
+    };
+    tick();
+  });
+}
+
 // ── Main content (needs Suspense for useSearchParams) ────────────────────────
 function TopupContent() {
   const params       = useParams();
@@ -82,7 +99,7 @@ function TopupContent() {
   const paddleReady = useRef(false);
   function initPaddle() {
     if (paddleReady.current || !window.Paddle) return;
-    const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
+    const token = PADDLE_TOKEN;
     if (!token) return; // surfaced as an error when the user tries to pay
     if (process.env.NEXT_PUBLIC_PADDLE_SANDBOX === "true" && window.Paddle.Environment) {
       window.Paddle.Environment.set("sandbox");
@@ -145,13 +162,26 @@ function TopupContent() {
   // ── Paddle handler (inline overlay via Paddle.js) ─────────────────────────
   async function handlePaddle() {
     if (!selected || paying) return;
-    initPaddle();
-    if (!paddleReady.current || !window.Paddle) {
-      setPayErr(zh ? "支付组件未就绪，请稍后重试" : "Checkout not ready, please retry");
+    setPayErr(null);
+
+    // Token must be baked into the build. If empty, configuration is the problem,
+    // not a transient state — tell the user clearly and stop.
+    if (!PADDLE_TOKEN) {
+      setPayErr(zh ? "银行卡支付暂未开放，请选择其他方式" : "Card payment is unavailable, please use another method");
       return;
     }
+
     setPaying(true);
-    setPayErr(null);
+
+    // Paddle.js loads async (afterInteractive); a fast click can beat it. Wait briefly.
+    const ready = await waitForPaddle();
+    initPaddle();
+    if (!ready || !paddleReady.current || !window.Paddle) {
+      setPayErr(zh ? "支付组件加载中，请稍后重试" : "Checkout is loading, please retry in a moment");
+      setPaying(false);
+      return;
+    }
+
     try {
       const res  = await fetch("/api/topup/paddle", {
         method:  "POST",
