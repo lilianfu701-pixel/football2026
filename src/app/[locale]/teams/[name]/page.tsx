@@ -5,6 +5,109 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { getFlagUrl, getTeamDisplayName, isTBD } from "@/lib/flags";
 
+// ── Squad component (async server component) ───────────────────────────────────
+
+interface SquadPlayer {
+  id:           number;
+  name:         string;
+  name_zh:      string | null;
+  position:     string | null;
+  shirt_number: number | null;
+  club:         string | null;
+  age:          number | null;
+  photo_url:    string | null;
+}
+
+const POS_ORDER = ["GK", "DF", "MF", "FW"];
+const POS_LABEL: Record<string, { en: string; zh: string; color: string }> = {
+  GK: { en: "Goalkeepers",  zh: "门将",   color: "text-yellow-400" },
+  DF: { en: "Defenders",    zh: "后卫",   color: "text-blue-400" },
+  MF: { en: "Midfielders",  zh: "中场",   color: "text-green-400" },
+  FW: { en: "Forwards",     zh: "前锋",   color: "text-red-400" },
+};
+
+async function TeamSquad({ locale, teamName }: { locale: string; teamName: string }) {
+  const zh = locale === "zh";
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("players")
+    .select("id, name, name_zh, position, shirt_number, club, age, photo_url")
+    .eq("team", teamName)
+    .order("position")
+    .order("shirt_number")
+    .order("name");
+
+  const players = (data ?? []) as SquadPlayer[];
+  if (players.length === 0) return null;
+
+  // Group by position
+  const grouped: Record<string, SquadPlayer[]> = {};
+  for (const pos of POS_ORDER) grouped[pos] = [];
+  for (const p of players) {
+    const key = p.position ?? "FW";
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(p);
+  }
+
+  return (
+    <section>
+      <h2 className="text-sm font-black text-white mb-3">
+        👥 {zh ? "球队名单" : "Squad"} ({players.length})
+      </h2>
+      <div className="space-y-4">
+        {POS_ORDER.filter((pos) => (grouped[pos]?.length ?? 0) > 0).map((pos) => {
+          const posLabel = POS_LABEL[pos];
+          return (
+            <div key={pos}>
+              <p className={`text-xs font-black mb-2 ${posLabel.color}`}>
+                {zh ? posLabel.zh : posLabel.en}
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {grouped[pos].map((p) => {
+                  const name = zh && p.name_zh ? p.name_zh : p.name;
+                  return (
+                    <Link key={p.id} href={`/${locale}/players/${p.id}`}
+                      className="flex items-center gap-2.5 bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-2.5 hover:border-[#FFD700]/30 transition-all group">
+                      {/* Mini avatar */}
+                      {p.photo_url ? (
+                        <div className="w-9 h-9 rounded-lg overflow-hidden border border-[#1E3A5F] relative shrink-0">
+                          <Image src={p.photo_url} alt={p.name} fill className="object-cover" unoptimized />
+                        </div>
+                      ) : (
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-black text-white shrink-0 border border-[#1E3A5F] text-sm bg-gradient-to-br ${
+                          pos === "GK" ? "from-yellow-700 to-yellow-900" :
+                          pos === "DF" ? "from-blue-700 to-blue-900" :
+                          pos === "MF" ? "from-green-700 to-green-900" :
+                          "from-red-700 to-red-900"
+                        }`}>
+                          {p.shirt_number ?? name[0]}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-white truncate group-hover:text-[#FFD700] transition-colors">
+                          {name}
+                        </p>
+                        {p.club && (
+                          <p className="text-[10px] text-gray-600 truncate">{p.club}</p>
+                        )}
+                      </div>
+                      {p.shirt_number != null && (
+                        <span className="text-[10px] text-gray-600 shrink-0 font-bold">
+                          #{p.shirt_number}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -250,6 +353,9 @@ export default async function TeamPage({ params }: Props) {
           </div>
         </section>
       )}
+
+      {/* ── Squad ── */}
+      <TeamSquad locale={locale} teamName={teamName} />
 
       {/* ── All matches ── */}
       <section>

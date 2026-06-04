@@ -35,7 +35,7 @@ export default async function AdminDashboard({ params }: Props) {
 
   const [
     usersRes, newUsersRes, postsRes, reportsRes, matchesRes,
-    betsRes, gcTxRes, topupRes,
+    betsRes, gcTxRes, topupRes, playersRes,
   ] = await Promise.all([
     service.from("users").select("id", { count: "exact", head: true }),
     service.from("users").select("id", { count: "exact", head: true }).gte("created_at", since7d),
@@ -45,6 +45,7 @@ export default async function AdminDashboard({ params }: Props) {
     service.from("bets").select("id, amount_gc").eq("status", "pending"),
     service.from("gc_transactions").select("amount").eq("type", "topup"),
     service.from("gc_transactions").select("amount").eq("type", "topup").gte("created_at", since24h),
+    service.from("players").select("id", { count: "exact", head: true }),
   ]);
 
   // ── Derived stats ────────────────────────────────────────────────────────
@@ -103,6 +104,10 @@ export default async function AdminDashboard({ params }: Props) {
         <StatCard icon="⚽" label={zh ? "比赛数量" : "Matches"}
           value={matchesRes.count ?? 0}
           href={`/${locale}/admin/matches`} />
+        <StatCard icon="👤" label={zh ? "球员数据" : "Players"}
+          value={playersRes.count ?? 0}
+          sub={zh ? "点击导入/管理" : "Import or manage"}
+          href={`/${locale}/admin/players`} />
         <StatCard icon="🎯" label={zh ? "待结算预测" : "Active Predictions"}
           value={(betsRes.count ?? 0).toLocaleString()}
           sub={`Pool: ${formatGc(totalBetPool)} GC`}
@@ -172,6 +177,7 @@ export default async function AdminDashboard({ params }: Props) {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {[
           { href: `/${locale}/admin/matches`,  icon: "⚽", label: zh ? "更新比分" : "Update Scores",  desc: zh ? "比赛结果、AI 预测"  : "Match results & AI" },
+          { href: `/${locale}/admin/players`, icon: "👤", label: zh ? "球员管理" : "Players",         desc: zh ? "导入、编辑球员资料"  : "Import & edit squad data" },
           { href: `/${locale}/admin/bets`,     icon: "🎯", label: zh ? "预测管理" : "Predictions",    desc: zh ? "查看预测、结算奖励"  : "View & settle predictions" },
           { href: `/${locale}/admin/gc-tools`, icon: "🪙", label: zh ? "GC 工具"  : "GC Tools",       desc: zh ? "手动奖励或调整余额"  : "Award or adjust GC" },
           { href: `/${locale}/admin/finance`,  icon: "💰", label: zh ? "财务记录" : "Finance",        desc: zh ? "充值与流水记录"       : "Topup & tx history" },
