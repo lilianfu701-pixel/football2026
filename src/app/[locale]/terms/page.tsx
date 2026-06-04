@@ -260,6 +260,9 @@ export default async function TermsPage({ params }: Props) {
           <Link href={`/${locale}/privacy`} className="hover:text-[#FFD700]">
             {zh ? "隐私政策" : "Privacy Policy"}
           </Link>
+          <Link href={`/${locale}/refund`} className="hover:text-[#FFD700]">
+            {zh ? "退款政策" : "Refund Policy"}
+          </Link>
           <Link href={`/${locale}/help`} className="hover:text-[#FFD700]">
             {zh ? "帮助中心" : "Help Center"}
           </Link>

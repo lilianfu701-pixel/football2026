@@ -280,6 +280,9 @@ export default async function PrivacyPage({ params }: Props) {
           <Link href={`/${locale}/terms`} className="hover:text-[#FFD700]">
             {zh ? "服务条款" : "Terms of Service"}
           </Link>
+          <Link href={`/${locale}/refund`} className="hover:text-[#FFD700]">
+            {zh ? "退款政策" : "Refund Policy"}
+          </Link>
           <Link href={`/${locale}/help`} className="hover:text-[#FFD700]">
             {zh ? "帮助中心" : "Help Center"}
           </Link>

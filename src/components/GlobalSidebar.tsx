@@ -400,6 +400,7 @@ export default async function GlobalSidebar({ locale }: Props) {
             { href: `/${locale}/notifications`,   icon: "🔔", label: zh ? "通知中心" : "Notifications" },
             { href: `/${locale}/terms`,           icon: "📋", label: zh ? "服务条款" : "Terms of Service" },
             { href: `/${locale}/privacy`,         icon: "🔒", label: zh ? "隐私政策" : "Privacy Policy" },
+            { href: `/${locale}/refund`,          icon: "💸", label: zh ? "退款政策" : "Refund Policy" },
           ].map((item) => (
             <Link
               key={item.href}
