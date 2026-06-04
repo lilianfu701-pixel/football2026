@@ -64,6 +64,51 @@ export default async function PredictPage({ params }: PageProps) {
     matches: betMatchesMap[b.match_id] ?? null,
   }));
 
+  // ── Score bet history ──────────────────────────────────────────────────────
+  const { data: scoreBetsRaw } = user
+    ? await supabase
+        .from("score_bets")
+        .select("id, match_id, score_home, score_away, gc_amount, odds_multiplier, status, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(50)
+    : { data: [] as Array<{ id: string; match_id: string; score_home: number; score_away: number; gc_amount: number; odds_multiplier: number; status: string; created_at: string }> };
+
+  const scoreBetMatchIds = [...new Set((scoreBetsRaw ?? []).map((b) => b.match_id).filter(Boolean))];
+  const { data: scoreBetMatchesRaw } = scoreBetMatchIds.length
+    ? await supabase
+        .from("matches")
+        .select("id, home_team, away_team, kickoff_time, stage, group_name, status, home_score, away_score")
+        .in("id", scoreBetMatchIds)
+    : { data: [] as PredictMatchStub[] };
+
+  const scoreBetMatchesMap: Record<string, PredictMatchStub> = {};
+  (scoreBetMatchesRaw ?? []).forEach((m) => { scoreBetMatchesMap[m.id] = m as PredictMatchStub; });
+
+  const scoreBetHistory = (scoreBetsRaw ?? []).map((b) => {
+    const match = scoreBetMatchesMap[b.match_id];
+    return {
+      id:             b.id,
+      scoreHome:      b.score_home,
+      scoreAway:      b.score_away,
+      gcAmount:       b.gc_amount,
+      oddsMultiplier: b.odds_multiplier,
+      status:         b.status,
+      createdAt:      b.created_at,
+      match: match ? {
+        id:          match.id,
+        homeTeam:    match.home_team,
+        awayTeam:    match.away_team,
+        kickoffTime: match.kickoff_time,
+        stage:       match.stage,
+        stageLabel:  zh ? (STAGE_LABELS_ZH[match.stage] ?? match.stage) : (STAGE_LABELS[match.stage] ?? match.stage),
+        status:      match.status,
+        homeScore:   match.home_score ?? null,
+        awayScore:   match.away_score ?? null,
+      } : null,
+    };
+  });
+
   // ── Stats ─────────────────────────────────────────────────────────────────
   const totalBets    = betHistory?.length ?? 0;
   const wonBets      = betHistory?.filter((b) => b.status === "won").length  ?? 0;
@@ -126,6 +171,7 @@ export default async function PredictPage({ params }: PageProps) {
           locale={locale}
           user={user ? { id: user.id } : null}
           stats={{ totalBets, wonBets, lostBets, pendingBets, winRate, totalWon, totalStaked }}
+          scoreBetHistory={scoreBetHistory}
           betHistory={(betHistory ?? []).map((b) => {
             const match = b.matches;
             return {
