@@ -102,7 +102,7 @@ export default async function PlayerPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-[#0A1628] text-white pb-20 pt-8">
-      <div className="max-w-2xl mx-auto space-y-6 px-1">
+      <div className="max-w-5xl mx-auto space-y-6 px-4">
 
         {/* Breadcrumb */}
         <nav className="text-xs text-gray-500 flex items-center gap-1 flex-wrap">
@@ -200,6 +200,12 @@ export default async function PlayerPage({ params }: Props) {
           </div>
         </div>
 
+        {/* ── Two-column body (desktop) ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
+
+        {/* Left column: info + bio */}
+        <div className="lg:col-span-3 space-y-6">
+
         {/* ── Stats grid ── */}
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
           <div className="px-5 py-3.5 border-b border-[#1E3A5F]">
@@ -254,6 +260,11 @@ export default async function PlayerPage({ params }: Props) {
           </div>
         )}
 
+        </div>{/* /left column */}
+
+        {/* Right column: teammates */}
+        <div className="lg:col-span-2 space-y-6">
+
         {/* ── Teammates ── */}
         {(teammates ?? []).length > 0 && (
           <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
@@ -298,6 +309,10 @@ export default async function PlayerPage({ params }: Props) {
             </div>
           </div>
         )}
+
+        </div>{/* /right column */}
+
+        </div>{/* /two-column body */}
 
       </div>
     </div>
