@@ -15,6 +15,7 @@ import ProfileCompletion from "@/components/ProfileCompletion";
 import { PROFILE_REWARDS } from "@/lib/profileRewards";
 import { AWARD_META, dbToAwardKey } from "@/data/players";
 import Link from "next/link";
+import Image from "next/image";
 
 interface ProfilePageProps {
   params:       Promise<{ locale: string }>;
@@ -76,6 +77,27 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(10);
+
+  // Fetch followed players (overview section)
+  const { data: followedRows } = await supabase
+    .from("player_follows")
+    .select("player_id, created_at, players(id, name, name_zh, team, position, shirt_number, photo_url)")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(12);
+
+  interface FollowedPlayer {
+    id:           number;
+    name:         string;
+    name_zh:      string | null;
+    team:         string;
+    position:     string | null;
+    shirt_number: number | null;
+    photo_url:    string | null;
+  }
+  const followedPlayers: FollowedPlayer[] = (followedRows ?? [])
+    .map((r) => (Array.isArray(r.players) ? r.players[0] : r.players) as FollowedPlayer | null)
+    .filter((p): p is FollowedPlayer => p != null);
 
   const wealthLevel = getWealthLevel(profile.gc_balance ?? 0);
   const honorLevel = getHonorLevel(profile.honor_points ?? 0);
@@ -633,6 +655,52 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                 </Link>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ── Followed Players (overview only) ── */}
+        {tab === "overview" && (
+          <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5 mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-bold">⭐ {zh ? "关注的球员" : "Followed Players"}</h3>
+              <Link href={`/${locale}/players`} className="text-[#FFD700] text-xs hover:underline">
+                {zh ? "浏览球员 →" : "Browse →"}
+              </Link>
+            </div>
+            {followedPlayers.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {followedPlayers.map((fp) => {
+                  const name = zh && fp.name_zh ? fp.name_zh : fp.name;
+                  return (
+                    <Link key={fp.id} href={`/${locale}/players/${fp.id}`}
+                      className="flex items-center gap-3 bg-[#0A1628] rounded-xl p-3 border border-transparent hover:border-[#FFD700]/30 transition-all">
+                      {fp.photo_url ? (
+                        <div className="w-10 h-10 rounded-full overflow-hidden border border-[#1E3A5F] relative shrink-0">
+                          <Image src={fp.photo_url} alt={fp.name} fill className="object-cover" unoptimized />
+                        </div>
+                      ) : (
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-black border border-[#1E3A5F] shrink-0 bg-gradient-to-br ${
+                          fp.position === "GK" ? "from-yellow-700 to-yellow-900" :
+                          fp.position === "DF" ? "from-blue-700 to-blue-900" :
+                          fp.position === "MF" ? "from-green-700 to-green-900" :
+                          "from-red-700 to-red-900"
+                        }`}>
+                          {fp.shirt_number ?? (fp.name[0] ?? "?")}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-white text-sm font-semibold truncate">{name}</p>
+                        <p className="text-gray-500 text-xs truncate">{fp.team}</p>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-sm text-center py-4">
+                {zh ? "还没有关注的球员，去球员页关注你喜欢的球星吧。" : "No followed players yet — browse and follow your favorites."}
+              </p>
+            )}
           </div>
         )}
 

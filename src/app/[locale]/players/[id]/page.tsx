@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getFlagUrl, getTeamDisplayName } from "@/lib/flags";
+import FollowButton from "@/components/players/FollowButton";
 
 interface Props {
   params: Promise<{ locale: string; id: string }>;
@@ -147,7 +148,12 @@ export default async function PlayerPage({ params }: Props) {
 
               {/* Names + meta */}
               <div className="flex-1 min-w-0">
-                <h1 className="text-2xl font-black text-white leading-tight">{displayName}</h1>
+                <div className="flex items-start justify-between gap-3">
+                  <h1 className="text-2xl font-black text-white leading-tight">{displayName}</h1>
+                  <div className="shrink-0">
+                    <FollowButton playerId={p.id} locale={locale} />
+                  </div>
+                </div>
                 {zh && p.name_zh && p.name !== p.name_zh && (
                   <p className="text-sm text-gray-400 mt-0.5">{p.name}</p>
                 )}
