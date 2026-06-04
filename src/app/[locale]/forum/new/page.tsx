@@ -1,3 +1,5 @@
+﻿export const dynamic = "force-dynamic";
+
 // Server component — fetches categories, passes to client form
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";

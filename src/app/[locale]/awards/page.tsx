@@ -1,3 +1,5 @@
+﻿export const dynamic = "force-dynamic";
+
 import { createClient } from "@/lib/supabase/server";
 import { getBetPhase } from "@/lib/awardPhase";
 import AwardBettingUI from "./AwardBettingUI";

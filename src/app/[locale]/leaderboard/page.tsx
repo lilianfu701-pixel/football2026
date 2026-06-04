@@ -1,3 +1,5 @@
+﻿export const dynamic = "force-dynamic";
+
 import { createClient } from "@/lib/supabase/server";
 import { getWealthLevel, getHonorLevel, formatGc } from "@/lib/levels";
 import LeaderboardClient from "./LeaderboardClient";
