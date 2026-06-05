@@ -17,12 +17,20 @@ export async function signUp(formData: FormData) {
   // Referral code passed from URL ?ref=<username>
   const ref          = ((formData.get("ref") as string) ?? "").trim();
 
-  // 1. Sign up with Supabase Auth
-  const { data: authData, error: authError } = await supabase.auth.signUp({
+  // Build the email-confirmation callback URL. Carry `ref` as its own query
+  // param (the old string concat folded it into `next`, so it was unreadable).
+  const callbackParams = new URLSearchParams({ locale, next: "/" });
+  if (ref) callbackParams.set("ref", ref);
+
+  // Sign up with Supabase Auth. The `handle_new_user` DB trigger creates the
+  // public.users profile (using `username` for the nickname). Referral rewards
+  // are granted by /auth/callback after the user confirms their email — not
+  // here — so unconfirmed signups cannot farm GC.
+  const { error: authError } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${origin}/auth/callback?locale=${locale}&next=/${ref ? `?ref=${encodeURIComponent(ref)}` : ""}`,
+      emailRedirectTo: `${origin}/auth/callback?${callbackParams.toString()}`,
       data: {
         username: nickname,
         country_code,
@@ -33,36 +41,6 @@ export async function signUp(formData: FormData) {
 
   if (authError) {
     return { error: authError.message };
-  }
-
-  // 2. Create user profile in our users table (trigger handles OAuth, this handles email signups)
-  if (authData.user) {
-    const { error: profileError } = await supabase.from("users").insert({
-      id:           authData.user.id,
-      email,
-      nickname,
-      country_code: country_code.slice(0, 2),
-      gc_balance:   100000,
-      gc_total:     100000,
-      honor_points: 0,
-      wealth_level: 1,
-      honor_level:  1,
-      ...(ref ? { referred_by: ref } : {}),
-    });
-
-    if (profileError) {
-      console.error("Profile creation error:", profileError);
-      // Don't fail - profile might already exist via trigger
-    }
-
-    // 3. Process referral rewards (SECURITY DEFINER fn — safe to call with service role)
-    //    Only fires if profile was just created and a ref was provided.
-    if (ref && !profileError) {
-      await supabase.rpc("process_referral", {
-        new_user_id:   authData.user.id,
-        referrer_name: ref,
-      });
-    }
   }
 
   return {

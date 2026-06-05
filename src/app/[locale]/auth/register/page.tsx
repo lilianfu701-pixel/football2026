@@ -63,13 +63,19 @@ export default function RegisterPage() {
     });
   }
 
+  // Carry the referral code through the OAuth round-trip so /auth/callback can
+  // grant the reward after the provider returns. Email path uses the form field.
+  function oauthRedirectTo() {
+    const params = new URLSearchParams({ locale, next: "/" });
+    if (refCode) params.set("ref", refCode);
+    return `${window.location.origin}/auth/callback?${params.toString()}`;
+  }
+
   async function handleGoogle() {
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?locale=${locale}&next=/`,
-      },
+      options: { redirectTo: oauthRedirectTo() },
     });
   }
 
@@ -77,9 +83,7 @@ export default function RegisterPage() {
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: "facebook",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?locale=${locale}&next=/`,
-      },
+      options: { redirectTo: oauthRedirectTo() },
     });
   }
 
