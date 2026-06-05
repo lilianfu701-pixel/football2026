@@ -92,8 +92,12 @@ function TopupContent() {
   const [tab,        setTab]        = useState<"buy" | "free">("buy");
 
   // USDT-specific state
-  const [txHash,     setTxHash]     = useState("");
-  const [copied,     setCopied]     = useState<"addr" | "amount" | null>(null);
+  const [usdtPaymentId, setUsdtPaymentId] = useState<string | null>(null);
+  const [usdtAddress,   setUsdtAddress]   = useState<string | null>(null);
+  const [usdtPayAmount, setUsdtPayAmount] = useState<number | null>(null);
+  const [usdtStatus,    setUsdtStatus]    = useState<"idle" | "pending" | "completed">("idle");
+  const [copied,        setCopied]        = useState<"addr" | "amount" | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Paddle.js readiness
   const paddleReady = useRef(false);
@@ -122,30 +126,76 @@ function TopupContent() {
     if (cancelled) setPayErr(zh ? "支付已取消" : "Payment cancelled");
   }, [cancelled, zh]);
 
-  // Reset error + USDT input when package or method changes
-  useEffect(() => { setPayErr(null); setTxHash(""); }, [selected, payMethod]);
+  // Reset error + USDT state when package or method changes
+  useEffect(() => {
+    setPayErr(null);
+    setUsdtPaymentId(null);
+    setUsdtAddress(null);
+    setUsdtPayAmount(null);
+    setUsdtStatus("idle");
+    if (pollRef.current) clearInterval(pollRef.current);
+  }, [selected, payMethod]);
 
-  // ── USDT handler ────────────────────────────────────────────────────────
-  async function handleUsdt() {
-    if (!selected || !txHash.trim() || paying) return;
+  // Stop polling on unmount
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
+
+  // ── USDT: create order & get unique address ──────────────────────────────
+  async function handleCreateUsdtOrder() {
+    if (!selected || paying) return;
     setPaying(true);
     setPayErr(null);
     try {
       const res  = await fetch("/api/topup/usdt", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ txHash: txHash.trim(), packageId: selected }),
+        body:    JSON.stringify({ packageId: selected }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setPayErr(data.error ?? (zh ? "验证失败，请检查 TxID" : "Verification failed"));
+        setPayErr(data.error ?? (zh ? "创建订单失败，请重试" : "Failed to create order"));
         setPaying(false);
         return;
       }
-      router.replace(`/${locale}/profile/topup/success?type=usdt&gc=${data.gcAmount}`);
+      setUsdtPaymentId(data.paymentId);
+      setUsdtAddress(data.payAddress);
+      setUsdtPayAmount(data.payAmount);
+      setUsdtStatus("pending");
+      startPolling(data.paymentId, data.gcAmount);
     } catch {
       setPayErr(zh ? "网络错误，请重试" : "Network error, please retry");
-      setPaying(false);
+    }
+    setPaying(false);
+  }
+
+  // ── USDT: poll status every 15s ─────────────────────────────────────────
+  function startPolling(paymentId: string, gcAmount: number) {
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = setInterval(async () => {
+      try {
+        const res  = await fetch(`/api/topup/usdt/status/${paymentId}`);
+        const data = await res.json();
+        if (data.status === "completed") {
+          clearInterval(pollRef.current!);
+          setUsdtStatus("completed");
+          router.replace(`/${locale}/profile/topup/success?type=usdt&gc=${gcAmount}`);
+        }
+      } catch { /* silent — next tick will retry */ }
+    }, 15_000);
+  }
+
+  async function checkUsdtManually() {
+    if (!usdtPaymentId) return;
+    try {
+      const res  = await fetch(`/api/topup/usdt/status/${usdtPaymentId}`);
+      const data = await res.json();
+      if (data.status === "completed") {
+        setUsdtStatus("completed");
+        router.replace(`/${locale}/profile/topup/success?type=usdt&gc=${data.gcAmount}`);
+      } else {
+        setPayErr(zh ? "⏳ 暂未检测到到账，通常需 1-5 分钟，请稍候" : "⏳ Not detected yet, usually 1-5 min");
+      }
+    } catch {
+      setPayErr(zh ? "查询失败，请重试" : "Query failed, please retry");
     }
   }
 
@@ -481,112 +531,141 @@ function TopupContent() {
 
             {payMethod === "usdt" && selected && pkg && (
               <div className="space-y-3">
-                {/* Step 1 — transfer info */}
-                <div className="bg-[#0B1E10] border border-[#26A17B]/40 rounded-2xl p-4">
-                  <p className="text-[11px] font-black text-[#26A17B] uppercase tracking-wider mb-3">
-                    {zh ? "① 转账信息" : "① Transfer Details"}
-                  </p>
 
-                  {/* Network badge */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-[10px] bg-[#26A17B]/20 border border-[#26A17B]/40 text-[#26A17B] font-black px-2.5 py-1 rounded-full">
-                      TRC-20 · TRON
-                    </span>
-                    <span className="text-[10px] text-gray-500">
-                      {zh ? "请勿使用其他网络" : "Do NOT use other networks"}
-                    </span>
-                  </div>
-
-                  {/* Amount row */}
-                  <div className="flex items-center justify-between bg-[#0A1628] rounded-xl px-3.5 py-2.5 mb-2 border border-[#1E3A5F]">
-                    <div>
-                      <p className="text-[10px] text-gray-500 mb-0.5">{zh ? "转账金额" : "Amount to send"}</p>
-                      <p className="text-lg font-black text-white">
-                        {pkg.priceUsdt.toFixed(2)}
-                        <span className="text-[#26A17B] ml-1">USDT</span>
+                {/* ── Idle: show package info + generate button ── */}
+                {usdtStatus === "idle" && (
+                  <>
+                    <div className="bg-[#0B1E10] border border-[#26A17B]/40 rounded-2xl p-4">
+                      <p className="text-[11px] font-black text-[#26A17B] uppercase tracking-wider mb-3">
+                        {zh ? "USDT TRC-20 自动到账" : "USDT TRC-20 Auto-Detection"}
                       </p>
-                    </div>
-                    <button
-                      onClick={() => copyText(pkg.priceUsdt.toFixed(2), "amount")}
-                      className="flex items-center gap-1 text-[10px] font-bold text-[#26A17B] bg-[#26A17B]/10 hover:bg-[#26A17B]/20 border border-[#26A17B]/30 px-2.5 py-1.5 rounded-lg transition-colors"
-                    >
-                      {copied === "amount" ? (zh ? "已复制 ✓" : "Copied ✓") : (zh ? "复制金额" : "Copy")}
-                    </button>
-                  </div>
-
-                  {/* Wallet address row */}
-                  <div className="flex items-start gap-3 bg-[#0A1628] rounded-xl px-3.5 py-2.5 border border-[#1E3A5F]">
-                    {/* QR code */}
-                    {process.env.NEXT_PUBLIC_USDT_WALLET ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(process.env.NEXT_PUBLIC_USDT_WALLET)}&bgcolor=0A1628&color=26A17B&margin=1&format=png`}
-                        alt="USDT wallet QR"
-                        width={72}
-                        height={72}
-                        className="rounded-lg shrink-0 border border-[#26A17B]/30"
-                      />
-                    ) : (
-                      <div className="w-[72px] h-[72px] rounded-lg bg-[#26A17B]/10 border border-[#26A17B]/30 flex items-center justify-center text-[#26A17B] text-2xl shrink-0">
-                        ⬡
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-[10px] bg-[#26A17B]/20 border border-[#26A17B]/40 text-[#26A17B] font-black px-2.5 py-1 rounded-full">
+                          TRC-20 · TRON
+                        </span>
+                        <span className="text-[10px] text-gray-500">
+                          {zh ? "请勿使用其他网络" : "Do NOT use other networks"}
+                        </span>
                       </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[10px] text-gray-500 mb-1">{zh ? "收款地址 (TRC-20)" : "Wallet address (TRC-20)"}</p>
-                      <p className="text-[11px] text-gray-300 font-mono break-all leading-relaxed">
-                        {process.env.NEXT_PUBLIC_USDT_WALLET || (zh ? "尚未配置，请联系管理员" : "Not configured, contact admin")}
+                      <div className="flex items-center justify-between bg-[#0A1628] rounded-xl px-3.5 py-2.5 mb-3 border border-[#1E3A5F]">
+                        <div>
+                          <p className="text-[10px] text-gray-500 mb-0.5">{zh ? "应付金额" : "Amount to pay"}</p>
+                          <p className="text-lg font-black text-white">
+                            {pkg.priceUsdt.toFixed(2)}
+                            <span className="text-[#26A17B] ml-1">USDT</span>
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] text-gray-500 mb-0.5">{zh ? "获得" : "You get"}</p>
+                          <p className="text-sm font-black text-[#FFD700]">{formatGcBig(totalGc)}</p>
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-gray-500 leading-relaxed">
+                        {zh
+                          ? "点击下方按钮，系统将为本次订单生成一个专属 TRC-20 收款地址，转账后自动识别到账，无需提交 TxID。"
+                          : "Click below to generate a unique TRC-20 address for this order. Payment is detected automatically — no TxID needed."}
                       </p>
-                      {process.env.NEXT_PUBLIC_USDT_WALLET && (
-                        <button
-                          onClick={() => copyText(process.env.NEXT_PUBLIC_USDT_WALLET!, "addr")}
-                          className="mt-1.5 flex items-center gap-1 text-[10px] font-bold text-[#26A17B] bg-[#26A17B]/10 hover:bg-[#26A17B]/20 border border-[#26A17B]/30 px-2.5 py-1 rounded-lg transition-colors"
-                        >
-                          {copied === "addr" ? (zh ? "已复制 ✓" : "Copied ✓") : (zh ? "复制地址" : "Copy address")}
-                        </button>
-                      )}
                     </div>
-                  </div>
 
-                  <p className="text-[10px] text-amber-500/80 mt-2.5 leading-relaxed">
-                    ⚠ {zh
-                      ? "请务必转账准确金额，多转或少转无法自动识别。TRX 钱包需保留少量 TRX 作为手续费。"
-                      : "Send the exact amount shown. Your wallet needs a small TRX balance for gas fees."}
-                  </p>
-                </div>
+                    <button
+                      onClick={handleCreateUsdtOrder}
+                      disabled={paying}
+                      className="w-full py-3.5 rounded-2xl font-black text-base transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-[#26A17B] text-white hover:bg-[#1e8a68] shadow-lg shadow-[#26A17B]/20"
+                    >
+                      {paying ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          {zh ? "生成中…" : "Generating…"}
+                        </span>
+                      ) : (
+                        zh ? "⬡ 生成专属付款地址" : "⬡ Generate Payment Address"
+                      )}
+                    </button>
+                  </>
+                )}
 
-                {/* Step 2 — submit TX hash */}
-                <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-4">
-                  <p className="text-[11px] font-black text-gray-400 uppercase tracking-wider mb-3">
-                    {zh ? "② 提交交易哈希 (TxID)" : "② Submit Transaction Hash (TxID)"}
-                  </p>
-                  <input
-                    type="text"
-                    value={txHash}
-                    onChange={(e) => setTxHash(e.target.value)}
-                    placeholder={zh ? "粘贴 64 位交易哈希…" : "Paste 64-char transaction hash…"}
-                    className="w-full bg-[#080F1F] border border-[#2A4A7F] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-[#26A17B]/60 transition-colors font-mono text-[12px]"
-                    maxLength={66}
-                  />
-                  <p className="text-[10px] text-gray-600 mt-1.5">
-                    {zh ? "在钱包 App 或 TronScan 中找到本次转账记录，复制 TxID 粘贴至此" : "Find the TxID in your wallet app or on tronscan.org, then paste it here"}
-                  </p>
-                </div>
+                {/* ── Pending: show unique address + QR + manual check ── */}
+                {usdtStatus === "pending" && usdtAddress && (
+                  <>
+                    <div className="bg-[#0B1E10] border border-[#26A17B]/40 rounded-2xl p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-[11px] font-black text-[#26A17B] uppercase tracking-wider">
+                          {zh ? "专属收款地址" : "Your Payment Address"}
+                        </p>
+                        <span className="flex items-center gap-1.5 text-[10px] text-amber-400">
+                          <span className="inline-block w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
+                          {zh ? "等待收款…" : "Awaiting payment…"}
+                        </span>
+                      </div>
 
-                {/* Verify button */}
-                <button
-                  onClick={handleUsdt}
-                  disabled={!txHash.trim() || paying}
-                  className="w-full py-3.5 rounded-2xl font-black text-base transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-[#26A17B] text-white hover:bg-[#1e8a68] shadow-lg shadow-[#26A17B]/20"
-                >
-                  {paying ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      {zh ? "链上验证中…" : "Verifying on-chain…"}
-                    </span>
-                  ) : (
-                    zh ? "✓ 验证转账并到账 GC" : "✓ Verify & Credit GC"
-                  )}
-                </button>
+                      {/* Network badge */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-[10px] bg-[#26A17B]/20 border border-[#26A17B]/40 text-[#26A17B] font-black px-2.5 py-1 rounded-full">
+                          TRC-20 · TRON
+                        </span>
+                        <span className="text-[10px] text-gray-500">
+                          {zh ? "请勿使用其他网络" : "Do NOT use other networks"}
+                        </span>
+                      </div>
+
+                      {/* Exact amount */}
+                      <div className="flex items-center justify-between bg-[#0A1628] rounded-xl px-3.5 py-2.5 mb-2 border border-[#1E3A5F]">
+                        <div>
+                          <p className="text-[10px] text-gray-500 mb-0.5">{zh ? "转账金额（精确）" : "Exact amount to send"}</p>
+                          <p className="text-lg font-black text-white">
+                            {usdtPayAmount?.toFixed(6)}
+                            <span className="text-[#26A17B] ml-1">USDT</span>
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => copyText(usdtPayAmount?.toFixed(6) ?? "", "amount")}
+                          className="flex items-center gap-1 text-[10px] font-bold text-[#26A17B] bg-[#26A17B]/10 hover:bg-[#26A17B]/20 border border-[#26A17B]/30 px-2.5 py-1.5 rounded-lg transition-colors"
+                        >
+                          {copied === "amount" ? (zh ? "已复制 ✓" : "Copied ✓") : (zh ? "复制金额" : "Copy")}
+                        </button>
+                      </div>
+
+                      {/* Address + QR */}
+                      <div className="flex items-start gap-3 bg-[#0A1628] rounded-xl px-3.5 py-2.5 border border-[#1E3A5F]">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(usdtAddress)}&bgcolor=0A1628&color=26A17B&margin=1&format=png`}
+                          alt="USDT address QR"
+                          width={72}
+                          height={72}
+                          className="rounded-lg shrink-0 border border-[#26A17B]/30"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] text-gray-500 mb-1">{zh ? "收款地址 (TRC-20)" : "Wallet address (TRC-20)"}</p>
+                          <p className="text-[11px] text-gray-300 font-mono break-all leading-relaxed">
+                            {usdtAddress}
+                          </p>
+                          <button
+                            onClick={() => copyText(usdtAddress, "addr")}
+                            className="mt-1.5 flex items-center gap-1 text-[10px] font-bold text-[#26A17B] bg-[#26A17B]/10 hover:bg-[#26A17B]/20 border border-[#26A17B]/30 px-2.5 py-1 rounded-lg transition-colors"
+                          >
+                            {copied === "addr" ? (zh ? "已复制 ✓" : "Copied ✓") : (zh ? "复制地址" : "Copy address")}
+                          </button>
+                        </div>
+                      </div>
+
+                      <p className="text-[10px] text-amber-500/80 mt-2.5 leading-relaxed">
+                        ⚠ {zh
+                          ? "请转账精确金额，多转或少转可能无法自动识别。TRX 钱包需保留少量 TRX 作为手续费。转账后通常 1-5 分钟自动到账。"
+                          : "Send the exact amount shown. Your wallet needs a small TRX balance for gas fees. Usually confirmed within 1-5 minutes."}
+                      </p>
+                    </div>
+
+                    {/* Manual check button */}
+                    <button
+                      onClick={checkUsdtManually}
+                      className="w-full py-3 rounded-2xl font-bold text-sm transition-all border border-[#26A17B]/40 text-[#26A17B] bg-[#26A17B]/5 hover:bg-[#26A17B]/10"
+                    >
+                      🔍 {zh ? "手动查询到账状态" : "Check Payment Status"}
+                    </button>
+                  </>
+                )}
+
               </div>
             )}
 
