@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import Navbar from "@/components/Navbar";
 import SidebarLayout from "@/components/SidebarLayout";
 import GlobalSidebar from "@/components/GlobalSidebar";
+import SiteFooter from "@/components/SiteFooter";
 import { GcBalanceProvider } from "@/context/GcBalance";
 import MobilePwaRegister from "@/components/mobile/MobilePwaRegister";
 import "../globals.css";
@@ -239,6 +240,7 @@ export default async function LocaleLayout({
               <SidebarLayout locale={locale} sidebar={<GlobalSidebar locale={locale} />}>
                 {children}
               </SidebarLayout>
+              <SiteFooter locale={locale} />
             </div>
           </GcBalanceProvider>
         </NextIntlClientProvider>

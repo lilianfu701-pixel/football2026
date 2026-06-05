@@ -384,41 +384,6 @@ export default async function GlobalSidebar({ locale }: Props) {
         </div>
       </div>
 
-      {/* ── Slot 5: Footer links ── */}
-      <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-4">
-        <p className="text-[10px] text-gray-600 uppercase tracking-widest mb-3">
-          {zh ? "关于 Football2026" : "Football2026"}
-        </p>
-        <div className="space-y-1">
-          {[
-            { href: `/${locale}/missions`,        icon: "🎖️", label: zh ? "任务 & 成就" : "Missions & Achievements" },
-            { href: `/${locale}/rewards`,         icon: "🪙", label: zh ? "GC 奖励说明" : "GC Rewards Guide" },
-            { href: `/${locale}/feed`,            icon: "🌐", label: zh ? "好友动态" : "Following Feed" },
-            { href: `/${locale}/schedule`,        icon: "🗓️", label: zh ? "赛程 & 积分榜" : "Schedule & Standings" },
-            { href: `/${locale}/profile/checkin`, icon: "📅", label: zh ? "每日签到领 GC" : "Daily Check-in" },
-            { href: `/${locale}/help`,            icon: "❓", label: zh ? "帮助中心 / FAQ" : "Help Center / FAQ" },
-            { href: `/${locale}/notifications`,   icon: "🔔", label: zh ? "通知中心" : "Notifications" },
-            { href: `/${locale}/terms`,           icon: "📋", label: zh ? "服务条款" : "Terms of Service" },
-            { href: `/${locale}/privacy`,         icon: "🔒", label: zh ? "隐私政策" : "Privacy Policy" },
-            { href: `/${locale}/refund`,          icon: "💸", label: zh ? "退款政策" : "Refund Policy" },
-          ].map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[#1E3A5F]/50 transition-colors group"
-            >
-              <span className="text-sm w-5 text-center shrink-0">{item.icon}</span>
-              <span className="text-xs text-gray-500 group-hover:text-gray-200 transition-colors">
-                {item.label}
-              </span>
-            </Link>
-          ))}
-        </div>
-        <p className="text-[10px] text-gray-700 mt-3 text-center">
-          © 2026 Football2026 · GoalCoin is a virtual entertainment token with no cash value
-        </p>
-      </div>
-
     </div>
   );
 }
