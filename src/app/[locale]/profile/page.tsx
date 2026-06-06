@@ -406,7 +406,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
           {/* GC Balance */}
           <div className="mt-5 bg-[#0A1628] border border-[#1E3A5F] rounded-xl p-4">
             <div className="flex items-center justify-between mb-1">
-              <p className="text-gray-500 text-xs">GoalCoin Balance</p>
+              <p className="text-gray-500 text-xs">{zh ? "GoalCoin 余额" : "GoalCoin Balance"}</p>
               <Link
                 href={`/${locale}/profile/topup`}
                 className="flex items-center gap-1 px-2.5 py-1 bg-[#FFD700]/15 hover:bg-[#FFD700]/25 border border-[#FFD700]/40 hover:border-[#FFD700]/70 text-[#FFD700] text-[11px] font-black rounded-lg transition-all"
@@ -424,8 +424,9 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                 <div className="flex justify-between text-xs text-gray-500 mb-1.5">
                   <span>{wealthLevel.name}</span>
                   <span>
-                    {formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC to{" "}
-                    {nextWealthLevel.name}
+                    {zh
+                      ? `距离 ${nextWealthLevel.name} 还差 ${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC`
+                      : `${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC to ${nextWealthLevel.name}`}
                   </span>
                 </div>
                 <div className="h-1.5 bg-[#1E3A5F] rounded-full overflow-hidden">
@@ -478,10 +479,10 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
             <h3 className="text-white font-bold text-base mb-4">预测统计</h3>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: "Total Bets", value: totalBets, icon: "🎯" },
-                { label: "Win Rate", value: `${winRate}%`, icon: "✅" },
-                { label: "Won", value: wonBets, icon: "🏆" },
-                { label: "Wagered", value: formatGc(totalWagered), icon: "🪙" },
+                { label: zh ? "总预测" : "Total Bets",  value: totalBets,              icon: "🎯" },
+                { label: zh ? "胜率"   : "Win Rate",    value: `${winRate}%`,          icon: "✅" },
+                { label: zh ? "赢了"   : "Won",         value: wonBets,                icon: "🏆" },
+                { label: zh ? "总投注" : "Wagered",     value: formatGc(totalWagered), icon: "🪙" },
               ].map((stat, i) => (
                 <div key={i} className="bg-[#0A1628] rounded-xl p-3">
                   <p className="text-lg mb-0.5">{stat.icon}</p>
@@ -514,7 +515,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
           <div className="flex justify-between text-xs text-gray-500 mb-1.5">
             <span>{profile.honor_points ?? 0} pts</span>
             {honorLevel.maxPoints && (
-              <span>Next: {honorLevel.maxPoints + 1} pts</span>
+              <span>{zh ? `下一级：${honorLevel.maxPoints + 1} 积分` : `Next: ${honorLevel.maxPoints + 1} pts`}</span>
             )}
           </div>
           <div className="h-2 bg-[#1E3A5F] rounded-full overflow-hidden">
@@ -527,7 +528,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
             />
           </div>
           <p className="text-gray-600 text-xs mt-2">
-            Earn honor points by making accurate predictions
+            {zh ? "通过精准预测赚取荣誉积分" : "Earn honor points by making accurate predictions"}
           </p>
         </div>
 
@@ -556,7 +557,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                       <p className="text-sm text-white">
                         {gcTransactionLabel(tx.type, zh)}
                       </p>
-                      <p className="text-xs text-gray-500">{tx.note}</p>
+                      {tx.note && <p className="text-xs text-gray-500">{tx.note}</p>}
                     </div>
                     <span
                       className={`text-sm font-bold ${
@@ -572,7 +573,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
             </div>
           ) : (
             <div className="text-center py-6 text-gray-600 text-sm">
-              No transactions yet. Claim your daily GC to get started!
+              {zh ? "暂无交易记录，先去签到领取每日 GC 吧！" : "No transactions yet. Claim your daily GC to get started!"}
             </div>
           )}
         </div>
@@ -585,7 +586,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
               href={`/${locale}/profile/bets`}
               className="text-[#FFD700] text-xs hover:underline"
             >
-              View All →
+              {zh ? "全部记录 →" : "View All →"}
             </Link>
           </div>
 
@@ -600,10 +601,10 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                   >
                     <div>
                       <p className="text-sm text-white">
-                        {match ? `${match.home_team} vs ${match.away_team}` : "Match"}
+                        {match ? `${match.home_team} vs ${match.away_team}` : (zh ? "比赛" : "Match")}
                       </p>
                       <p className="text-xs text-gray-500">
-                        Wagered: {formatGc(bet.gc_amount)} GC
+                        {zh ? "投注：" : "Wagered: "}{formatGc(bet.gc_amount)} GC
                       </p>
                     </div>
                     <span
@@ -617,7 +618,13 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                           : "bg-[#FFD700]/20 text-[#FFD700]"
                       }`}
                     >
-                      {bet.status === "pending" ? "Pending" : bet.status === "won" ? "Won" : bet.status === "lost" ? "Lost" : "Refunded"}
+                      {bet.status === "pending"
+                        ? (zh ? "待结算" : "Pending")
+                        : bet.status === "won"
+                        ? (zh ? "赢" : "Won")
+                        : bet.status === "lost"
+                        ? (zh ? "输" : "Lost")
+                        : (zh ? "已退款" : "Refunded")}
                     </span>
                   </div>
                 );
@@ -625,9 +632,9 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
             </div>
           ) : (
             <div className="text-center py-6 text-gray-600 text-sm">
-              No predictions yet.{" "}
+              {zh ? "还没有预测记录。" : "No predictions yet."}{" "}
               <Link href={`/${locale}/matches`} className="text-[#FFD700] hover:underline">
-                Browse matches →
+                {zh ? "去看比赛 →" : "Browse matches →"}
               </Link>
             </div>
           )}
