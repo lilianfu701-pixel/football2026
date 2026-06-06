@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient }              from "@/lib/supabase/server";
 import { createServiceClient }       from "@/lib/supabase/service";
+import { sendGcAwardedEmail }        from "@/lib/email/send";
 
 export async function POST(req: NextRequest) {
   // ── Auth: admin only ──────────────────────────────────────────────────────
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
   // ── Verify target user exists ─────────────────────────────────────────────
   const { data: target } = await service
     .from("users")
-    .select("id, gc_balance")
+    .select("id, gc_balance, email, nickname")
     .eq("id", user_id)
     .single();
 
@@ -62,6 +63,17 @@ export async function POST(req: NextRequest) {
       p_desc:    txNote,
     });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    // Send email notification (non-blocking)
+    if (target.email) {
+      sendGcAwardedEmail({
+        to:         target.email,
+        nickname:   target.nickname ?? "用户",
+        amount:     gc_amount,
+        newBalance: newBal as number,
+        reason:     txNote,
+        locale:     "zh",
+      }).catch(() => {/* ignore email errors */});
+    }
     return NextResponse.json({ ok: true, new_balance: newBal });
   } else {
     const { data: newBal, error } = await service.rpc("gc_deduct_atomic", {
