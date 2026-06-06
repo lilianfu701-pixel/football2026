@@ -8,7 +8,7 @@ import {
   welcomeHtml,
 } from "./templates";
 
-const FROM = "Football2026 <noreply@football2026.net>";
+const FROM = "Football2026 <support@mail.football2026.net>";
 
 function getResend(): Resend {
   const key = process.env.RESEND_API_KEY;
