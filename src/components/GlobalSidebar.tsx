@@ -367,17 +367,17 @@ export default async function GlobalSidebar({ locale }: Props) {
         <div className="flex justify-center mb-4">
           <div className="p-2.5 bg-white rounded-2xl inline-block shadow-lg">
             <Image
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(baseUrl + "/download")}&margin=4`}
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(baseUrl + `/${locale}/m`)}&margin=4`}
               alt="App download QR" width={150} height={150} className="rounded-xl" unoptimized />
           </div>
         </div>
         <p className="text-center text-xs text-gray-500 mb-3">{zh ? "扫描二维码立即安装" : "Scan QR code to install"}</p>
         <div className="flex gap-2">
-          <a href={`/${locale}/download`}
+          <a href={`/${locale}/m`}
             className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#1E3A5F] hover:bg-[#1E3A5F]/80 border border-[#1E3A5F] text-gray-300 hover:text-white text-xs font-semibold transition-all">
             🍎 App Store
           </a>
-          <a href={`/${locale}/download`}
+          <a href={`/${locale}/m`}
             className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#1E3A5F] hover:bg-[#1E3A5F]/80 border border-[#1E3A5F] text-gray-300 hover:text-white text-xs font-semibold transition-all">
             🤖 Google Play
           </a>

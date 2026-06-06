@@ -583,7 +583,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-white font-bold">预测历史</h3>
             <Link
-              href={`/${locale}/profile/bets`}
+              href={`/${locale}/profile?tab=bets`}
               className="text-[#FFD700] text-xs hover:underline"
             >
               {zh ? "全部记录 →" : "View All →"}

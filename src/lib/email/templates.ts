@@ -28,7 +28,7 @@ function shell(body: string): string {
   <div class="logo"><a href="${BASE_URL}">⚽ Football2026</a></div>
   <div class="card">${body}</div>
   <div class="footer">
-    <p>© 2026 Football2026.net · <a href="${BASE_URL}/zh/auth/unsubscribe">退订</a> · <a href="${BASE_URL}/unsubscribe">Unsubscribe</a></p>
+    <p>© 2026 Football2026.net</p>
   </div>
 </div>
 </body></html>`;

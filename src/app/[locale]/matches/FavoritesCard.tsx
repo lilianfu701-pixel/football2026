@@ -79,7 +79,7 @@ export default function FavoritesCard({ matches, locale, dbFollowedIds }: Props)
         </div>
         {favoriteMatches.length > 0 && (
           <Link
-            href={`/${locale}/profile/favorites`}
+            href={`/${locale}/matches`}
             className="text-xs text-[#7C6FE0] hover:text-white font-semibold transition-colors whitespace-nowrap"
           >
             {zh ? "管理 →" : "Manage →"}
