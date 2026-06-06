@@ -70,16 +70,25 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
     return newPath;
   }
 
+  // Core nav — always visible (5 items max)
   const navLinks = [
-    { href: `/${locale}`, label: t("home") },
-    { href: `/${locale}/matches`, label: t("matches") },
-    { href: `/${locale}/schedule`, label: t("schedule") },
-    { href: `/${locale}/predict`, label: t("predict") },
-    { href: `/${locale}/leaderboard`, label: t("leaderboard") },
-    { href: `/${locale}/invite`, label: t("invite") },
-    { href: `/${locale}/forum`, label: t("forum") },
-    ...(user ? [{ href: `/${locale}/messages`, label: t("messages"), badge: unreadMessages }] : []),
+    { href: `/${locale}`,            label: t("home") },
+    { href: `/${locale}/matches`,    label: t("matches") },
+    { href: `/${locale}/predict`,    label: t("predict") },
+    { href: `/${locale}/leaderboard`,label: t("leaderboard") },
+    { href: `/${locale}/forum`,      label: t("forum") },
   ];
+
+  // User-specific links — shown in avatar dropdown
+  type UserMenuLink = { href: string; label: string; icon: string; badge?: number };
+  const userMenuLinks: UserMenuLink[] = user ? [
+    { href: `/${locale}/profile`,   label: locale === "zh" ? "个人主页" : "Profile",       icon: "👤" },
+    { href: `/${locale}/feed`,      label: locale === "zh" ? "动态"     : "Feed",           icon: "📰" },
+    { href: `/${locale}/missions`,  label: locale === "zh" ? "任务"     : "Missions",       icon: "🎯" },
+    { href: `/${locale}/rewards`,   label: locale === "zh" ? "奖励"     : "Rewards",        icon: "🎁" },
+    { href: `/${locale}/invite`,    label: locale === "zh" ? "邀请好友" : "Invite Friends",  icon: "🤝" },
+    { href: `/${locale}/messages`,  label: locale === "zh" ? "消息"     : "Messages",       icon: "💬", badge: unreadMessages },
+  ] : [];
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0A1628]/95 backdrop-blur-md border-b border-[#1E3A5F]">
@@ -109,14 +118,9 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
               <Link
                 key={link.href}
                 href={link.href}
-                className="relative px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#1E3A5F] rounded-lg transition-colors"
+                className="px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#1E3A5F] rounded-lg transition-colors"
               >
                 {link.label}
-                {"badge" in link && (link.badge ?? 0) > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center px-1">
-                    {(link.badge ?? 0) > 99 ? "99+" : link.badge}
-                  </span>
-                )}
               </Link>
             ))}
           </div>
@@ -182,15 +186,6 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
             {/* Auth Buttons */}
             {user ? (
               <div className="hidden sm:flex items-center gap-1.5">
-                {/* Profile shortcut */}
-                <Link
-                  href={`/${locale}/profile`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-300 hover:text-white hover:bg-[#1E3A5F] rounded-lg transition-colors"
-                >
-                  <span>👤</span>
-                  <span className="hidden lg:block">{locale === "zh" ? "个人后台" : "My Account"}</span>
-                </Link>
-
                 {/* Admin shortcut — only shown if is_admin */}
                 {isAdmin && (
                   <Link
@@ -206,10 +201,17 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                 <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center gap-1 text-sm text-gray-300 hover:text-white transition-colors"
+                    className="flex items-center gap-1.5 text-sm text-gray-300 hover:text-white transition-colors"
                   >
-                    <div className="w-8 h-8 bg-[#FFD700] rounded-full flex items-center justify-center text-[#0A1628] font-bold text-sm">
-                      {(nickname ?? user.email ?? "U")[0].toUpperCase()}
+                    <div className="relative">
+                      <div className="w-8 h-8 bg-[#FFD700] rounded-full flex items-center justify-center text-[#0A1628] font-bold text-sm">
+                        {(nickname ?? user.email ?? "U")[0].toUpperCase()}
+                      </div>
+                      {unreadMessages > 0 && (
+                        <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center px-0.5">
+                          {unreadMessages > 99 ? "99+" : unreadMessages}
+                        </span>
+                      )}
                     </div>
                     <svg className={`w-3 h-3 transition-transform ${userMenuOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -218,18 +220,36 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
 
                   {/* Dropdown */}
                   {userMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-44 bg-[#0F2040] border border-[#1E3A5F] rounded-xl shadow-2xl overflow-hidden z-50">
+                    <div className="absolute right-0 mt-2 w-48 bg-[#0F2040] border border-[#1E3A5F] rounded-xl shadow-2xl overflow-hidden z-50">
                       <div className="px-4 py-3 border-b border-[#1E3A5F]">
                         <p className="text-xs font-bold text-white truncate">{nickname ?? user.email}</p>
                         <p className="text-[10px] text-gray-500 truncate">{user.email}</p>
                       </div>
-                      <button
-                        onClick={handleSignOut}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-[#1E3A5F] transition-colors"
-                      >
-                        <span>🚪</span>
-                        <span>{t("logout")}</span>
-                      </button>
+                      {userMenuLinks.map((link) => (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          onClick={() => setUserMenuOpen(false)}
+                          className="relative flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-[#1E3A5F] transition-colors"
+                        >
+                          <span>{link.icon}</span>
+                          <span>{link.label}</span>
+                          {"badge" in link && (link.badge ?? 0) > 0 && (
+                            <span className="ml-auto min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center px-1">
+                              {(link.badge ?? 0) > 99 ? "99+" : link.badge}
+                            </span>
+                          )}
+                        </Link>
+                      ))}
+                      <div className="border-t border-[#1E3A5F]">
+                        <button
+                          onClick={handleSignOut}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-[#1E3A5F] transition-colors"
+                        >
+                          <span>🚪</span>
+                          <span>{t("logout")}</span>
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -280,6 +300,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
         {/* Mobile Menu */}
         {menuOpen && (
           <div className="md:hidden border-t border-[#1E3A5F] py-3 space-y-1">
+            {/* Core links */}
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -290,22 +311,31 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                 {link.label}
               </Link>
             ))}
-            <div className="pt-2 border-t border-[#1E3A5F] px-4 space-y-1">
+
+            <div className="pt-2 border-t border-[#1E3A5F] space-y-1">
               {user ? (
                 <>
-                  <Link
-                    href={`/${locale}/profile`}
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-[#1E3A5F] rounded-lg transition-colors"
-                  >
-                    <span>👤</span>
-                    <span>{locale === "zh" ? "个人主页" : "Profile"}</span>
-                  </Link>
+                  {userMenuLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-[#1E3A5F] rounded-lg transition-colors"
+                    >
+                      <span>{link.icon}</span>
+                      <span>{link.label}</span>
+                      {"badge" in link && (link.badge ?? 0) > 0 && (
+                        <span className="ml-auto min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center px-1">
+                          {(link.badge ?? 0) > 99 ? "99+" : link.badge}
+                        </span>
+                      )}
+                    </Link>
+                  ))}
                   {isAdmin && (
                     <Link
                       href={`/${locale}/admin`}
                       onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2.5 text-sm text-[#FFD700] hover:bg-[#FFD700]/10 rounded-lg transition-colors"
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#FFD700] hover:bg-[#FFD700]/10 rounded-lg transition-colors"
                     >
                       <span>🛡️</span>
                       <span>{locale === "zh" ? "管理后台" : "Admin Panel"}</span>
@@ -313,14 +343,14 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                   )}
                   <button
                     onClick={handleSignOut}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-[#1E3A5F] rounded-lg transition-colors"
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-[#1E3A5F] rounded-lg transition-colors"
                   >
                     <span>🚪</span>
                     <span>{t("logout")}</span>
                   </button>
                 </>
               ) : (
-                <>
+                <div className="flex gap-2 px-4">
                   <Link
                     href={`/${locale}/auth/login`}
                     onClick={() => setMenuOpen(false)}
@@ -335,7 +365,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                   >
                     {t("register")}
                   </Link>
-                </>
+                </div>
               )}
             </div>
           </div>
