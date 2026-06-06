@@ -80,15 +80,21 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
   ];
 
   // User-specific links — shown in avatar dropdown
+  // Section 1: personal hub (always useful)
   type UserMenuLink = { href: string; label: string; icon: string; badge?: number };
-  const userMenuLinks: UserMenuLink[] = user ? [
-    { href: `/${locale}/profile`,   label: locale === "zh" ? "个人主页" : "Profile",       icon: "👤" },
-    { href: `/${locale}/feed`,      label: locale === "zh" ? "动态"     : "Feed",           icon: "📰" },
-    { href: `/${locale}/missions`,  label: locale === "zh" ? "任务"     : "Missions",       icon: "🎯" },
-    { href: `/${locale}/rewards`,   label: locale === "zh" ? "奖励"     : "Rewards",        icon: "🎁" },
-    { href: `/${locale}/invite`,    label: locale === "zh" ? "邀请好友" : "Invite Friends",  icon: "🤝" },
-    { href: `/${locale}/messages`,  label: locale === "zh" ? "消息"     : "Messages",       icon: "💬", badge: unreadMessages },
+  const userHubLinks: UserMenuLink[] = user ? [
+    { href: `/${locale}/profile`,   label: locale === "zh" ? "个人主页" : "Profile",   icon: "👤" },
+    { href: `/${locale}/profile?tab=topup`, label: locale === "zh" ? "充值 GC" : "Top Up GC", icon: "🪙" },
+    { href: `/${locale}/missions`,  label: locale === "zh" ? "任务中心" : "Missions",  icon: "🎯" },
+    { href: `/${locale}/rewards`,   label: locale === "zh" ? "奖励兑换" : "Rewards",   icon: "🎁" },
   ] : [];
+  // Section 2: social
+  const userSocialLinks: UserMenuLink[] = user ? [
+    { href: `/${locale}/feed`,      label: locale === "zh" ? "动态"     : "Feed",           icon: "📰" },
+    { href: `/${locale}/messages`,  label: locale === "zh" ? "消息"     : "Messages",       icon: "💬", badge: unreadMessages },
+    { href: `/${locale}/invite`,    label: locale === "zh" ? "邀请好友" : "Invite Friends",  icon: "🤝" },
+  ] : [];
+  const userMenuLinks = [...userHubLinks, ...userSocialLinks];
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0A1628]/95 backdrop-blur-md border-b border-[#1E3A5F]">
@@ -186,6 +192,15 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
             {/* Auth Buttons */}
             {user ? (
               <div className="hidden sm:flex items-center gap-1.5">
+                {/* Personal dashboard — always visible when logged in */}
+                <Link
+                  href={`/${locale}/profile`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-300 hover:text-white hover:bg-[#1E3A5F] rounded-lg transition-colors border border-[#1E3A5F] hover:border-[#1E3A5F]"
+                >
+                  <span>👤</span>
+                  <span className="hidden lg:block">{locale === "zh" ? "个人主页" : "Profile"}</span>
+                </Link>
+
                 {/* Admin shortcut — only shown if is_admin */}
                 {isAdmin && (
                   <Link
@@ -201,10 +216,10 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                 <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center gap-1.5 text-sm text-gray-300 hover:text-white transition-colors"
+                    className="flex items-center gap-1.5 text-sm text-gray-300 hover:text-white transition-colors bg-[#1E3A5F]/40 hover:bg-[#1E3A5F]/80 border border-[#1E3A5F] rounded-xl px-2.5 py-1.5"
                   >
                     <div className="relative">
-                      <div className="w-8 h-8 bg-[#FFD700] rounded-full flex items-center justify-center text-[#0A1628] font-bold text-sm">
+                      <div className="w-6 h-6 bg-[#FFD700] rounded-full flex items-center justify-center text-[#0A1628] font-bold text-xs">
                         {(nickname ?? user.email ?? "U")[0].toUpperCase()}
                       </div>
                       {unreadMessages > 0 && (
@@ -213,6 +228,10 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                         </span>
                       )}
                     </div>
+                    <span className="max-w-[72px] truncate text-xs font-semibold text-white hidden lg:block">
+                      {nickname ?? (locale === "zh" ? "我的" : "Me")}
+                    </span>
+                    <span className="text-xs text-white lg:hidden">{locale === "zh" ? "我的" : "Me"}</span>
                     <svg className={`w-3 h-3 transition-transform ${userMenuOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
@@ -220,31 +239,59 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
 
                   {/* Dropdown */}
                   {userMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-[#0F2040] border border-[#1E3A5F] rounded-xl shadow-2xl overflow-hidden z-50">
-                      <div className="px-4 py-3 border-b border-[#1E3A5F]">
+                    <div className="absolute right-0 mt-2 w-52 bg-[#0F2040] border border-[#1E3A5F] rounded-xl shadow-2xl overflow-hidden z-50">
+                      {/* User info header */}
+                      <div className="px-4 py-3 border-b border-[#1E3A5F]/60 bg-[#0A1628]/50">
                         <p className="text-xs font-bold text-white truncate">{nickname ?? user.email}</p>
                         <p className="text-[10px] text-gray-500 truncate">{user.email}</p>
                       </div>
-                      {userMenuLinks.map((link) => (
-                        <Link
-                          key={link.href}
-                          href={link.href}
-                          onClick={() => setUserMenuOpen(false)}
-                          className="relative flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-[#1E3A5F] transition-colors"
-                        >
-                          <span>{link.icon}</span>
-                          <span>{link.label}</span>
-                          {"badge" in link && (link.badge ?? 0) > 0 && (
-                            <span className="ml-auto min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center px-1">
-                              {(link.badge ?? 0) > 99 ? "99+" : link.badge}
-                            </span>
-                          )}
-                        </Link>
-                      ))}
-                      <div className="border-t border-[#1E3A5F]">
+
+                      {/* Section 1: Personal hub */}
+                      <div className="py-1">
+                        <p className="px-4 pt-1.5 pb-0.5 text-[9px] font-black text-gray-600 uppercase tracking-wider">
+                          {locale === "zh" ? "个人中心" : "My Account"}
+                        </p>
+                        {userHubLinks.map((link) => (
+                          <Link
+                            key={link.href}
+                            href={link.href}
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#1E3A5F] transition-colors"
+                          >
+                            <span className="text-base">{link.icon}</span>
+                            <span>{link.label}</span>
+                          </Link>
+                        ))}
+                      </div>
+
+                      {/* Section 2: Social */}
+                      <div className="border-t border-[#1E3A5F]/60 py-1">
+                        <p className="px-4 pt-1.5 pb-0.5 text-[9px] font-black text-gray-600 uppercase tracking-wider">
+                          {locale === "zh" ? "社交" : "Social"}
+                        </p>
+                        {userSocialLinks.map((link) => (
+                          <Link
+                            key={link.href}
+                            href={link.href}
+                            onClick={() => setUserMenuOpen(false)}
+                            className="relative flex items-center gap-2.5 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#1E3A5F] transition-colors"
+                          >
+                            <span className="text-base">{link.icon}</span>
+                            <span>{link.label}</span>
+                            {"badge" in link && (link.badge ?? 0) > 0 && (
+                              <span className="ml-auto min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center px-1">
+                                {(link.badge ?? 0) > 99 ? "99+" : link.badge}
+                              </span>
+                            )}
+                          </Link>
+                        ))}
+                      </div>
+
+                      {/* Sign out */}
+                      <div className="border-t border-[#1E3A5F]/60">
                         <button
                           onClick={handleSignOut}
-                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-400 hover:text-white hover:bg-[#1E3A5F] transition-colors"
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-500 hover:text-white hover:bg-[#1E3A5F] transition-colors"
                         >
                           <span>🚪</span>
                           <span>{t("logout")}</span>
@@ -311,11 +358,41 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                 {link.label}
               </Link>
             ))}
+            {/* Personal dashboard — mobile quick entry */}
+            {user && (
+              <Link
+                href={`/${locale}/profile`}
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-200 hover:text-white hover:bg-[#1E3A5F] rounded-lg transition-colors border border-[#1E3A5F]/50 mx-1"
+              >
+                <span>👤</span>
+                <span className="font-semibold">{locale === "zh" ? "个人主页" : "My Profile"}</span>
+              </Link>
+            )}
 
             <div className="pt-2 border-t border-[#1E3A5F] space-y-1">
               {user ? (
                 <>
-                  {userMenuLinks.map((link) => (
+                  {/* Mobile: Personal hub section */}
+                  <p className="px-4 pt-1 pb-0.5 text-[9px] font-black text-gray-600 uppercase tracking-wider">
+                    {locale === "zh" ? "个人中心" : "My Account"}
+                  </p>
+                  {userHubLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-[#1E3A5F] rounded-lg transition-colors"
+                    >
+                      <span>{link.icon}</span>
+                      <span>{link.label}</span>
+                    </Link>
+                  ))}
+                  {/* Mobile: Social section */}
+                  <p className="px-4 pt-2 pb-0.5 text-[9px] font-black text-gray-600 uppercase tracking-wider">
+                    {locale === "zh" ? "社交" : "Social"}
+                  </p>
+                  {userSocialLinks.map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}

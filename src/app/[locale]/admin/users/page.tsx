@@ -58,27 +58,42 @@ export default async function AdminUsersPage({ params, searchParams }: PageProps
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
           <div className="divide-y divide-[#1E3A5F]/40">
             {(users ?? []).map((u) => (
-              <div key={u.id} className="flex items-center gap-4 px-5 py-3.5">
-                {u.avatar_url ? (
-                  <Image src={u.avatar_url} alt={u.nickname} width={36} height={36}
-                    className="rounded-full object-cover shrink-0 border border-[#1E3A5F]" unoptimized />
-                ) : (
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#7C6FE0] to-[#4F46E5] flex items-center justify-center text-white font-black text-sm shrink-0 border border-[#1E3A5F]">
-                    {u.nickname.slice(0, 1).toUpperCase()}
+              <div key={u.id} className="px-5 py-3.5">
+                {/* Main row */}
+                <div className="flex items-center gap-4">
+                  {u.avatar_url ? (
+                    <Image src={u.avatar_url} alt={u.nickname} width={36} height={36}
+                      className="rounded-full object-cover shrink-0 border border-[#1E3A5F]" unoptimized />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#7C6FE0] to-[#4F46E5] flex items-center justify-center text-white font-black text-sm shrink-0 border border-[#1E3A5F]">
+                      {u.nickname.slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold text-white truncate">{u.nickname}</p>
+                      {u.is_admin && <span className="text-[9px] font-black text-[#FFD700] bg-[#FFD700]/10 px-1.5 py-0.5 rounded">ADMIN</span>}
+                      {u.is_banned && <span className="text-[9px] font-black text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded">BANNED</span>}
+                    </div>
+                    <p className="text-[10px] text-gray-600 truncate">{u.email}</p>
                   </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-white truncate">{u.nickname}</p>
-                    {u.is_admin && <span className="text-[9px] font-black text-[#FFD700] bg-[#FFD700]/10 px-1.5 py-0.5 rounded">ADMIN</span>}
-                    {u.is_banned && <span className="text-[9px] font-black text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded">BANNED</span>}
+                  <div className="text-right shrink-0">
+                    <p className="text-xs text-[#FFD700] font-bold">
+                      {(u.gc_balance ?? 0) >= 1_000_000
+                        ? ((u.gc_balance ?? 0) / 1_000_000).toFixed(1) + "M"
+                        : (u.gc_balance ?? 0).toLocaleString()} GC
+                    </p>
                   </div>
-                  <p className="text-[10px] text-gray-600 truncate">{u.email}</p>
+                  <UserAdminActions
+                    userId={u.id}
+                    userName={u.nickname}
+                    gcBalance={u.gc_balance ?? 0}
+                    isAdmin={!!u.is_admin}
+                    isBanned={!!u.is_banned}
+                    zh={zh}
+                    myId={user.id}
+                  />
                 </div>
-                <div className="text-right shrink-0">
-                  <p className="text-xs text-[#FFD700] font-bold">{((u.gc_balance ?? 0) / 1_000_000).toFixed(0)}M GC</p>
-                </div>
-                <UserAdminActions userId={u.id} isAdmin={!!u.is_admin} isBanned={!!u.is_banned} zh={zh} myId={user.id} />
               </div>
             ))}
           </div>
