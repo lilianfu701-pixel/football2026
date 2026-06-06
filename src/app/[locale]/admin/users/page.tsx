@@ -29,7 +29,7 @@ export default async function AdminUsersPage({ params, searchParams }: PageProps
   const service = createServiceClient();
   let query = service
     .from("users")
-    .select("id, nickname, email, avatar_url, gc_balance, is_admin, is_banned, created_at", { count: "exact" })
+    .select("id, nickname, email, avatar_url, gc_balance, is_admin, is_banned, created_at, country_code", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(from, from + 19);
   if (q) query = query.or(`nickname.ilike.%${q}%,email.ilike.%${q}%`);
@@ -76,6 +76,9 @@ export default async function AdminUsersPage({ params, searchParams }: PageProps
                       {u.is_banned && <span className="text-[9px] font-black text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded">BANNED</span>}
                     </div>
                     <p className="text-[10px] text-gray-600 truncate">{u.email}</p>
+                    {u.country_code && u.country_code !== "UN" && (
+                      <p className="text-[10px] text-blue-400">{u.country_code}</p>
+                    )}
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-xs text-[#FFD700] font-bold">

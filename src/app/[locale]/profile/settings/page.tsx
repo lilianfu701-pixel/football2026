@@ -186,6 +186,9 @@ export default function SettingsPage() {
       } catch { /* ignore claim errors */ }
 
       setSuccess(true);
+      // Invalidate Next.js router cache so leaderboard / profile pages re-fetch
+      // fresh data from the server on the next navigation.
+      router.refresh();
       setTimeout(() => router.push(`/${locale}/profile`), rewardMsg ? 3000 : 1500);
     });
   }
