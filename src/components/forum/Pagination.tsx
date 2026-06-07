@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { lc } from "@/i18n/content";
 
 interface Props {
   page:       number;
   totalPages: number;
   buildHref:  (page: number) => string;
   zh?:        boolean;
+  locale:     string;
 }
 
 /** Generate the list of page-number tokens to show.
@@ -27,7 +29,7 @@ function buildPageList(current: number, total: number): (number | "…")[] {
   return result;
 }
 
-export default function ForumPagination({ page, totalPages, buildHref, zh }: Props) {
+export default function ForumPagination({ page, totalPages, buildHref, zh, locale }: Props) {
   if (totalPages <= 1) return null;
   const tokens = buildPageList(page, totalPages);
 
@@ -42,7 +44,7 @@ export default function ForumPagination({ page, totalPages, buildHref, zh }: Pro
 
       {/* First */}
       {page > 1 ? (
-        <Link href={buildHref(1)} className={btnNormal} title={zh ? "首页" : "First"}>
+        <Link href={buildHref(1)} className={btnNormal} title={lc(locale, "首页", "First")}>
           «
         </Link>
       ) : (
@@ -51,7 +53,7 @@ export default function ForumPagination({ page, totalPages, buildHref, zh }: Pro
 
       {/* Prev */}
       {page > 1 ? (
-        <Link href={buildHref(page - 1)} className={btnNormal} title={zh ? "上一页" : "Previous"}>
+        <Link href={buildHref(page - 1)} className={btnNormal} title={lc(locale, "上一页", "Previous")}>
           ‹
         </Link>
       ) : (
@@ -73,7 +75,7 @@ export default function ForumPagination({ page, totalPages, buildHref, zh }: Pro
 
       {/* Next */}
       {page < totalPages ? (
-        <Link href={buildHref(page + 1)} className={btnNormal} title={zh ? "下一页" : "Next"}>
+        <Link href={buildHref(page + 1)} className={btnNormal} title={lc(locale, "下一页", "Next")}>
           ›
         </Link>
       ) : (
@@ -82,7 +84,7 @@ export default function ForumPagination({ page, totalPages, buildHref, zh }: Pro
 
       {/* Last */}
       {page < totalPages ? (
-        <Link href={buildHref(totalPages)} className={btnNormal} title={zh ? "尾页" : "Last"}>
+        <Link href={buildHref(totalPages)} className={btnNormal} title={lc(locale, "尾页", "Last")}>
           »
         </Link>
       ) : (

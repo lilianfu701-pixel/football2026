@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import MissionsClient, { type UserStats } from "./MissionsClient";
+import { lc } from "@/i18n/content";
 
 interface Props {
   params: Promise<{ locale: string }>;
@@ -12,10 +13,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const zh = locale === "zh";
   return {
-    title: zh ? "任务中心 | Football2026" : "Missions | Football2026",
-    description: zh
-      ? "完成每日任务和成就挑战，提升 GoalCoin 等级。"
-      : "Complete daily tasks and achievement challenges on Football2026.",
+    title: lc(locale, "任务中心 | Football2026", "Missions | Football2026"),
+    description: lc(locale, "完成每日任务和成就挑战，提升 GoalCoin 等级。", "Complete daily tasks and achievement challenges on Football2026."),
   };
 }
 

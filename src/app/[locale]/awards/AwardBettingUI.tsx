@@ -21,6 +21,7 @@ export interface AwardBet {
 }
 
 import type { AwardPhase } from "@/lib/awardPhase";
+import { lc } from "@/i18n/content";
 
 interface Props {
   locale: string;
@@ -97,7 +98,7 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
   function handlePlaceBet() {
     const amount = effectiveAmount();
     if (amount < MIN_BET) { setFeedback({ type: "err", msg: zh ? `最低消耗 ${formatGc(MIN_BET)} GC` : `Minimum is ${formatGc(MIN_BET)} GC` }); return; }
-    if (amount > localGc) { setFeedback({ type: "err", msg: zh ? "GC 余额不足" : "Insufficient GC" }); return; }
+    if (amount > localGc) { setFeedback({ type: "err", msg: lc(locale, "GC 余额不足", "Insufficient GC") }); return; }
     if (!betModal) return;
 
     startTransition(async () => {
@@ -105,7 +106,7 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
       try {
         res = await placeAwardBet(awardKeyToDb(activeAward), betModal.id, amount);
       } catch (e) {
-        setFeedback({ type: "err", msg: `${zh ? "网络异常" : "Network error"}: ${String(e)}` });
+        setFeedback({ type: "err", msg: `${lc(locale, "网络异常", "Network error")}: ${String(e)}` });
         return;
       }
       if (res.success) {
@@ -137,17 +138,17 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
         setTimeout(() => { setBetModal(null); setFeedback(null); }, 1200);
       } else {
         const errMap: Record<string, string> = {
-          insufficient_gc:    zh ? "GC 余额不足" : "Insufficient GC",
-          max_picks_reached:  zh ? "每项大奖最多预测 5 名球员" : "Max 5 picks per award",
-          betting_closed:     zh ? "预测已截止" : "Predictions closed",
-          not_authenticated:  zh ? "请先登录" : "Please log in",
-          player_not_found:   zh ? "球员数据异常" : "Player not found",
-          gc_deduction_failed:zh ? "GC 扣除失败，请重试" : "GC deduction failed",
-          insert_failed:      zh ? "写入失败，请刷新后重试" : "Insert failed, please refresh",
-          update_failed:      zh ? "更新失败，请重试" : "Update failed, please retry",
-          invalid_amount:     zh ? "金额无效" : "Invalid amount",
+          insufficient_gc:    lc(locale, "GC 余额不足", "Insufficient GC"),
+          max_picks_reached:  lc(locale, "每项大奖最多预测 5 名球员", "Max 5 picks per award"),
+          betting_closed:     lc(locale, "预测已截止", "Predictions closed"),
+          not_authenticated:  lc(locale, "请先登录", "Please log in"),
+          player_not_found:   lc(locale, "球员数据异常", "Player not found"),
+          gc_deduction_failed:lc(locale, "GC 扣除失败，请重试", "GC deduction failed"),
+          insert_failed:      lc(locale, "写入失败，请刷新后重试", "Insert failed, please refresh"),
+          update_failed:      lc(locale, "更新失败，请重试", "Update failed, please retry"),
+          invalid_amount:     lc(locale, "金额无效", "Invalid amount"),
         };
-        setFeedback({ type: "err", msg: errMap[res.error ?? ""] ?? `${zh ? "错误" : "Error"}: ${res.error ?? "unknown"}` });
+        setFeedback({ type: "err", msg: errMap[res.error ?? ""] ?? `${lc(locale, "错误", "Error")}: ${res.error ?? "unknown"}` });
       }
     });
   }
@@ -166,10 +167,10 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
   }
 
   const phaseConfig = {
-    pre:      { label: zh ? "⭐ 开赛前"    : "⭐ Pre-Tournament", color: "#FFD700", sublabel: zh ? "截止 6月11日开赛前，预测开放中"   : "Before Jun 11 kick-off · Predictions Open" },
-    group:    { label: zh ? "🔥 小组赛阶段" : "🔥 Group Stage",    color: "#FB923C", sublabel: zh ? "小组赛结束前，预测开放中"            : "Before group stage ends · Predictions Open" },
-    knockout: { label: zh ? "🏆 淘汰赛阶段" : "🏆 Knockout Stage",  color: "#34D399", sublabel: zh ? "决赛结束前，预测开放中"              : "Before final ends · Predictions Open"       },
-    closed:   { label: zh ? "🔒 预测已截止" : "🔒 Closed",          color: "#6B7280", sublabel: zh ? "不再接受新预测"                      : "No new predictions"                         },
+    pre:      { label: lc(locale, "⭐ 开赛前", "⭐ Pre-Tournament"), color: "#FFD700", sublabel: lc(locale, "截止 6月11日开赛前，预测开放中", "Before Jun 11 kick-off · Predictions Open") },
+    group:    { label: lc(locale, "🔥 小组赛阶段", "🔥 Group Stage"),    color: "#FB923C", sublabel: lc(locale, "小组赛结束前，预测开放中", "Before group stage ends · Predictions Open") },
+    knockout: { label: lc(locale, "🏆 淘汰赛阶段", "🏆 Knockout Stage"),  color: "#34D399", sublabel: lc(locale, "决赛结束前，预测开放中", "Before final ends · Predictions Open")       },
+    closed:   { label: lc(locale, "🔒 预测已截止", "🔒 Closed"),          color: "#6B7280", sublabel: lc(locale, "不再接受新预测", "No new predictions")                         },
   }[phase];
 
   // Effective closed state per award
@@ -181,9 +182,9 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
 
         {/* ── Section Header ── */}
         <div className="mb-5 mt-8 flex items-center gap-2">
-          <h2 className="text-base font-black text-white">🏅 {zh ? "大奖预测" : "Award Predictions"}</h2>
+          <h2 className="text-base font-black text-white">🏅 {lc(locale, "大奖预测", "Award Predictions")}</h2>
           <span className="text-xs text-gray-500">
-            {zh ? "每项最多 5 名球员" : "max 5 picks each"}
+            {lc(locale, "每项最多 5 名球员", "max 5 picks each")}
           </span>
         </div>
 
@@ -226,7 +227,7 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
         {myBetsForAward.length > 0 && (
           <div className="mb-5 bg-[#0F2040] border border-[#FFD700]/20 rounded-2xl p-4">
             <p className="text-xs font-bold text-[#FFD700] uppercase tracking-widest mb-3">
-              {zh ? "我的预测" : "My Picks"} ({myBetsForAward.length}/5)
+              {lc(locale, "我的预测", "My Picks")} ({myBetsForAward.length}/5)
             </p>
             <div className="space-y-2">
               {myBetsForAward.map((bet) => {
@@ -249,14 +250,14 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-sm font-black text-[#FFD700]">{formatGc(bet.gc_amount)}</p>
-                      <p className="text-[10px] text-gray-500">{bet.odds_multiplier}× · {zh ? "潜在" : "→"} {formatGc(bet.gc_amount * bet.odds_multiplier)}</p>
+                      <p className="text-[10px] text-gray-500">{bet.odds_multiplier}× · {lc(locale, "潜在", "→")} {formatGc(bet.gc_amount * bet.odds_multiplier)}</p>
                     </div>
                     {!isBettingClosed && (
                       <button
                         onClick={() => handleCancel(bet.id)}
                         disabled={isPending}
                         className="ml-2 text-gray-600 hover:text-red-400 transition-colors text-xs shrink-0"
-                        title={zh ? "取消预测" : "Cancel"}
+                        title={lc(locale, "取消预测", "Cancel")}
                       >✕</button>
                     )}
                   </div>
@@ -268,7 +269,7 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
 
         {/* ── Player Grid ── */}
         <p className="text-xs text-gray-600 mb-4">
-          {players.length} {zh ? "名候选" : "candidates"}
+          {players.length} {lc(locale, "名候选", "candidates")}
         </p>
         <div key={activeAward} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {players.map((player) => {
@@ -288,7 +289,7 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
                 {/* Already-bet badge */}
                 {hasBet && (
                   <div className="absolute top-2.5 right-2.5 bg-[#FFD700] text-[#0A1628] text-[9px] font-black px-1.5 py-0.5 rounded-full">
-                    ✓ {zh ? "已押" : "BET"}
+                    ✓ {lc(locale, "已押", "BET")}
                   </div>
                 )}
 
@@ -318,12 +319,12 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
 
                 {/* Club + Age */}
                 <p className="text-[11px] text-gray-500 mt-1 truncate">{player.club}</p>
-                <p className="text-[10px] text-gray-600">{player.age} {zh ? "岁" : "y/o"}</p>
+                <p className="text-[10px] text-gray-600">{player.age} {lc(locale, "岁", "y/o")}</p>
 
                 {/* Bet info if existing */}
                 {hasBet && (
                   <div className="mt-2 pt-2 border-t border-[#1E3A5F]">
-                    <p className="text-[10px] text-gray-500">{zh ? "预测消耗" : "GC Used"}</p>
+                    <p className="text-[10px] text-gray-500">{lc(locale, "预测消耗", "GC Used")}</p>
                     <p className="text-sm font-black text-[#FFD700]">{formatGc(bet.gc_amount)}</p>
                     <p className="text-[10px] text-gray-600">{bet.odds_multiplier}× = {formatGc(bet.gc_amount * bet.odds_multiplier)}</p>
                   </div>
@@ -340,14 +341,14 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
                           : "bg-[#1E3A5F] text-gray-300 hover:bg-[#7C6FE0]/30 hover:text-white border border-[#1E3A5F] hover:border-[#7C6FE0]/50"
                       }`}
                     >
-                      {hasBet ? (zh ? "+ 加预测" : "+ Add") : (zh ? "支持" : "Predict")}
+                      {hasBet ? (lc(locale, "+ 加预测", "+ Add")) : (lc(locale, "支持", "Predict"))}
                     </button>
                   ) : (
                     <Link
                       href={`/${locale}/auth/login`}
                       className="mt-3 block w-full py-1.5 rounded-xl text-xs font-black text-center bg-[#FFD700] text-[#0A1628] hover:bg-[#FFC200] transition-colors"
                     >
-                      {zh ? "登录预测" : "Login to Predict"}
+                      {lc(locale, "登录预测", "Login to Predict")}
                     </Link>
                   )
                 )}
@@ -391,14 +392,14 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
               <div className="bg-[#0A1628] rounded-xl px-4 py-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-gray-400">{zh ? "预测奖励" : "Prediction Reward"}</p>
+                    <p className="text-xs text-gray-400">{lc(locale, "预测奖励", "Prediction Reward")}</p>
                     <p className="text-[10px] mt-0.5" style={{ color: phaseConfig.color }}>
                       {phaseConfig.label}
                     </p>
                     <p className="text-[10px] text-gray-600 mt-0.5">{phaseConfig.sublabel}</p>
                     {activeAward === "goldenBoot" && (
                       <p className="text-[10px] text-orange-400 mt-1">
-                        {zh ? "⚠️ 金靴奖于四强赛前截止下注" : "⚠️ Golden Boot closes before semi-finals"}
+                        {lc(locale, "⚠️ 金靴奖于四强赛前截止下注", "⚠️ Golden Boot closes before semi-finals")}
                       </p>
                     )}
                   </div>
@@ -408,7 +409,7 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
 
               {/* Percentage quick-bet */}
               <div>
-                <p className="text-xs text-gray-500 mb-2">{zh ? "快速下注" : "Quick bet"}</p>
+                <p className="text-xs text-gray-500 mb-2">{lc(locale, "快速下注", "Quick bet")}</p>
                 <div className="grid grid-cols-5 gap-1.5">
                   {PCT_PRESETS.map((pct) => {
                     const v = Math.max(Math.floor(localGc * pct), 1);
@@ -437,7 +438,7 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
                         : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
                     }`}
                   >
-                    <span>{zh ? "全押" : "All in"}</span>
+                    <span>{lc(locale, "全押", "All in")}</span>
                     <span className="text-[9px] opacity-70">{formatGc(localGc)}</span>
                   </button>
                 </div>
@@ -445,7 +446,7 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
 
               {/* Custom input */}
               <div>
-                <p className="text-xs text-gray-500 mb-1.5">{zh ? "自定义金额" : "Custom amount"}</p>
+                <p className="text-xs text-gray-500 mb-1.5">{lc(locale, "自定义金额", "Custom amount")}</p>
                 <div className="flex items-center gap-2 bg-[#0A1628] border border-[#1E3A5F] rounded-xl px-3 py-2">
                   <input
                     type="number"
@@ -461,7 +462,7 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
 
               {/* Expected return */}
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">{zh ? "预计回报" : "Expected Return"}</span>
+                <span className="text-xs text-gray-500">{lc(locale, "预计回报", "Expected Return")}</span>
                 <span className="text-sm font-black text-green-400">
                   {formatGc(Math.floor(effectiveAmount() * odds))} GC
                 </span>
@@ -469,7 +470,7 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
 
               {/* Balance */}
               <div className="flex items-center justify-between border-t border-[#1E3A5F] pt-3">
-                <span className="text-xs text-gray-500">{zh ? "当前余额" : "Balance"}</span>
+                <span className="text-xs text-gray-500">{lc(locale, "当前余额", "Balance")}</span>
                 <span className="text-sm font-black text-[#FFD700]">{formatGc(localGc)}</span>
               </div>
 
@@ -492,14 +493,14 @@ export default function AwardBettingUI({ locale, userId, userGc, existingBets, p
                 disabled={isPending || isBettingClosed}
                 className="flex-1 bg-[#FFD700] text-[#0A1628] font-black py-2.5 rounded-xl text-sm hover:bg-[#FFC200] transition-colors disabled:opacity-50"
               >
-                {isPending ? "…" : (zh ? "确认预测" : "Confirm Prediction")}
+                {isPending ? "…" : (lc(locale, "确认预测", "Confirm Prediction"))}
               </button>
               <button
                 onClick={() => { setBetModal(null); setFeedback(null); }}
                 disabled={isPending}
                 className="px-4 py-2.5 border border-[#1E3A5F] text-gray-400 rounded-xl text-sm hover:text-white hover:border-gray-500 transition-colors"
               >
-                {zh ? "取消" : "Cancel"}
+                {lc(locale, "取消", "Cancel")}
               </button>
             </div>
           </div>

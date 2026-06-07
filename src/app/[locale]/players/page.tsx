@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { getFlagUrl, getTeamDisplayName } from "@/lib/flags";
+import { lc } from "@/i18n/content";
 
 interface Props {
   params:       Promise<{ locale: string }>;
@@ -37,10 +38,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const zh = locale === "zh";
   return {
-    title: zh ? "球员 | Football2026" : "Players | Football2026",
-    description: zh
-      ? "浏览 2026 FIFA 世界杯 48 支球队的全部球员资料，包含头像、位置、俱乐部和获奖预测。"
-      : "Browse all players from 48 nations at the 2026 FIFA World Cup. Stats, clubs, positions, and award contenders.",
+    title: lc(locale, "球员 | Football2026", "Players | Football2026"),
+    description: lc(locale, "浏览 2026 FIFA 世界杯 48 支球队的全部球员资料，包含头像、位置、俱乐部和获奖预测。", "Browse all players from 48 nations at the 2026 FIFA World Cup. Stats, clubs, positions, and award contenders."),
   };
 }
 
@@ -81,7 +80,7 @@ export default async function PlayersPage({ params, searchParams }: Props) {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-black text-white">
-            👤 {zh ? "2026 世界杯球员" : "WC 2026 Players"}
+            👤 {lc(locale, "2026 世界杯球员", "WC 2026 Players")}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             {zh
@@ -93,25 +92,25 @@ export default async function PlayersPage({ params, searchParams }: Props) {
         {/* Filters */}
         <form method="GET" className="flex flex-wrap gap-2">
           <input name="q" defaultValue={q}
-            placeholder={zh ? "搜索球员姓名…" : "Search player name…"}
+            placeholder={lc(locale, "搜索球员姓名…", "Search player name…")}
             className="flex-1 min-w-[160px] bg-[#0F2040] border border-[#1E3A5F] rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-[#FFD700]/40" />
           <select name="team" defaultValue={team}
             className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-[#FFD700]/40">
-            <option value="">{zh ? "所有球队" : "All teams"}</option>
+            <option value="">{lc(locale, "所有球队", "All teams")}</option>
             {teams.map((t) => (
               <option key={t} value={t}>{getTeamDisplayName(t, locale)}</option>
             ))}
           </select>
           <select name="position" defaultValue={position}
             className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-[#FFD700]/40">
-            <option value="">{zh ? "所有位置" : "All positions"}</option>
+            <option value="">{lc(locale, "所有位置", "All positions")}</option>
             {Object.entries(POS_META).map(([k, v]) => (
               <option key={k} value={k}>{k} · {zh ? v.zh : v.en}</option>
             ))}
           </select>
           <button type="submit"
             className="px-4 py-2.5 bg-[#FFD700] text-[#0A1628] font-black rounded-xl text-sm hover:bg-[#FFC200]">
-            {zh ? "搜索" : "Search"}
+            {lc(locale, "搜索", "Search")}
           </button>
         </form>
 
@@ -120,12 +119,10 @@ export default async function PlayersPage({ params, searchParams }: Props) {
           <div className="text-center py-20">
             <p className="text-4xl mb-4">⚽</p>
             <p className="text-lg font-bold text-white mb-2">
-              {zh ? "暂无球员数据" : "No players yet"}
+              {lc(locale, "暂无球员数据", "No players yet")}
             </p>
             <p className="text-sm text-gray-500">
-              {zh
-                ? "管理员请前往后台导入球员数据"
-                : "Admins: go to the admin panel to import player data"}
+              {lc(locale, "管理员请前往后台导入球员数据", "Admins: go to the admin panel to import player data")}
             </p>
           </div>
         )}
@@ -216,7 +213,7 @@ export default async function PlayersPage({ params, searchParams }: Props) {
             {page > 1 && (
               <Link href={`?q=${q}&team=${team}&position=${position}&page=${page - 1}`}
                 className="px-4 py-2 bg-[#0F2040] border border-[#1E3A5F] rounded-xl text-sm text-gray-400 hover:border-[#FFD700]/40">
-                ← {zh ? "上一页" : "Prev"}
+                ← {lc(locale, "上一页", "Prev")}
               </Link>
             )}
             <span className="text-xs text-gray-500">
@@ -225,7 +222,7 @@ export default async function PlayersPage({ params, searchParams }: Props) {
             {page < totalPages && (
               <Link href={`?q=${q}&team=${team}&position=${position}&page=${page + 1}`}
                 className="px-4 py-2 bg-[#0F2040] border border-[#1E3A5F] rounded-xl text-sm text-gray-400 hover:border-[#FFD700]/40">
-                {zh ? "下一页" : "Next"} →
+                {lc(locale, "下一页", "Next")} →
               </Link>
             )}
           </div>

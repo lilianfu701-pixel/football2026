@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import RichTextEditor from "@/components/forum/RichTextEditor";
 import ReportModal from "@/components/forum/ReportModal";
+import { lc } from "@/i18n/content";
 
 interface Props {
   locale:        string;
@@ -86,8 +87,8 @@ export default function PostActions({
   async function handleDelete() {
     const isPost  = !replyId;
     const label   = isPost
-      ? (zh ? "确定删除整个帖子？此操作不可恢复。" : "Delete this entire post? Cannot be undone.")
-      : (zh ? "确定删除此楼？此操作不可恢复。"   : "Delete this reply? Cannot be undone.");
+      ? (lc(locale, "确定删除整个帖子？此操作不可恢复。", "Delete this entire post? Cannot be undone."))
+      : (lc(locale, "确定删除此楼？此操作不可恢复。", "Delete this reply? Cannot be undone."));
     if (!window.confirm(label)) return;
 
     setDeleting(true);
@@ -156,7 +157,7 @@ export default function PostActions({
       .replace(/&[a-z]+;/gi, " ")
       .trim();
     if (!textOnly && !hasImage) {
-      setReplyErr(zh ? "回复内容不能为空" : "Reply cannot be empty");
+      setReplyErr(lc(locale, "回复内容不能为空", "Reply cannot be empty"));
       return;
     }
 
@@ -178,7 +179,7 @@ export default function PostActions({
       setReplyOpen(false);
       router.refresh();
     } catch {
-      setReplyErr(zh ? "网络错误" : "Network error");
+      setReplyErr(lc(locale, "网络错误", "Network error"));
     } finally {
       setSubmitting(false);
     }
@@ -195,7 +196,7 @@ export default function PostActions({
               ? "bg-orange-500/15 border-orange-500/40 text-orange-400"
               : "bg-[#0A1628] border-[#1E3A5F] text-gray-400 hover:text-white"
           }`}>
-          {bookmarked ? "🔖" : "🔖"} {zh ? "收藏" : "Bookmark"}
+          {bookmarked ? "🔖" : "🔖"} {lc(locale, "收藏", "Bookmark")}
         </button>
         {/* Follow */}
         <button onClick={handleFollow}
@@ -204,7 +205,7 @@ export default function PostActions({
               ? "bg-[#FFD700]/15 border-[#FFD700]/40 text-[#FFD700]"
               : "bg-[#0A1628] border-[#1E3A5F] text-gray-400 hover:text-white"
           }`}>
-          {following ? "⭐" : "☆"} {zh ? "关注" : "Follow"}
+          {following ? "⭐" : "☆"} {lc(locale, "关注", "Follow")}
         </button>
         {/* Recommend */}
         <button onClick={handleLike}
@@ -213,7 +214,7 @@ export default function PostActions({
               ? "bg-green-500/15 border-green-500/30 text-green-400"
               : "bg-[#0A1628] border-[#1E3A5F] text-gray-400 hover:text-white"
           }`}>
-          👍 {zh ? "推荐" : "Recommend"}{likes > 0 ? ` (${likes})` : ""}
+          👍 {lc(locale, "推荐", "Recommend")}{likes > 0 ? ` (${likes})` : ""}
         </button>
       </div>
     );
@@ -225,11 +226,11 @@ export default function PostActions({
       return (
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl px-5 py-6 text-center">
           <p className="text-gray-500 text-sm mb-3">
-            {zh ? "登录后才能回复" : "Login to reply"}
+            {lc(locale, "登录后才能回复", "Login to reply")}
           </p>
           <a href={`/${locale}/auth/login`}
             className="inline-block bg-[#FFD700] text-[#0A1628] font-black px-5 py-2.5 rounded-xl text-sm hover:bg-[#FFC200] transition-colors">
-            {zh ? "登录" : "Login"}
+            {lc(locale, "登录", "Login")}
           </a>
         </div>
       );
@@ -244,18 +245,18 @@ export default function PostActions({
         {/* ── Discuz-style action bar ── */}
         {!replyOpen && (
           <div className="flex items-center gap-2 px-4 py-3 border-b border-[#1E3A5F]">
-            <span className="text-xs text-gray-500 font-bold shrink-0">{zh ? "快速操作：" : "Quick actions:"}</span>
+            <span className="text-xs text-gray-500 font-bold shrink-0">{lc(locale, "快速操作：", "Quick actions:")}</span>
             <button
               onClick={() => { setReplyOpen(true); setTimeout(() => document.getElementById("reply-box")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60); }}
               className="flex items-center gap-1.5 px-4 py-1.5 bg-[#FFD700] text-[#0A1628] rounded-xl text-xs font-black hover:bg-[#FFC200] transition-colors"
             >
-              ✍️ {zh ? "回复本帖" : "Reply"}
+              ✍️ {lc(locale, "回复本帖", "Reply")}
             </button>
             <a
               href={newPostHref}
               className="flex items-center gap-1.5 px-4 py-1.5 bg-[#1E3A5F] border border-[#2A5A8F] text-gray-300 rounded-xl text-xs font-bold hover:text-white hover:bg-[#2A5A8F] transition-colors"
             >
-              📝 {zh ? "发新帖" : "New Post"}
+              📝 {lc(locale, "发新帖", "New Post")}
             </a>
           </div>
         )}
@@ -264,7 +265,7 @@ export default function PostActions({
         {replyOpen && (
           <>
             <div className="flex items-center justify-between px-5 py-3 border-b border-[#1E3A5F]">
-              <span className="text-sm font-black text-white">✍️ {zh ? "发表回复" : "Post a Reply"}</span>
+              <span className="text-sm font-black text-white">✍️ {lc(locale, "发表回复", "Post a Reply")}</span>
               <button
                 onClick={() => { setReplyOpen(false); setReplyText(""); setReplyErr(null); }}
                 className="text-gray-500 hover:text-white text-lg leading-none transition-colors"
@@ -276,7 +277,7 @@ export default function PostActions({
                 onChange={setReplyText}
                 injectHtml={injectHtml}
                 zh={zh}
-                placeholder={zh ? "写下你的回复…" : "Write your reply…"}
+                placeholder={lc(locale, "写下你的回复…", "Write your reply…")}
               />
               {replyErr && <p className="text-xs text-red-400 mt-2">⚠ {replyErr}</p>}
               <div className="flex items-center justify-between mt-3">
@@ -284,14 +285,14 @@ export default function PostActions({
                   href={newPostHref}
                   className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors"
                 >
-                  📝 {zh ? "发新帖" : "New Post"}
+                  📝 {lc(locale, "发新帖", "New Post")}
                 </a>
                 <button
                   onClick={handleReply}
                   disabled={submitting}
                   className="bg-[#FFD700] text-[#0A1628] font-black px-6 py-2.5 rounded-xl text-sm hover:bg-[#FFC200] transition-colors disabled:opacity-50"
                 >
-                  {submitting ? "…" : (zh ? "🚀 提交回复" : "🚀 Submit")}
+                  {submitting ? "…" : (lc(locale, "🚀 提交回复", "🚀 Submit"))}
                 </button>
               </div>
             </div>
@@ -315,7 +316,7 @@ export default function PostActions({
               : "border-transparent text-gray-500 hover:text-white hover:border-[#1E3A5F]"
           }`}
         >
-          ❤️ {likes > 0 ? likes : (zh ? "点赞" : "Like")}
+          ❤️ {likes > 0 ? likes : (lc(locale, "点赞", "Like"))}
         </button>
 
         {/* Bookmark (post-level) */}
@@ -327,7 +328,7 @@ export default function PostActions({
               : "border-transparent text-gray-500 hover:text-white hover:border-[#1E3A5F]"
           }`}
         >
-          🔖 {bookmarked ? (zh ? "已收藏" : "Saved") : (zh ? "收藏" : "Bookmark")}
+          🔖 {bookmarked ? (lc(locale, "已收藏", "Saved")) : (lc(locale, "收藏", "Bookmark"))}
         </button>
 
         {/* Quote */}
@@ -357,7 +358,7 @@ export default function PostActions({
             }}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-bold border border-transparent text-gray-500 hover:text-white hover:border-[#1E3A5F] transition-all"
           >
-            ⬅ {zh ? "引用" : "Quote"}
+            ⬅ {lc(locale, "引用", "Quote")}
           </button>
         )}
 
@@ -368,7 +369,7 @@ export default function PostActions({
             onClick={onEditClick}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-bold border border-transparent text-gray-500 hover:text-[#FFD700] hover:border-[#1E3A5F] transition-all"
           >
-            ✏️ {zh ? "编辑" : "Edit"}
+            ✏️ {lc(locale, "编辑", "Edit")}
           </button>
         )}
 
@@ -379,11 +380,11 @@ export default function PostActions({
             disabled={deleting}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-bold border border-transparent text-gray-600 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/20 transition-all disabled:opacity-50"
           >
-            🗑 {!replyId ? (zh ? "删除帖子" : "Del Post") : (zh ? "删除此楼" : "Del Floor")}
+            🗑 {!replyId ? (lc(locale, "删除帖子", "Del Post")) : (lc(locale, "删除此楼", "Del Floor"))}
           </button>
         )}
         {deleted && (
-          <span className="px-2.5 py-1.5 text-[11px] text-red-500/60">✓ {zh ? "已删除" : "Deleted"}</span>
+          <span className="px-2.5 py-1.5 text-[11px] text-red-500/60">✓ {lc(locale, "已删除", "Deleted")}</span>
         )}
 
         {/* Report */}
@@ -391,7 +392,7 @@ export default function PostActions({
           <button
             onClick={() => setShowReport(true)}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-bold border border-transparent text-gray-500 hover:text-orange-400 hover:border-[#1E3A5F] transition-all">
-            🚩 {zh ? "举报" : "Report"}
+            🚩 {lc(locale, "举报", "Report")}
           </button>
         )}
 
@@ -414,7 +415,7 @@ export default function PostActions({
                 : "border-transparent text-gray-500 hover:text-white hover:border-[#1E3A5F]"
             }`}
           >
-            💬 {zh ? "回复" : "Reply"}
+            💬 {lc(locale, "回复", "Reply")}
           </button>
         )}
 
@@ -424,7 +425,7 @@ export default function PostActions({
             href={`/${locale}/forum/${categorySlug}/new`}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-bold border border-transparent text-gray-500 hover:text-white hover:border-[#1E3A5F] transition-all"
           >
-            📝 {zh ? "新帖" : "New Post"}
+            📝 {lc(locale, "新帖", "New Post")}
           </a>
         )}
 
@@ -445,7 +446,7 @@ export default function PostActions({
             onChange={setReplyText}
             injectHtml={injectHtml}
             zh={zh}
-            placeholder={zh ? "写下你的回复…" : "Write your reply…"}
+            placeholder={lc(locale, "写下你的回复…", "Write your reply…")}
           />
           {replyErr && <p className="text-xs text-red-400 mt-2">⚠ {replyErr}</p>}
           <div className="flex items-center gap-2 mt-2 justify-end">
@@ -453,14 +454,14 @@ export default function PostActions({
               onClick={() => { setReplyOpen(false); setReplyText(""); setReplyErr(null); }}
               className="px-4 py-2 text-xs text-gray-500 hover:text-white border border-[#1E3A5F] rounded-xl transition-colors"
             >
-              {zh ? "取消" : "Cancel"}
+              {lc(locale, "取消", "Cancel")}
             </button>
             <button
               onClick={handleReply}
               disabled={submitting}
               className="px-4 py-2 text-xs font-black bg-[#FFD700] text-[#0A1628] rounded-xl hover:bg-[#FFC200] transition-colors disabled:opacity-50"
             >
-              {submitting ? "…" : (zh ? "提交" : "Submit")}
+              {submitting ? "…" : (lc(locale, "提交", "Submit"))}
             </button>
           </div>
         </div>

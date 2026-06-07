@@ -7,6 +7,7 @@ import { getFlagUrl, getTeamDisplayName } from "@/lib/flags";
 import { computeGroupStandings } from "@/lib/groupStandings";
 import CountdownHero from "@/components/home/CountdownHero";
 import MobileAppBanner from "@/components/home/MobileAppBanner";
+import { lc } from "@/i18n/content";
 
 /* ─── Phase detection ────────────────────────────────────────────────────── */
 const WC_START = new Date("2026-06-11T20:00:00+00:00");
@@ -102,8 +103,8 @@ function MatchCard({ match, locale }: { match: MatchRow; locale: string }) {
             match.status === "finished" ? "bg-gray-700 text-gray-400" :
                                           "bg-[#FFD700]/10 text-[#FFD700]"
           }`}>
-            {match.status === "live"     ? (zh ? "直播中" : "LIVE") :
-             match.status === "finished" ? (zh ? "已结束" : "FT") :
+            {match.status === "live"     ? (lc(locale, "直播中", "LIVE")) :
+             match.status === "finished" ? (lc(locale, "已结束", "FT")) :
                                            timeStr}
           </span>
         </div>
@@ -310,12 +311,12 @@ export default async function HomePage({ params }: HomePageProps) {
             <div className="flex items-center gap-3">
               <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
               <span className="text-xl font-black text-white">
-                🏆 {zh ? "世界杯正在进行中！" : "World Cup is LIVE!"}
+                🏆 {lc(locale, "世界杯正在进行中！", "World Cup is LIVE!")}
               </span>
             </div>
             <Link href={`/${locale}/matches`}
               className="bg-[#FFD700] text-[#0A1628] font-black px-5 py-2.5 rounded-xl text-sm hover:bg-[#FFC200] transition-all">
-              ⚽ {zh ? "立即助威" : "Predict Now"}
+              ⚽ {lc(locale, "立即助威", "Predict Now")}
             </Link>
           </div>
         </section>
@@ -323,11 +324,11 @@ export default async function HomePage({ params }: HomePageProps) {
 
       {phase === "post" && (
         <section className="bg-[#050D1E] border-b border-[#FFD700]/20 py-8 text-center">
-          <p className="text-4xl font-black text-[#FFD700]">🏆 {zh ? "感谢参与 2026 世界杯助威！" : "Thanks for playing Football 2026!"}</p>
-          <p className="text-gray-400 mt-2 text-lg">{zh ? "决赛已结束，查看最终排行榜" : "The final is over — check the final standings"}</p>
+          <p className="text-4xl font-black text-[#FFD700]">🏆 {lc(locale, "感谢参与 2026 世界杯助威！", "Thanks for playing Football 2026!")}</p>
+          <p className="text-gray-400 mt-2 text-lg">{lc(locale, "决赛已结束，查看最终排行榜", "The final is over — check the final standings")}</p>
           <Link href={`/${locale}/leaderboard`}
             className="inline-block mt-5 bg-[#FFD700] text-[#0A1628] font-black px-8 py-3 rounded-2xl hover:bg-[#FFC200] transition-all">
-            {zh ? "查看排行榜" : "View Leaderboard"}
+            {lc(locale, "查看排行榜", "View Leaderboard")}
           </Link>
         </section>
       )}
@@ -342,22 +343,22 @@ export default async function HomePage({ params }: HomePageProps) {
             <SectionTitle en="Live Leaderboard" zh="实时排行榜" locale={locale} />
             <Link href={`/${locale}/leaderboard`}
               className="text-xs text-[#FFD700] hover:underline">
-              {zh ? "完整榜单 →" : "Full board →"}
+              {lc(locale, "完整榜单 →", "Full board →")}
             </Link>
           </div>
           <div className="grid sm:grid-cols-3 gap-4">
             <DuringLeaderboard
-              title={zh ? "💰 财富榜 Top 5" : "💰 Wealth Top 5"}
+              title={lc(locale, "💰 财富榜 Top 5", "💰 Wealth Top 5")}
               users={wealthUsers}
               locale={locale}
             />
             <DuringLeaderboard
-              title={zh ? "🏅 荣誉榜 Top 5" : "🏅 Honor Top 5"}
+              title={lc(locale, "🏅 荣誉榜 Top 5", "🏅 Honor Top 5")}
               users={wealthUsers} // same data as fallback
               locale={locale}
             />
             <DuringLeaderboard
-              title={zh ? "🌍 国家榜 Top 5" : "🌍 Country Top 5"}
+              title={lc(locale, "🌍 国家榜 Top 5", "🌍 Country Top 5")}
               users={wealthUsers} // same data as fallback
               locale={locale}
             />
@@ -371,7 +372,7 @@ export default async function HomePage({ params }: HomePageProps) {
           <SectionTitle en="⚽ Upcoming Matches" zh="⚽ 即将开赛" locale={locale} />
           <Link href={`/${locale}/matches`}
             className="text-xs text-[#FFD700] hover:underline">
-            {zh ? "全部赛程 →" : "All matches →"}
+            {lc(locale, "全部赛程 →", "All matches →")}
           </Link>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -417,15 +418,15 @@ export default async function HomePage({ params }: HomePageProps) {
             {/* Table header skeleton */}
             <div className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-3 px-4 py-3 border-b border-white/10 text-[11px] text-gray-500 uppercase tracking-wider">
               <span className="w-6">#</span>
-              <span>{zh ? "球员" : "Player"}</span>
-              <span className="w-12 text-center">{zh ? "进球" : "Goals"}</span>
-              <span className="w-12 text-center">{zh ? "助攻" : "Assists"}</span>
-              <span className="w-16 text-center">{zh ? "出场" : "Apps"}</span>
+              <span>{lc(locale, "球员", "Player")}</span>
+              <span className="w-12 text-center">{lc(locale, "进球", "Goals")}</span>
+              <span className="w-12 text-center">{lc(locale, "助攻", "Assists")}</span>
+              <span className="w-16 text-center">{lc(locale, "出场", "Apps")}</span>
             </div>
             {[1, 2, 3, 4, 5].map((r) => <ScorerRowSkeleton key={r} rank={r} />)}
             <div className="px-4 py-3 text-center">
               <span className="text-[11px] text-gray-700 tracking-wide">
-                {zh ? "赛事开始后自动更新" : "Updates automatically after matches begin"}
+                {lc(locale, "赛事开始后自动更新", "Updates automatically after matches begin")}
               </span>
             </div>
           </div>
@@ -434,10 +435,10 @@ export default async function HomePage({ params }: HomePageProps) {
             {/* Header */}
             <div className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-3 px-4 py-3 border-b border-white/10 text-[11px] text-gray-500 uppercase tracking-wider">
               <span className="w-6">#</span>
-              <span>{zh ? "球员" : "Player"}</span>
-              <span className="w-12 text-center">{zh ? "进球" : "Goals"}</span>
-              <span className="w-12 text-center">{zh ? "助攻" : "Assists"}</span>
-              <span className="w-16 text-center">{zh ? "出场" : "Apps"}</span>
+              <span>{lc(locale, "球员", "Player")}</span>
+              <span className="w-12 text-center">{lc(locale, "进球", "Goals")}</span>
+              <span className="w-12 text-center">{lc(locale, "助攻", "Assists")}</span>
+              <span className="w-16 text-center">{lc(locale, "出场", "Apps")}</span>
             </div>
             {scorers.map((s, i) => (
               <div key={s.id}
@@ -489,7 +490,7 @@ export default async function HomePage({ params }: HomePageProps) {
         {groupStandings.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-[#0A1628] p-8 text-center">
             <p className="text-gray-600 text-sm">
-              {zh ? "积分榜将在小组赛开始后更新" : "Group standings will appear after group stage matches begin"}
+              {lc(locale, "积分榜将在小组赛开始后更新", "Group standings will appear after group stage matches begin")}
             </p>
           </div>
         ) : (
@@ -502,9 +503,9 @@ export default async function HomePage({ params }: HomePageProps) {
                     {zh ? `小组 ${group}` : `Group ${group}`}
                   </span>
                   <div className="flex gap-4 text-[10px] text-gray-500 uppercase tracking-wider">
-                    <span className="w-5 text-center">{zh ? "积" : "Pts"}</span>
-                    <span className="w-5 text-center">{zh ? "赛" : "P"}</span>
-                    <span className="w-5 text-center">{zh ? "差" : "GD"}</span>
+                    <span className="w-5 text-center">{lc(locale, "积", "Pts")}</span>
+                    <span className="w-5 text-center">{lc(locale, "赛", "P")}</span>
+                    <span className="w-5 text-center">{lc(locale, "差", "GD")}</span>
                   </div>
                 </div>
                 {/* Teams */}
@@ -594,25 +595,23 @@ export default async function HomePage({ params }: HomePageProps) {
       <footer className="border-t border-white/10 bg-[#030912] px-4 py-10 text-center">
         <div className="max-w-3xl mx-auto">
           <p className="text-xs leading-6 text-gray-600">
-            {zh
-              ? "GoalCoin (GC) 是 Football2026 平台内的娱乐虚拟积分，不可提现或兑换真实货币。平台仅供娱乐，18+。"
-              : "GoalCoin (GC) is a virtual entertainment currency on Football2026. It cannot be withdrawn or exchanged for real money. Entertainment only. 18+."}
+            {lc(locale, "GoalCoin (GC) 是 Football2026 平台内的娱乐虚拟积分，不可提现或兑换真实货币。平台仅供娱乐，18+。", "GoalCoin (GC) is a virtual entertainment currency on Football2026. It cannot be withdrawn or exchanged for real money. Entertainment only. 18+.")}
           </p>
           <p className="text-xs text-gray-700 mt-3">
-            {zh ? "© 2026 Football2026. 保留所有权利。" : "© 2026 Football2026. All rights reserved."}
+            {lc(locale, "© 2026 Football2026. 保留所有权利。", "© 2026 Football2026. All rights reserved.")}
           </p>
           <div className="flex justify-center gap-6 mt-5 text-xs text-gray-600">
             <Link href={`/${locale}/matches`} className="hover:text-gray-400 transition-colors">
-              {zh ? "赛程" : "Matches"}
+              {lc(locale, "赛程", "Matches")}
             </Link>
             <Link href={`/${locale}/leaderboard`} className="hover:text-gray-400 transition-colors">
-              {zh ? "排行榜" : "Leaderboard"}
+              {lc(locale, "排行榜", "Leaderboard")}
             </Link>
             <Link href={`/${locale}/forum`} className="hover:text-gray-400 transition-colors">
-              {zh ? "论坛" : "Forum"}
+              {lc(locale, "论坛", "Forum")}
             </Link>
             <Link href={`/${locale}/profile`} className="hover:text-gray-400 transition-colors">
-              {zh ? "个人中心" : "Profile"}
+              {lc(locale, "个人中心", "Profile")}
             </Link>
           </div>
         </div>

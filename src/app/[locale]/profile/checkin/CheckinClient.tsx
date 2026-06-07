@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { lc } from "@/i18n/content";
 
 interface CheckinRecord {
   date: string;
@@ -59,10 +60,10 @@ export default function CheckinClient({
       if (!res.ok) {
         if (data.error === "already_claimed") {
           setCheckedIn(true);
-          setError(zh ? "今天已经签到过了" : "Already checked in today");
+          setError(lc(locale, "今天已经签到过了", "Already checked in today"));
           return;
         }
-        setError(data.error ?? (zh ? "签到失败，请重试" : "Check-in failed, please try again"));
+        setError(data.error ?? (lc(locale, "签到失败，请重试", "Check-in failed, please try again")));
         return;
       }
       setCheckedIn(true);
@@ -70,7 +71,7 @@ export default function CheckinClient({
       setResult({ gcEarned: data.gc_earned, newStreak: data.streak });
       router.refresh();
     } catch {
-      setError(zh ? "网络错误，请重试" : "Network error, please try again");
+      setError(lc(locale, "网络错误，请重试", "Network error, please try again"));
     } finally {
       setLoading(false);
     }
@@ -110,16 +111,16 @@ export default function CheckinClient({
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">
-              {zh ? "连续签到" : "Streak"}
+              {lc(locale, "连续签到", "Streak")}
             </p>
             <div className="flex items-baseline gap-2">
               <span className="text-4xl font-black text-[#FFD700]">{streak}</span>
-              <span className="text-gray-400 text-sm">{zh ? "天" : "days"}</span>
+              <span className="text-gray-400 text-sm">{lc(locale, "天", "days")}</span>
             </div>
           </div>
           <div className="text-right">
             <p className="text-xs text-gray-500 mb-1">
-              {zh ? "今日预计领取" : "Today's estimate"}
+              {lc(locale, "今日预计领取", "Today's estimate")}
             </p>
             <p className="text-xl font-black text-white">
               {fmt(dailyGcEstimate)} GC
@@ -164,7 +165,7 @@ export default function CheckinClient({
         {/* Streak bonus info */}
         <div className="bg-[#0A1628]/50 rounded-xl p-3 mb-4">
           <p className="text-xs text-gray-500 mb-1.5">
-            {zh ? "连签奖励（每天 +1%，最高 +30%）" : "Streak bonus (+1% per day, max +30%)"}
+            {lc(locale, "连签奖励（每天 +1%，最高 +30%）", "Streak bonus (+1% per day, max +30%)")}
           </p>
           <div className="w-full bg-[#1E3A5F] rounded-full h-1.5">
             <div
@@ -173,7 +174,7 @@ export default function CheckinClient({
             />
           </div>
           <p className="text-right text-[10px] text-[#FFD700] mt-1 font-bold">
-            {Math.min(streak, 30)}/30 {zh ? "天" : "days"} · +{Math.min(streak - 1, 30)}%
+            {Math.min(streak, 30)}/30 {lc(locale, "天", "days")} · +{Math.min(streak - 1, 30)}%
           </p>
         </div>
 
@@ -196,17 +197,17 @@ export default function CheckinClient({
           }`}
         >
           {checkedIn
-            ? (zh ? "✓ 今日已签到" : "✓ Checked in today")
+            ? (lc(locale, "✓ 今日已签到", "✓ Checked in today"))
             : loading
-            ? (zh ? "签到中…" : "Checking in…")
-            : (zh ? "🎁 立即签到" : "🎁 Check In Now")}
+            ? (lc(locale, "签到中…", "Checking in…"))
+            : (lc(locale, "🎁 立即签到", "🎁 Check In Now"))}
         </button>
       </div>
 
       {/* Wealth level info */}
       <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-4">
         <p className="text-xs text-gray-500 uppercase tracking-widest mb-2">
-          {zh ? "当前等级" : "Current Level"}
+          {lc(locale, "当前等级", "Current Level")}
         </p>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -223,7 +224,7 @@ export default function CheckinClient({
             </div>
           </div>
           <div className="text-right text-xs text-gray-500">
-            {zh ? "充值或赢取 GC 可升级" : "Top up or win GC to level up"}
+            {lc(locale, "充值或赢取 GC 可升级", "Top up or win GC to level up")}
           </div>
         </div>
       </div>

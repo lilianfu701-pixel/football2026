@@ -13,6 +13,7 @@
 
 import { AI_MODELS, type AiPredictions, type AiPrediction } from "@/lib/aiModels";
 import { getTeamDisplayName } from "@/lib/flags";
+import { lc } from "@/i18n/content";
 
 export interface AiSuccessRates {
   [modelKey: string]: { correct: number; total: number } | undefined;
@@ -45,7 +46,7 @@ export default function AiPredictions({
         <div className="flex items-center gap-1.5">
           <span className="text-sm">🤖</span>
           <span className="text-sm font-bold text-white whitespace-nowrap">
-            {zh ? "AI 预测" : "AI Picks"}
+            {lc(locale, "AI 预测", "AI Picks")}
           </span>
         </div>
 
@@ -61,7 +62,7 @@ export default function AiPredictions({
 
         {/* Success rate label */}
         <span className="text-xs font-bold text-gray-500 text-center">
-          {zh ? "准确率" : "Acc."}
+          {lc(locale, "准确率", "Acc.")}
         </span>
       </div>
 
@@ -152,9 +153,7 @@ export default function AiPredictions({
       {/* ── Footer ───────────────────────────────────────────────────────────── */}
       <div className="px-4 py-2 border-t border-[#1E3A5F]/50">
         <p className="text-[10px] text-gray-600 text-center">
-          {zh
-            ? "准确率 = 预测胜负平与实际结果一致的比例"
-            : "Accuracy = correct winner/draw predictions over finished matches"}
+          {lc(locale, "准确率 = 预测胜负平与实际结果一致的比例", "Accuracy = correct winner/draw predictions over finished matches")}
         </p>
       </div>
     </div>

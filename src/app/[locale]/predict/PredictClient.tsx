@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getFlagCode, getTeamDisplayName } from "@/lib/flags";
 import { netPayout } from "@/lib/scoreOdds";
+import { lc } from "@/i18n/content";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -91,10 +92,10 @@ function TeamFlag({ team, size = 18 }: { team: string; size?: number }) {
 function StatusBadge({ status, locale }: { status: string; locale: string }) {
   const zh = locale === "zh";
   const base = "text-[10px] px-1.5 py-0.5 rounded-full font-bold shrink-0";
-  if (status === "won")      return <span className={`${base} bg-green-500/15 text-green-400`}>🎉{zh ? "赢" : "Won"}</span>;
-  if (status === "lost")     return <span className={`${base} bg-red-500/15 text-red-400`}>💔{zh ? "输" : "Lost"}</span>;
-  if (status === "refunded") return <span className={`${base} bg-gray-500/15 text-gray-400`}>{zh ? "退款" : "Refund"}</span>;
-  return <span className={`${base} bg-blue-500/15 text-blue-400`}>⏳{zh ? "待结算" : "Pending"}</span>;
+  if (status === "won")      return <span className={`${base} bg-green-500/15 text-green-400`}>🎉{lc(locale, "赢", "Won")}</span>;
+  if (status === "lost")     return <span className={`${base} bg-red-500/15 text-red-400`}>💔{lc(locale, "输", "Lost")}</span>;
+  if (status === "refunded") return <span className={`${base} bg-gray-500/15 text-gray-400`}>{lc(locale, "退款", "Refund")}</span>;
+  return <span className={`${base} bg-blue-500/15 text-blue-400`}>⏳{lc(locale, "待结算", "Pending")}</span>;
 }
 
 interface TabBarProps {
@@ -106,10 +107,10 @@ interface TabBarProps {
 function TabBar({ active, onSelect, counts, locale }: TabBarProps) {
   const zh = locale === "zh";
   const labels: Record<TabKey, string> = {
-    all:     zh ? "全部" : "All",
-    pending: zh ? "待结算" : "Pending",
-    won:     zh ? "赢" : "Won",
-    lost:    zh ? "输" : "Lost",
+    all:     lc(locale, "全部", "All"),
+    pending: lc(locale, "待结算", "Pending"),
+    won:     lc(locale, "赢", "Won"),
+    lost:    lc(locale, "输", "Lost"),
   };
   return (
     <div className="flex gap-1 bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-1 mb-3">
@@ -139,12 +140,12 @@ function EmptyState({ tab, locale, href }: { tab: TabKey; locale: string; href: 
     <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-8 text-center">
       <p className="text-gray-500 text-sm">
         {tab === "all"
-          ? (zh ? "还没有预测记录，去比赛页面开始预测吧！" : "No predictions yet — visit a match to place one!")
-          : (zh ? "该分类暂无记录" : "No records in this category")}
+          ? (lc(locale, "还没有预测记录，去比赛页面开始预测吧！", "No predictions yet — visit a match to place one!"))
+          : (lc(locale, "该分类暂无记录", "No records in this category"))}
       </p>
       {tab === "all" && (
         <Link href={href} className="inline-block mt-3 text-[#FFD700] text-xs font-bold hover:underline">
-          {zh ? "浏览比赛 →" : "Browse matches →"}
+          {lc(locale, "浏览比赛 →", "Browse matches →")}
         </Link>
       )}
     </div>
@@ -175,29 +176,29 @@ export default function PredictClient({ locale, user, stats, betHistory, scoreBe
 
   async function cancelBet(betId: string) {
     if (cancellingId) return;
-    if (!window.confirm(zh ? "确定取消这笔预测吗？消耗金额将退还到你的余额。" : "Cancel this prediction? Your stake will be refunded.")) return;
+    if (!window.confirm(lc(locale, "确定取消这笔预测吗？消耗金额将退还到你的余额。", "Cancel this prediction? Your stake will be refunded."))) return;
     setCancellingId(betId);
     setCancelError(null);
     try {
       const res  = await fetch("/api/bets", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bet_id: betId }) });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) { setCancelError(data?.error ?? (zh ? "取消失败，请重试" : "Cancel failed")); return; }
+      if (!res.ok) { setCancelError(data?.error ?? (lc(locale, "取消失败，请重试", "Cancel failed"))); return; }
       router.refresh();
-    } catch { setCancelError(zh ? "网络错误，请重试" : "Network error"); }
+    } catch { setCancelError(lc(locale, "网络错误，请重试", "Network error")); }
     finally   { setCancellingId(null); }
   }
 
   async function cancelScoreBet(betId: string) {
     if (cancellingScoreId) return;
-    if (!window.confirm(zh ? "确定取消这笔比分预测吗？消耗金额将退还到你的余额。" : "Cancel this score prediction? Your stake will be refunded.")) return;
+    if (!window.confirm(lc(locale, "确定取消这笔比分预测吗？消耗金额将退还到你的余额。", "Cancel this score prediction? Your stake will be refunded."))) return;
     setCancellingScoreId(betId);
     setCancelError(null);
     try {
       const res  = await fetch("/api/score-bets", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bet_id: betId }) });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) { setCancelError(data?.error ?? (zh ? "取消失败，请重试" : "Cancel failed")); return; }
+      if (!res.ok) { setCancelError(data?.error ?? (lc(locale, "取消失败，请重试", "Cancel failed"))); return; }
       router.refresh();
-    } catch { setCancelError(zh ? "网络错误，请重试" : "Network error"); }
+    } catch { setCancelError(lc(locale, "网络错误，请重试", "Network error")); }
     finally   { setCancellingScoreId(null); }
   }
 
@@ -231,7 +232,7 @@ export default function PredictClient({ locale, user, stats, betHistory, scoreBe
       {user && (
         <section>
           <h2 className="text-base font-black text-white mb-3">
-            🏆 {zh ? "输赢预测" : "Match Predictions"}
+            🏆 {lc(locale, "输赢预测", "Match Predictions")}
           </h2>
 
           <TabBar active={tab1} onSelect={setTab1} counts={cnt1} locale={locale} />
@@ -253,7 +254,7 @@ export default function PredictClient({ locale, user, stats, betHistory, scoreBe
                 const pickLbl  =
                   bet.prediction === "home" ? (zh ? `${homeName} 胜` : `${homeName} Win`) :
                   bet.prediction === "away" ? (zh ? `${awayName} 胜` : `${awayName} Win`) :
-                  (zh ? "平局" : "Draw");
+                  (lc(locale, "平局", "Draw"));
                 const pickColor =
                   bet.prediction === "home" ? "text-blue-400" :
                   bet.prediction === "away" ? "text-amber-400" : "text-gray-400";
@@ -293,7 +294,7 @@ export default function PredictClient({ locale, user, stats, betHistory, scoreBe
                         <span className={`text-[11px] font-bold shrink-0 ${pickColor}`}>{pickLbl}</span>
                         <span className="text-[10px] text-gray-600 shrink-0">·</span>
                         <span className="text-[10px] text-gray-500 shrink-0">
-                          {zh ? "押" : ""}{fmt(bet.gcAmount)} GC ×{(bet.odds ?? 0).toFixed(1)}
+                          {lc(locale, "押", "")}{fmt(bet.gcAmount)} GC ×{(bet.odds ?? 0).toFixed(1)}
                         </span>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
@@ -307,11 +308,11 @@ export default function PredictClient({ locale, user, stats, betHistory, scoreBe
                           )}
                           className={actionBtn}
                         >
-                          {sharedId === bet.id ? (zh ? "✓已复制" : "✓ Copied") : (zh ? "分享" : "Share")}
+                          {sharedId === bet.id ? (lc(locale, "✓已复制", "✓ Copied")) : (lc(locale, "分享", "Share"))}
                         </button>
                         {m && (
                           <Link href={`/${locale}/matches/${m.id}`} className={actionBtn}>
-                            {zh ? "详情" : "Details"}
+                            {lc(locale, "详情", "Details")}
                           </Link>
                         )}
                         {isPending && (
@@ -320,7 +321,7 @@ export default function PredictClient({ locale, user, stats, betHistory, scoreBe
                             disabled={cancellingId === bet.id}
                             className={cancelBtn}
                           >
-                            {cancellingId === bet.id ? "…" : (zh ? "取消" : "Cancel")}
+                            {cancellingId === bet.id ? "…" : (lc(locale, "取消", "Cancel"))}
                           </button>
                         )}
                       </div>
@@ -340,7 +341,7 @@ export default function PredictClient({ locale, user, stats, betHistory, scoreBe
       {user && (
         <section>
           <h2 className="text-base font-black text-white mb-3">
-            🎯 {zh ? "比分预测" : "Score Predictions"}
+            🎯 {lc(locale, "比分预测", "Score Predictions")}
           </h2>
 
           <TabBar active={tab2} onSelect={setTab2} counts={cnt2} locale={locale} />
@@ -389,7 +390,7 @@ export default function PredictClient({ locale, user, stats, betHistory, scoreBe
                     {/* ── Row 2: 押注信息 · 按钮 ────────────────────────── */}
                     <div className="flex items-center justify-between gap-1.5 mt-1.5 pt-1.5 border-t border-[#1E3A5F]/40">
                       <span className="text-[10px] text-gray-500 shrink-0">
-                        {zh ? "押" : ""}{fmt(bet.gcAmount)} GC · ×{bet.oddsMultiplier.toFixed(1)}
+                        {lc(locale, "押", "")}{fmt(bet.gcAmount)} GC · ×{bet.oddsMultiplier.toFixed(1)}
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
                         <button
@@ -402,11 +403,11 @@ export default function PredictClient({ locale, user, stats, betHistory, scoreBe
                           )}
                           className={actionBtn}
                         >
-                          {sharedId === bet.id ? (zh ? "✓已复制" : "✓ Copied") : (zh ? "分享" : "Share")}
+                          {sharedId === bet.id ? (lc(locale, "✓已复制", "✓ Copied")) : (lc(locale, "分享", "Share"))}
                         </button>
                         {m && (
                           <Link href={`/${locale}/matches/${m.id}`} className={actionBtn}>
-                            {zh ? "详情" : "Details"}
+                            {lc(locale, "详情", "Details")}
                           </Link>
                         )}
                         {isPending && (
@@ -415,7 +416,7 @@ export default function PredictClient({ locale, user, stats, betHistory, scoreBe
                             disabled={cancellingScoreId === bet.id}
                             className={cancelBtn}
                           >
-                            {cancellingScoreId === bet.id ? "…" : (zh ? "取消" : "Cancel")}
+                            {cancellingScoreId === bet.id ? "…" : (lc(locale, "取消", "Cancel"))}
                           </button>
                         )}
                       </div>
@@ -435,10 +436,10 @@ export default function PredictClient({ locale, user, stats, betHistory, scoreBe
       {user && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: zh ? "预测场次" : "Total Bets",  value: stats.totalBets,             color: "text-white",        emoji: "🎯" },
-            { label: zh ? "胜率"     : "Win Rate",     value: `${stats.winRate}%`,          color: stats.winRate >= 60 ? "text-green-400" : stats.winRate >= 40 ? "text-yellow-400" : "text-red-400", emoji: "📈" },
-            { label: zh ? "累计赢得" : "Total Won",    value: `${fmt(stats.totalWon)} GC`, color: "text-green-400",    emoji: "🪙" },
-            { label: zh ? "进行中"   : "In Progress",  value: stats.pendingBets,            color: "text-blue-400",     emoji: "⏳" },
+            { label: lc(locale, "预测场次", "Total Bets"),  value: stats.totalBets,             color: "text-white",        emoji: "🎯" },
+            { label: lc(locale, "胜率", "Win Rate"),     value: `${stats.winRate}%`,          color: stats.winRate >= 60 ? "text-green-400" : stats.winRate >= 40 ? "text-yellow-400" : "text-red-400", emoji: "📈" },
+            { label: lc(locale, "累计赢得", "Total Won"),    value: `${fmt(stats.totalWon)} GC`, color: "text-green-400",    emoji: "🪙" },
+            { label: lc(locale, "进行中", "In Progress"),  value: stats.pendingBets,            color: "text-blue-400",     emoji: "⏳" },
           ].map((s) => (
             <div key={s.label} className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-3.5">
               <div className="text-xl mb-1">{s.emoji}</div>

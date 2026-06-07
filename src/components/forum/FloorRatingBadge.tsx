@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { lc } from "@/i18n/content";
 
 // ── Shared type (exported so page.tsx can build the array) ───────────────────
 export type RatingEntry = {
@@ -33,12 +34,12 @@ function countryFlag(code: string): string {
   ).join("");
 }
 
-function timeAgo(dateStr: string, zh: boolean): string {
+function timeAgo(dateStr: string, zh: boolean, locale: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60000);
   const h = Math.floor(diff / 3600000);
   const d = Math.floor(diff / 86400000);
-  if (m < 1)  return zh ? "刚刚"      : "just now";
+  if (m < 1)  return lc(locale, "刚刚", "just now");
   if (m < 60) return zh ? `${m}分钟前` : `${m}m ago`;
   if (h < 24) return zh ? `${h}小时前` : `${h}h ago`;
   return zh ? `${d}天前` : `${d}d ago`;
@@ -55,7 +56,7 @@ export default function FloorRatingBadge({ ratings, locale, zh }: Props) {
   const isNeg = net < 0;
 
   // label shown on the badge
-  const label = isPos ? (zh ? "打赏" : "Tips") : isNeg ? (zh ? "扣分" : "Punished") : (zh ? "评分" : "Rated");
+  const label = isPos ? (lc(locale, "打赏", "Tips")) : isNeg ? (lc(locale, "扣分", "Punished")) : (lc(locale, "评分", "Rated"));
   const icon  = isPos ? "🎁" : isNeg ? "🔨" : "💰";
 
   return (
@@ -64,7 +65,7 @@ export default function FloorRatingBadge({ ratings, locale, zh }: Props) {
       {/* ── Badge button ──────────────────────────────────────────────────── */}
       <button
         onClick={() => setOpen((v) => !v)}
-        title={zh ? "点击查看详情" : "Click for details"}
+        title={lc(locale, "点击查看详情", "Click for details")}
         className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-black border transition-all duration-150 shadow-sm ${
           isPos
             ? "bg-[#FFD700]/10 border-[#FFD700]/45 text-[#FFD700] hover:bg-[#FFD700]/20 hover:border-[#FFD700]/65 shadow-[#FFD700]/5"
@@ -99,12 +100,12 @@ export default function FloorRatingBadge({ ratings, locale, zh }: Props) {
                             px-4 py-2.5 bg-[#080F1F]/70 border-b border-[#1E3A5F]">
               <span className="text-[11px] font-black text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
                 <span>{icon}</span>
-                {label} · {ratings.length}{zh ? "条" : ""}
+                {label} · {ratings.length}{lc(locale, "条", "")}
               </span>
               <span className={`text-xs font-black tabular-nums ${
                 isPos ? "text-[#FFD700]" : isNeg ? "text-red-400" : "text-gray-400"
               }`}>
-                {zh ? "净" : "Net"}&nbsp;{isPos ? "+" : ""}{net.toLocaleString()}&nbsp;GC
+                {lc(locale, "净", "Net")}&nbsp;{isPos ? "+" : ""}{net.toLocaleString()}&nbsp;GC
               </span>
             </div>
 
@@ -186,7 +187,7 @@ function RatingRow({
             </Link>
           ) : (
             <span className="text-xs text-gray-600">
-              {zh ? "用户已注销" : "Deleted user"}
+              {lc(locale, "用户已注销", "Deleted user")}
             </span>
           )}
 
@@ -222,7 +223,7 @@ function RatingRow({
           {isPos ? "+" : ""}{r.gc_amount.toLocaleString()}
         </div>
         <div className="text-[10px] text-gray-600 mt-0.5">
-          {timeAgo(r.created_at, zh)}
+          {timeAgo(r.created_at, zh, locale)}
         </div>
       </div>
 

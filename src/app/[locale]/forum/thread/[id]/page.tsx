@@ -16,6 +16,7 @@ import EditableFloor from "@/components/forum/EditableFloor";
 import AdminPostControls from "@/components/forum/AdminPostControls";
 import MatchHero from "@/components/forum/MatchHero";
 import TagBadge from "@/components/forum/TagBadge";
+import { lc } from "@/i18n/content";
 
 interface PageProps {
   params:       Promise<{ locale: string; id: string }>;
@@ -24,23 +25,23 @@ interface PageProps {
 
 const REPLIES_PER_PAGE = 10;
 
-function formatDate(dateStr: string, zh: boolean) {
+function formatDate(dateStr: string, zh: boolean, locale: string) {
   return new Date(dateStr).toLocaleString(zh ? "zh-CN" : "en-US", {
     year: "numeric", month: "2-digit", day: "2-digit",
     hour: "2-digit", minute: "2-digit",
   });
 }
 
-function timeAgo(dateStr: string, zh: boolean): string {
+function timeAgo(dateStr: string, zh: boolean, locale: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60000);
   const h = Math.floor(diff / 3600000);
   const d = Math.floor(diff / 86400000);
-  if (m < 1)  return zh ? "刚刚"      : "just now";
+  if (m < 1)  return lc(locale, "刚刚", "just now");
   if (m < 60) return zh ? `${m}分钟前` : `${m}m ago`;
   if (h < 24) return zh ? `${h}小时前` : `${h}h ago`;
   if (d < 7)  return zh ? `${d}天前`   : `${d}d ago`;
-  return formatDate(dateStr, zh);
+  return formatDate(dateStr, zh, locale);
 }
 
 // (RatingRecords replaced by FloorRatingBadge — see component)
@@ -309,7 +310,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
           </div>
           <p className="text-base font-black text-white">GoalCoin Bot</p>
           <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#FFD700]/10 text-[#FFD700] border border-[#FFD700]/25 font-bold">
-            🤖 {zh ? "官方账号" : "Official"}
+            🤖 {lc(locale, "官方账号", "Official")}
           </span>
         </div>
       );
@@ -318,7 +319,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
     if (!u) {
       return (
         <div className="w-[160px] sm:w-[192px] shrink-0 border-r border-[#1E3A5F]/70 bg-[#080F1F]/40 flex items-center justify-center p-4">
-          <span className="text-gray-600 text-sm">{zh ? "用户已注销" : "Deleted"}</span>
+          <span className="text-gray-600 text-sm">{lc(locale, "用户已注销", "Deleted")}</span>
         </div>
       );
     }
@@ -358,17 +359,17 @@ export default async function PostPage({ params, searchParams }: PageProps) {
             ? "bg-green-500/10 text-green-400 border-green-500/25"
             : "bg-gray-600/10 text-gray-500 border-gray-600/20"
         }`}>
-          {isOnline ? (zh ? "● 在线" : "● Online") : (zh ? "○ 离线" : "○ Offline")}
+          {isOnline ? (lc(locale, "● 在线", "● Online")) : (lc(locale, "○ 离线", "○ Offline"))}
         </span>
 
         {/* Level badges */}
         <div className="w-full space-y-1 px-1">
           <div className="flex items-center justify-between rounded-lg bg-[#0F2040]/60 px-2.5 py-1.5">
-            <span className="text-xs text-gray-500 font-medium">{zh ? "荣誉" : "Honor"}</span>
+            <span className="text-xs text-gray-500 font-medium">{lc(locale, "荣誉", "Honor")}</span>
             <span className="text-xs font-black" style={{ color: hl.color }}>{hl.icon} {zh ? hl.nameZh : hl.name}</span>
           </div>
           <div className="flex items-center justify-between rounded-lg bg-[#0F2040]/60 px-2.5 py-1.5">
-            <span className="text-xs text-gray-500 font-medium">{zh ? "财富" : "Wealth"}</span>
+            <span className="text-xs text-gray-500 font-medium">{lc(locale, "财富", "Wealth")}</span>
             <span className="text-xs font-black" style={{ color: wl.color }}>{wl.icon} {zh ? wl.nameZh : wl.name}</span>
           </div>
           <div className="flex items-center justify-between rounded-lg bg-[#FFD700]/5 border border-[#FFD700]/15 px-2.5 py-1.5">
@@ -384,14 +385,14 @@ export default async function PostPage({ params, searchParams }: PageProps) {
         <div className="w-full space-y-0.5">
           <Link href={`/${locale}/profile/${u.id}`}
             className="flex items-center gap-2 w-full px-2.5 py-2 rounded-lg text-xs text-gray-400 hover:text-white hover:bg-[#1E3A5F]/50 transition-colors font-medium">
-            👤 <span>{zh ? "个人空间" : "Profile"}</span>
+            👤 <span>{lc(locale, "个人空间", "Profile")}</span>
           </Link>
           <Link href={`/${locale}/messages/new?to=${u.id}`}
             className="flex items-center gap-2 w-full px-2.5 py-2 rounded-lg text-xs text-gray-400 hover:text-white hover:bg-[#1E3A5F]/50 transition-colors font-medium">
-            ✉️ <span>{zh ? "发站内信" : "Message"}</span>
+            ✉️ <span>{lc(locale, "发站内信", "Message")}</span>
           </Link>
           <button className="flex items-center gap-2 w-full px-2.5 py-2 rounded-lg text-xs text-gray-400 hover:text-white hover:bg-[#1E3A5F]/50 transition-colors font-medium">
-            ➕ <span>{zh ? "加为好友" : "Add Friend"}</span>
+            ➕ <span>{lc(locale, "加为好友", "Add Friend")}</span>
           </button>
         </div>
 
@@ -436,7 +437,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
             <div className="flex items-center gap-2 px-4 py-2 bg-[#080F1F]/50 border-b border-[#1E3A5F]/50">
               <span className="text-[11px] text-gray-500 flex items-center gap-1 flex-1 min-w-0">
                 <span className="text-gray-600 shrink-0">🕐</span>
-                <span className="truncate">{formatDate(createdAt, zh)}</span>
+                <span className="truncate">{formatDate(createdAt, zh, locale)}</span>
               </span>
               <span className="text-[11px] font-black px-2 py-0.5 rounded-md shrink-0 bg-[#1E3A5F]/40 text-gray-400">
                 {zh ? `${floorNum}楼` : `#${floorNum}`}
@@ -498,7 +499,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
         {/* ── Breadcrumb ── */}
         <nav className="flex items-center gap-1.5 text-xs text-gray-500 flex-wrap">
           <Link href={`/${locale}/forum`} className="hover:text-[#FFD700] transition-colors">
-            {zh ? "论坛" : "Forum"}
+            {lc(locale, "论坛", "Forum")}
           </Link>
           <span className="text-gray-700">›</span>
           <Link href={catHref} className="hover:text-[#FFD700] transition-colors flex items-center gap-1">
@@ -536,17 +537,17 @@ export default async function PostPage({ params, searchParams }: PageProps) {
               </span>
               {post.is_pinned && (
                 <span className="text-[10px] font-black bg-red-500/15 text-red-400 px-2.5 py-0.5 rounded-full border border-red-500/20">
-                  📌 {zh ? "置顶" : "PINNED"}
+                  📌 {lc(locale, "置顶", "PINNED")}
                 </span>
               )}
               {post.is_locked && (
                 <span className="text-[10px] font-black bg-gray-500/15 text-gray-400 px-2.5 py-0.5 rounded-full border border-gray-500/20">
-                  🔒 {zh ? "已锁定" : "LOCKED"}
+                  🔒 {lc(locale, "已锁定", "LOCKED")}
                 </span>
               )}
               {(post as typeof post & { is_featured?: boolean }).is_featured && (
                 <span className="text-[10px] font-black bg-[#FFD700]/10 text-[#FFD700] px-2.5 py-0.5 rounded-full border border-[#FFD700]/25">
-                  ⭐ {zh ? "精华" : "FEATURED"}
+                  ⭐ {lc(locale, "精华", "FEATURED")}
                 </span>
               )}
             </div>
@@ -604,18 +605,18 @@ export default async function PostPage({ params, searchParams }: PageProps) {
                 <span className="flex items-center gap-1">
                   <span>👁</span>
                   <span>{((post.view_count ?? 0) + 1).toLocaleString()}</span>
-                  <span className="text-gray-700">{zh ? "浏览" : "views"}</span>
+                  <span className="text-gray-700">{lc(locale, "浏览", "views")}</span>
                 </span>
                 <span className="flex items-center gap-1">
                   <span>💬</span>
                   <span>{post.reply_count.toLocaleString()}</span>
-                  <span className="text-gray-700">{zh ? "回复" : "replies"}</span>
+                  <span className="text-gray-700">{lc(locale, "回复", "replies")}</span>
                 </span>
                 <span className="flex items-center gap-1">
                   <span>❤️</span>
                   <span>{post.like_count.toLocaleString()}</span>
                 </span>
-                <span className="text-gray-600">{timeAgo(post.created_at, zh)}</span>
+                <span className="text-gray-600">{timeAgo(post.created_at, zh, locale)}</span>
               </div>
 
               {/* Bookmark + Recommend */}
@@ -639,7 +640,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
             {/* Share row */}
             <div className="mt-3 pt-3 border-t border-[#1E3A5F]/50 flex items-center gap-3 flex-wrap">
               <span className="text-sm font-black text-gray-300 shrink-0 flex items-center gap-1.5">
-                🔗 {zh ? "分享" : "Share"}
+                🔗 {lc(locale, "分享", "Share")}
               </span>
               <ShareButtons
                 title={post.title}
@@ -652,7 +653,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
               {/* Page jump — shown if multi-page */}
               {totalReplyPages > 1 && (
                 <div className="ml-auto flex items-center gap-1.5 text-[10px] text-gray-500">
-                  <span className="text-gray-600">{zh ? "跳至第" : "Page"}</span>
+                  <span className="text-gray-600">{lc(locale, "跳至第", "Page")}</span>
                   {Array.from({ length: Math.min(totalReplyPages, 5) }, (_, i) => i + 1).map((pg) => (
                     <a key={pg}
                       href={`/${locale}/forum/thread/${id}?page=${pg}#replies`}
@@ -699,7 +700,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
             {/* Reply count header */}
             <div className="flex items-center gap-3">
               <span className="text-xs font-black text-gray-500 uppercase tracking-widest">
-                💬 {totalReplies.toLocaleString()} {zh ? "条回复" : "Replies"}
+                💬 {totalReplies.toLocaleString()} {lc(locale, "条回复", "Replies")}
               </span>
               <div className="flex-1 h-px bg-[#1E3A5F]/40" />
             </div>
@@ -711,6 +712,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
                 totalPages={totalReplyPages}
                 buildHref={(pg) => `/${locale}/forum/thread/${id}?page=${pg}#replies`}
                 zh={zh}
+                locale={locale}
               />
             )}
 
@@ -754,7 +756,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1.5">
                               <span className="text-xs font-black text-white">@{nrAuthor?.nickname ?? "?"}</span>
-                              <span className="text-[10px] text-gray-600">{timeAgo(nr.created_at, zh)}</span>
+                              <span className="text-[10px] text-gray-600">{timeAgo(nr.created_at, zh, locale)}</span>
                             </div>
                             <RichTextContent html={nr.content} className="text-sm" />
                           </div>
@@ -775,6 +777,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
             totalPages={totalReplyPages}
             buildHref={(pg) => `/${locale}/forum/thread/${id}?page=${pg}#replies`}
             zh={zh}
+            locale={locale}
           />
         )}
 
@@ -796,7 +799,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
             <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl px-5 py-6 text-center">
               <span className="text-3xl mb-2 block">🔒</span>
               <p className="text-gray-500 text-sm">
-                {zh ? "此帖已锁定，不允许继续回复" : "This thread is locked"}
+                {lc(locale, "此帖已锁定，不允许继续回复", "This thread is locked")}
               </p>
             </div>
           )}

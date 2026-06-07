@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { lc } from "@/i18n/content";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -118,27 +119,27 @@ export default function LeaderboardClient({
       {!myId && (
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl px-5 py-4 flex items-center justify-between gap-4">
           <p className="text-gray-400 text-sm">
-            {zh ? "登录后查看你的排名" : "Login to see your ranking"}
+            {lc(locale, "登录后查看你的排名", "Login to see your ranking")}
           </p>
           <Link href={`/${locale}/auth/login`}
             className="shrink-0 text-xs bg-[#FFD700] text-[#0A1628] font-black px-4 py-2 rounded-xl hover:bg-[#FFC200] transition-colors">
-            {zh ? "登录" : "Login"}
+            {lc(locale, "登录", "Login")}
           </Link>
         </div>
       )}
 
       {/* ① 国家财富榜 */}
       <section>
-        <SectionTitle icon="🌍" title={zh ? "国家财富榜" : "Nation Wealth"} myRank={myRanks.country} zh={zh} />
-        <CountryBoard entries={countryBoard} myCountryCode={myCountryCode} zh={zh} />
+        <SectionTitle icon="🌍" title={lc(locale, "国家财富榜", "Nation Wealth")} myRank={myRanks.country} zh={zh} />
+        <CountryBoard entries={countryBoard} myCountryCode={myCountryCode} zh={zh} locale={locale} />
       </section>
 
       {/* ② 财富榜 */}
       <section>
-        <SectionTitle icon="💰" title={zh ? "财富榜" : "Wealth"} myRank={myRanks.wealth} zh={zh} />
+        <SectionTitle icon="💰" title={lc(locale, "财富榜", "Wealth")} myRank={myRanks.wealth} zh={zh} />
         <WealthBoard
           users={wealthBoard} myId={myId} zh={zh} locale={locale}
-          metricLabel={zh ? "GC 余额" : "GC Balance"}
+          metricLabel={lc(locale, "GC 余额", "GC Balance")}
           metricFn={(u) => u.gcFormatted + " GC"}
           badgeFn={(u) => ({ label: u.wlName, color: u.wlColor, bg: u.wlBg, icon: u.wlIcon })}
         />
@@ -146,10 +147,10 @@ export default function LeaderboardClient({
 
       {/* ③ 荣誉榜 */}
       <section>
-        <SectionTitle icon="🏅" title={zh ? "荣誉榜" : "Honor"} myRank={myRanks.honor} zh={zh} />
+        <SectionTitle icon="🏅" title={lc(locale, "荣誉榜", "Honor")} myRank={myRanks.honor} zh={zh} />
         <WealthBoard
           users={honorBoard} myId={myId} zh={zh} locale={locale}
-          metricLabel={zh ? "荣誉积分" : "Honor Points"}
+          metricLabel={lc(locale, "荣誉积分", "Honor Points")}
           metricFn={(u) => u.honorFormatted}
           badgeFn={(u) => ({ label: u.hlName, color: u.hlColor, bg: u.hlColor + "22", icon: u.hlIcon })}
         />
@@ -157,13 +158,13 @@ export default function LeaderboardClient({
 
       {/* ④ 胜率榜 */}
       <section>
-        <SectionTitle icon="🎯" title={zh ? "胜率榜" : "Win Rate"} myRank={myRanks.win} zh={zh} />
+        <SectionTitle icon="🎯" title={lc(locale, "胜率榜", "Win Rate")} myRank={myRanks.win} zh={zh} />
         <WinBoard users={winBoard} myId={myId} zh={zh} locale={locale} />
       </section>
 
       {/* ⑤ 邀请榜 */}
       <section>
-        <SectionTitle icon="🤝" title={zh ? "邀请榜" : "Invites"} myRank={myRanks.invite} zh={zh} />
+        <SectionTitle icon="🤝" title={lc(locale, "邀请榜", "Invites")} myRank={myRanks.invite} zh={zh} />
         <InviteBoard users={inviteBoard} myId={myId} zh={zh} locale={locale} />
       </section>
 
@@ -173,19 +174,20 @@ export default function LeaderboardClient({
 
 // ── Country board ─────────────────────────────────────────────────────────────
 
-function CountryBoard({ entries, myCountryCode, zh }: {
+function CountryBoard({ entries, myCountryCode, zh, locale }: {
   entries: CountryEntry[];
   myCountryCode: string | null;
   zh: boolean;
+  locale: string;
 }) {
-  if (entries.length === 0) return <EmptyState zh={zh} />;
+  if (entries.length === 0) return <EmptyState zh={zh} locale={locale} />;
 
   return (
     <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
       <div className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 px-5 py-3 border-b border-[#1E3A5F] bg-[#0A1628]/60">
         <span className="text-[10px] text-gray-600 uppercase tracking-widest">#</span>
-        <span className="text-[10px] text-gray-600 uppercase tracking-widest">{zh ? "国家" : "Nation"}</span>
-        <span className="text-[10px] text-gray-600 uppercase tracking-widest text-right">{zh ? "GC 总量" : "Total GC"}</span>
+        <span className="text-[10px] text-gray-600 uppercase tracking-widest">{lc(locale, "国家", "Nation")}</span>
+        <span className="text-[10px] text-gray-600 uppercase tracking-widest text-right">{lc(locale, "GC 总量", "Total GC")}</span>
       </div>
       <div className="divide-y divide-[#1E3A5F]/60">
         {entries.map((entry, i) => {
@@ -216,7 +218,7 @@ function CountryBoard({ entries, myCountryCode, zh }: {
                     </span>
                     {isMe && (
                       <span className="shrink-0 text-[9px] font-black bg-[#FFD700] text-[#0A1628] px-1.5 py-0.5 rounded-full leading-none">
-                        {zh ? "我的国家" : "MINE"}
+                        {lc(locale, "我的国家", "MINE")}
                       </span>
                     )}
                   </div>
@@ -238,7 +240,7 @@ function CountryBoard({ entries, myCountryCode, zh }: {
       </div>
       <div className="px-5 py-3 border-t border-[#1E3A5F] bg-[#0A1628]/40 text-center">
         <p className="text-[11px] text-gray-600">
-          {zh ? "国家总GC = 该国所有玩家财富之和" : "Nation total = sum of all players' GC from that country"}
+          {lc(locale, "国家总GC = 该国所有玩家财富之和", "Nation total = sum of all players' GC from that country")}
         </p>
       </div>
     </div>
@@ -258,13 +260,13 @@ function WealthBoard({
   metricFn: (u: WealthUser) => string;
   badgeFn: (u: WealthUser) => { label: string; color: string; bg: string; icon: string };
 }) {
-  if (users.length === 0) return <EmptyState zh={zh} />;
+  if (users.length === 0) return <EmptyState zh={zh} locale={locale} />;
 
   return (
     <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
       <div className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 px-5 py-3 border-b border-[#1E3A5F] bg-[#0A1628]/60">
         <span className="text-[10px] text-gray-600 uppercase tracking-widest">#</span>
-        <span className="text-[10px] text-gray-600 uppercase tracking-widest">{zh ? "玩家" : "Player"}</span>
+        <span className="text-[10px] text-gray-600 uppercase tracking-widest">{lc(locale, "玩家", "Player")}</span>
         <span className="text-[10px] text-gray-600 uppercase tracking-widest text-right">{metricLabel}</span>
       </div>
       <div className="divide-y divide-[#1E3A5F]/60">
@@ -338,14 +340,14 @@ function WealthBoard({
 function WinBoard({ users, myId, zh, locale }: {
   users: WinUser[]; myId: string | null; zh: boolean; locale: string;
 }) {
-  if (users.length === 0) return <EmptyState zh={zh} />;
+  if (users.length === 0) return <EmptyState zh={zh} locale={locale} />;
 
   return (
     <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
       <div className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 px-5 py-3 border-b border-[#1E3A5F] bg-[#0A1628]/60">
         <span className="text-[10px] text-gray-600 uppercase tracking-widest">#</span>
-        <span className="text-[10px] text-gray-600 uppercase tracking-widest">{zh ? "玩家" : "Player"}</span>
-        <span className="text-[10px] text-gray-600 uppercase tracking-widest text-right">{zh ? "胜率" : "Win Rate"}</span>
+        <span className="text-[10px] text-gray-600 uppercase tracking-widest">{lc(locale, "玩家", "Player")}</span>
+        <span className="text-[10px] text-gray-600 uppercase tracking-widest text-right">{lc(locale, "胜率", "Win Rate")}</span>
       </div>
       <div className="divide-y divide-[#1E3A5F]/60">
         {users.map((u, i) => {
@@ -401,7 +403,7 @@ function WinBoard({ users, myId, zh, locale }: {
                       />
                     </div>
                     <span className="text-[10px] text-gray-500">
-                      {u.won}/{u.total} {zh ? "场" : "bets"}
+                      {u.won}/{u.total} {lc(locale, "场", "bets")}
                     </span>
                   </div>
                 </div>
@@ -426,14 +428,14 @@ function WinBoard({ users, myId, zh, locale }: {
 function InviteBoard({ users, myId, zh, locale }: {
   users: InviteUser[]; myId: string | null; zh: boolean; locale: string;
 }) {
-  if (users.length === 0) return <EmptyState zh={zh} />;
+  if (users.length === 0) return <EmptyState zh={zh} locale={locale} />;
 
   return (
     <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
       <div className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 px-5 py-3 border-b border-[#1E3A5F] bg-[#0A1628]/60">
         <span className="text-[10px] text-gray-600 uppercase tracking-widest">#</span>
-        <span className="text-[10px] text-gray-600 uppercase tracking-widest">{zh ? "玩家" : "Player"}</span>
-        <span className="text-[10px] text-gray-600 uppercase tracking-widest text-right">{zh ? "邀请数" : "Invites"}</span>
+        <span className="text-[10px] text-gray-600 uppercase tracking-widest">{lc(locale, "玩家", "Player")}</span>
+        <span className="text-[10px] text-gray-600 uppercase tracking-widest text-right">{lc(locale, "邀请数", "Invites")}</span>
       </div>
       <div className="divide-y divide-[#1E3A5F]/60">
         {users.map((u, i) => {
@@ -481,7 +483,7 @@ function InviteBoard({ users, myId, zh, locale }: {
               <div className="text-right shrink-0">
                 <p className="text-sm font-black text-[#FFD700] tabular-nums">
                   {u.inviteCount.toLocaleString()}
-                  <span className="text-xs text-gray-500 font-normal ml-0.5">{zh ? "人" : ""}</span>
+                  <span className="text-xs text-gray-500 font-normal ml-0.5">{lc(locale, "人", "")}</span>
                 </p>
                 <p className="text-[10px] text-gray-600">🪙 {u.inviteGc}</p>
               </div>
@@ -492,7 +494,7 @@ function InviteBoard({ users, myId, zh, locale }: {
       <div className="px-5 py-4 border-t border-[#1E3A5F] bg-[#0A1628]/40">
         <Link href={`/${locale}/invite`}
           className="block w-full text-center bg-[#1E3A5F] hover:bg-[#FFD700]/20 border border-[#1E3A5F] hover:border-[#FFD700]/40 text-gray-300 hover:text-[#FFD700] font-semibold py-2.5 rounded-xl text-sm transition-all">
-          🤝 {zh ? "邀请好友，一起上榜" : "Invite Friends & Climb the Board"}
+          🤝 {lc(locale, "邀请好友，一起上榜", "Invite Friends & Climb the Board")}
         </Link>
       </div>
     </div>
@@ -501,12 +503,12 @@ function InviteBoard({ users, myId, zh, locale }: {
 
 // ── Empty state ───────────────────────────────────────────────────────────────
 
-function EmptyState({ zh }: { zh: boolean }) {
+function EmptyState({ zh, locale }: { zh: boolean; locale: string }) {
   return (
     <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-12 text-center">
       <div className="text-4xl mb-3">📭</div>
       <p className="text-gray-500 text-sm">
-        {zh ? "暂无数据，成为第一名吧！" : "No data yet — be the first!"}
+        {lc(locale, "暂无数据，成为第一名吧！", "No data yet — be the first!")}
       </p>
     </div>
   );

@@ -15,6 +15,7 @@ import { getH2H } from "@/lib/h2h";
 import { AI_MODELS } from "@/lib/aiModels";
 import type { AiPredictions as AiPredictionsType } from "@/lib/aiModels";
 import type { AiSuccessRates } from "@/components/matches/AiPredictions";
+import { lc } from "@/i18n/content";
 
 // ── Static generation: pre-render all 104 match pages × 2 locales ──────────────
 export const revalidate = 60; // ISR: re-generate in background every 60 seconds
@@ -184,7 +185,7 @@ export default async function MatchPage({ params }: MatchPageProps) {
             href={`/${locale}/matches${match.stage === "group" ? `?stage=group&group=${match.group_name?.toLowerCase()}` : `?stage=${match.stage}`}`}
             className="inline-flex items-center gap-1 text-gray-500 hover:text-white text-sm transition-colors shrink-0"
           >
-            ← {zh ? "返回" : "Back"}
+            ← {lc(locale, "返回", "Back")}
           </Link>
           <div className="w-px h-4 bg-[#1E3A5F] shrink-0" />
           {match.stage === "group" ? (
@@ -352,7 +353,7 @@ export default async function MatchPage({ params }: MatchPageProps) {
               {/* ── Header row ── */}
               <div className="grid grid-cols-[2fr_3fr_3fr] gap-x-2 items-center px-4 py-2 border-b border-[#1E3A5F]">
                 {/* Title */}
-                <span className="text-sm font-bold text-gray-200">⚔️ {zh ? "交战历史" : "Head to Head"}</span>
+                <span className="text-sm font-bold text-gray-200">⚔️ {lc(locale, "交战历史", "Head to Head")}</span>
 
                 {/* Home team: flag → name (horizontal) */}
                 <div className="flex items-center justify-center gap-1.5">
@@ -417,16 +418,16 @@ export default async function MatchPage({ params }: MatchPageProps) {
 
                   {/* ── Stats footer ── */}
                   <div className="grid grid-cols-[2fr_6fr] gap-x-2 items-center px-4 py-3 bg-[#0A1628]/50 border-t border-[#1E3A5F]">
-                    <span className="text-xs font-bold text-gray-500">{zh ? "统计" : "Record"}</span>
+                    <span className="text-xs font-bold text-gray-500">{lc(locale, "统计", "Record")}</span>
                     <div className="flex justify-evenly items-center">
                       <span className="text-sm font-black text-[#FFD700]">
-                        {h2hStats.homeWins}{zh ? "赢" : "W"}
+                        {h2hStats.homeWins}{lc(locale, "赢", "W")}
                       </span>
                       <span className="text-sm font-black text-blue-400">
-                        {h2hStats.draws}{zh ? "平" : "D"}
+                        {h2hStats.draws}{lc(locale, "平", "D")}
                       </span>
                       <span className="text-sm font-black text-purple-400">
-                        {h2hStats.awayWins}{zh ? "胜" : "W"}
+                        {h2hStats.awayWins}{lc(locale, "胜", "W")}
                       </span>
                     </div>
                   </div>
@@ -434,7 +435,7 @@ export default async function MatchPage({ params }: MatchPageProps) {
               ) : (
                 <div className="flex flex-col items-center py-5 gap-1.5">
                   <span className="text-2xl">🥇</span>
-                  <p className="text-sm font-bold text-gray-400">{zh ? "首次交锋" : "First Ever Meeting"}</p>
+                  <p className="text-sm font-bold text-gray-400">{lc(locale, "首次交锋", "First Ever Meeting")}</p>
                   <p className="text-xs text-gray-600 text-center px-4">
                     {zh
                       ? `${homeNameZh} 与 ${awayNameZh} 历史上首次正式交锋`

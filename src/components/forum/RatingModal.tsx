@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { getMaxAmount, makePresets, fmtGC } from "@/lib/forum/ratingCap";
+import { lc } from "@/i18n/content";
+import { useLocale } from "next-intl";
 
 interface Props {
   postId:            number;
@@ -20,6 +22,7 @@ export default function RatingModal({
   recipientBalance = 0,
   initialMode = "reward", zh, onClose, onDone,
 }: Props) {
+  const locale = useLocale();
   const maxAmount = getMaxAmount(recipientBalance);
   const PRESETS   = makePresets(maxAmount);
 
@@ -46,7 +49,7 @@ export default function RatingModal({
 
   async function handleSubmit() {
     if (finalAmount <= 0) {
-      setErr(zh ? "请输入有效金额" : "Invalid amount");
+      setErr(lc(locale, "请输入有效金额", "Invalid amount"));
       return;
     }
     setSubmitting(true);
@@ -64,12 +67,12 @@ export default function RatingModal({
       });
       const data = await res.json();
       if (!res.ok) {
-        setErr(data.error ?? (zh ? "操作失败" : "Failed"));
+        setErr(data.error ?? (lc(locale, "操作失败", "Failed")));
         return;
       }
       onDone();
     } catch {
-      setErr(zh ? "网络错误" : "Network error");
+      setErr(lc(locale, "网络错误", "Network error"));
     } finally {
       setSubmitting(false);
     }
@@ -90,10 +93,10 @@ export default function RatingModal({
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#1E3A5F]/70">
           <div>
             <h2 className="text-base font-black text-white flex items-center gap-2">
-              💰 {zh ? "赏罚 GC" : "Rate with GC"}
+              💰 {lc(locale, "赏罚 GC", "Rate with GC")}
             </h2>
             <p className="text-[11px] text-gray-500 mt-0.5">
-              {zh ? "对象：" : "To: "}
+              {lc(locale, "对象：", "To: ")}
               <span className="text-[#FFD700] font-bold">{authorName}</span>
             </p>
           </div>
@@ -122,7 +125,7 @@ export default function RatingModal({
                 }`}
               >
                 {m === "reward" ? "🎁" : "🔨"}
-                {m === "reward" ? (zh ? "赏（奖励）" : "Reward") : (zh ? "罚（扣除）" : "Punish")}
+                {m === "reward" ? (lc(locale, "赏（奖励）", "Reward")) : (lc(locale, "罚（扣除）", "Punish"))}
               </button>
             ))}
           </div>
@@ -131,10 +134,10 @@ export default function RatingModal({
           <div>
             <div className="flex items-center justify-between mb-2">
               <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">
-                GC {zh ? "金额" : "Amount"}
+                GC {lc(locale, "金额", "Amount")}
               </p>
               <p className="text-[10px] text-gray-600">
-                {zh ? "上限" : "Max"}{" "}
+                {lc(locale, "上限", "Max")}{" "}
                 <span className="font-black text-gray-500">{fmtGC(maxAmount)} GC</span>
               </p>
             </div>
@@ -178,14 +181,14 @@ export default function RatingModal({
           {/* Reason */}
           <div>
             <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-2">
-              {zh ? "理由（可选，最多 80 字）" : "Reason (optional)"}
+              {lc(locale, "理由（可选，最多 80 字）", "Reason (optional)")}
             </p>
             <input
               type="text"
               maxLength={80}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder={zh ? "填写赏罚理由…" : "Enter your reason…"}
+              placeholder={lc(locale, "填写赏罚理由…", "Enter your reason…")}
               className="w-full bg-[#080F1F] border border-[#1E3A5F] rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-700 outline-none focus:border-[#2A4A7F] transition-colors"
             />
           </div>
@@ -197,7 +200,7 @@ export default function RatingModal({
             {mode === "reward" ? (
               <>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">{zh ? "你支出" : "You spend"}</span>
+                  <span className="text-gray-500">{lc(locale, "你支出", "You spend")}</span>
                   <span className="font-black text-[#FFD700]">−{finalAmount.toLocaleString()} GC</span>
                 </div>
                 <div className="flex justify-between">
@@ -212,7 +215,7 @@ export default function RatingModal({
                   <span className="font-black text-red-400">−{finalAmount.toLocaleString()} GC</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">{zh ? "手续费（你支出）" : "Your fee"}</span>
+                  <span className="text-gray-500">{lc(locale, "手续费（你支出）", "Your fee")}</span>
                   <span className="font-black text-orange-400">−{fee.toLocaleString()} GC</span>
                 </div>
               </>
@@ -232,7 +235,7 @@ export default function RatingModal({
               onClick={onClose}
               className="flex-1 py-2.5 rounded-xl border border-[#1E3A5F] text-sm font-bold text-gray-400 hover:text-white hover:border-[#2A4A7F] transition-colors"
             >
-              {zh ? "取消" : "Cancel"}
+              {lc(locale, "取消", "Cancel")}
             </button>
             <button
               onClick={handleSubmit}
@@ -246,8 +249,8 @@ export default function RatingModal({
               {submitting
                 ? "…"
                 : mode === "reward"
-                  ? (zh ? "🎁 确认赏" : "🎁 Reward")
-                  : (zh ? "🔨 确认罚" : "🔨 Punish")}
+                  ? (lc(locale, "🎁 确认赏", "🎁 Reward"))
+                  : (lc(locale, "🔨 确认罚", "🔨 Punish"))}
             </button>
           </div>
 

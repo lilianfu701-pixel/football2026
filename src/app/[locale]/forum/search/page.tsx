@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getWealthLevel } from "@/lib/levels";
 import ForumSearchBar from "@/components/forum/ForumSearchBar";
 import ForumPagination from "@/components/forum/Pagination";
+import { lc } from "@/i18n/content";
 
 interface PageProps {
   params:       Promise<{ locale: string }>;
@@ -57,12 +58,12 @@ function Highlight({ text, query }: { text: string; query: string }) {
   );
 }
 
-function timeAgo(dateStr: string, zh: boolean): string {
+function timeAgo(dateStr: string, zh: boolean, locale: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60_000);
   const h = Math.floor(diff / 3_600_000);
   const d = Math.floor(diff / 86_400_000);
-  if (m < 1)   return zh ? "刚刚"       : "just now";
+  if (m < 1)   return lc(locale, "刚刚", "just now");
   if (m < 60)  return zh ? `${m}分钟前` : `${m}m ago`;
   if (h < 24)  return zh ? `${h}小时前` : `${h}h ago`;
   if (d < 30)  return zh ? `${d}天前`   : `${d}d ago`;
@@ -158,16 +159,16 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-xs text-gray-500">
           <Link href={`/${locale}/forum`} className="hover:text-[#FFD700] transition-colors">
-            {zh ? "论坛" : "Forum"}
+            {lc(locale, "论坛", "Forum")}
           </Link>
           <span className="text-gray-700">›</span>
-          <span className="text-gray-400">{zh ? "搜索" : "Search"}</span>
+          <span className="text-gray-400">{lc(locale, "搜索", "Search")}</span>
         </nav>
 
         {/* Search bar */}
         <div className="space-y-1">
           <h1 className="text-xl font-black text-white">
-            🔍 {zh ? "搜索帖子" : "Search Posts"}
+            🔍 {lc(locale, "搜索帖子", "Search Posts")}
           </h1>
           <ForumSearchBar locale={locale} defaultValue={query} zh={zh} />
         </div>
@@ -179,7 +180,7 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <p className="text-xs text-gray-500">
                 {error
-                  ? (zh ? "搜索出错，请重试" : "Search error, please retry")
+                  ? (lc(locale, "搜索出错，请重试", "Search error, please retry"))
                   : zh
                     ? `找到 ${totalCount.toLocaleString()} 条结果（关键词：「${query}」）`
                     : `${totalCount.toLocaleString()} result${totalCount !== 1 ? "s" : ""} for "${query}"`}
@@ -196,7 +197,7 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
                     : "border-[#1E3A5F] text-gray-500 hover:text-white hover:border-[#2A4A7F]"
                 }`}
               >
-                {zh ? "全部板块" : "All boards"}
+                {lc(locale, "全部板块", "All boards")}
               </Link>
               {categories.map((c) => (
                 <Link
@@ -220,6 +221,7 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
                 totalPages={totalPages}
                 buildHref={(pg) => buildHref({ page: String(pg) })}
                 zh={zh}
+                locale={locale}
               />
             )}
 
@@ -231,13 +233,13 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
                   {zh ? `没有找到与「${query}」相关的帖子` : `No posts found for "${query}"`}
                 </p>
                 <p className="text-gray-600 text-sm">
-                  {zh ? "试试其他关键词，或浏览所有板块" : "Try different keywords or browse all boards"}
+                  {lc(locale, "试试其他关键词，或浏览所有板块", "Try different keywords or browse all boards")}
                 </p>
                 <Link
                   href={`/${locale}/forum`}
                   className="inline-block mt-2 text-xs text-[#FFD700] hover:underline"
                 >
-                  {zh ? "← 返回论坛首页" : "← Back to forum"}
+                  {lc(locale, "← 返回论坛首页", "← Back to forum")}
                 </Link>
               </div>
             ) : (
@@ -302,7 +304,7 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
                             <span className="text-gray-500">@{author.nickname}</span>
                           </span>
                         )}
-                        <span>{timeAgo(post.created_at, zh)}</span>
+                        <span>{timeAgo(post.created_at, zh, locale)}</span>
                         <span className="flex items-center gap-0.5">
                           <span>👁</span>
                           <span>{(post.view_count ?? 0).toLocaleString()}</span>
@@ -329,6 +331,7 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
                 totalPages={totalPages}
                 buildHref={(pg) => buildHref({ page: String(pg) })}
                 zh={zh}
+                locale={locale}
               />
             )}
           </>
@@ -336,7 +339,7 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
           /* No query entered yet — show category shortcuts */
           <div className="space-y-4">
             <p className="text-sm text-gray-500">
-              {zh ? "输入关键词开始搜索全站帖子" : "Enter keywords to search all posts across all boards"}
+              {lc(locale, "输入关键词开始搜索全站帖子", "Enter keywords to search all posts across all boards")}
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {categories.map((c) => {

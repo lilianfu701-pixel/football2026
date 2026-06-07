@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { lc } from "@/i18n/content";
 
 interface Props {
   targetId:       string;
@@ -62,7 +63,7 @@ export default function UserFollowButton({
             : "px-5 py-2.5 text-sm bg-[#FFD700] text-[#0A1628] hover:bg-[#FFC200]"
         }`}
       >
-        {zh ? "关注" : "Follow"}
+        {lc(locale, "关注", "Follow")}
       </Link>
     );
   }
@@ -87,8 +88,8 @@ export default function UserFollowButton({
         <span>+</span>
       )}
       {following
-        ? (zh ? "已关注" : "Following")
-        : (zh ? "关注" : "Follow")}
+        ? (lc(locale, "已关注", "Following"))
+        : (lc(locale, "关注", "Follow"))}
       {count > 0 && !compact && (
         <span className={`text-[10px] font-normal opacity-70`}>
           {count >= 1000 ? `${(count / 1000).toFixed(1)}k` : count}

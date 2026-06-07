@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { lc } from "@/i18n/content";
 
 function formatGc(n: number): string {
   if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1).replace(/\.0$/, "")}B`;
@@ -72,7 +73,7 @@ function SuccessContent() {
       <div className="min-h-screen bg-[#0A1628] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-[#1E3A5F] border-t-[#FFD700] rounded-full animate-spin" />
-          <p className="text-gray-400 text-sm">{zh ? "正在确认支付…" : "Confirming payment…"}</p>
+          <p className="text-gray-400 text-sm">{lc(locale, "正在确认支付…", "Confirming payment…")}</p>
         </div>
       </div>
     );
@@ -85,18 +86,16 @@ function SuccessContent() {
         <div className="max-w-sm w-full text-center">
           <div className="text-6xl mb-4">⚠️</div>
           <h1 className="text-xl font-black text-white mb-2">
-            {zh ? "支付验证失败" : "Payment verification failed"}
+            {lc(locale, "支付验证失败", "Payment verification failed")}
           </h1>
           <p className="text-gray-400 text-sm mb-6">
-            {zh
-              ? "如已扣款，GoalCoin 将在 5 分钟内自动到账。如有疑问请联系客服。"
-              : "If charged, GoalCoin will be credited within 5 minutes. Contact support if needed."}
+            {lc(locale, "如已扣款，GoalCoin 将在 5 分钟内自动到账。如有疑问请联系客服。", "If charged, GoalCoin will be credited within 5 minutes. Contact support if needed.")}
           </p>
           <Link
             href={`/${locale}/profile`}
             className="inline-block px-6 py-3 bg-[#FFD700] text-[#0A1628] font-black rounded-2xl hover:bg-[#FFC200] transition-colors"
           >
-            {zh ? "返回个人主页" : "Back to Profile"}
+            {lc(locale, "返回个人主页", "Back to Profile")}
           </Link>
         </div>
       </div>
@@ -121,28 +120,28 @@ function SuccessContent() {
           </div>
 
           <h1 className="text-2xl font-black text-white mb-1">
-            {zh ? "充值成功！" : "Top-up Successful!"}
+            {lc(locale, "充值成功！", "Top-up Successful!")}
           </h1>
           <p className="text-gray-500 text-sm mb-6">
             {isWechat
-              ? (zh ? "通过微信支付完成" : "Paid via WeChat Pay")
+              ? (lc(locale, "通过微信支付完成", "Paid via WeChat Pay"))
               : isAlipay
-                ? (zh ? "通过支付宝完成" : "Paid via Alipay")
+                ? (lc(locale, "通过支付宝完成", "Paid via Alipay"))
                 : isUsdt
-                  ? (zh ? "通过 USDT TRC-20 完成支付" : "Paid via USDT TRC-20")
+                  ? (lc(locale, "通过 USDT TRC-20 完成支付", "Paid via USDT TRC-20"))
                   : isPayPal
-                    ? (zh ? "通过 PayPal 完成支付" : "Paid via PayPal")
+                    ? (lc(locale, "通过 PayPal 完成支付", "Paid via PayPal"))
                     : isPaddle
-                      ? (zh ? "通过银行卡完成支付" : "Paid via Card")
+                      ? (lc(locale, "通过银行卡完成支付", "Paid via Card"))
                       : priceCny > 0
                         ? (zh ? `已支付 ¥${priceCny}` : `Paid ¥${priceCny}`)
-                        : (zh ? "支付完成" : "Payment complete")}
+                        : (lc(locale, "支付完成", "Payment complete"))}
           </p>
 
           {/* GC Amount */}
           <div className="bg-[#FFD700]/10 border border-[#FFD700]/30 rounded-2xl px-6 py-5 mb-6">
             <p className="text-gray-400 text-xs mb-1">
-              {zh ? "到账 GoalCoin" : "GoalCoin Credited"}
+              {lc(locale, "到账 GoalCoin", "GoalCoin Credited")}
             </p>
             <p className="text-4xl font-black text-[#FFD700]">
               +{formatGc(gcAmount)}
@@ -151,7 +150,7 @@ function SuccessContent() {
           </div>
 
           <p className="text-gray-600 text-xs mb-6">
-            {zh ? "GoalCoin 已到账，5 秒后自动跳转个人主页" : "GC credited · Redirecting in 5s"}
+            {lc(locale, "GoalCoin 已到账，5 秒后自动跳转个人主页", "GC credited · Redirecting in 5s")}
           </p>
 
           <div className="flex flex-col gap-2">
@@ -159,13 +158,13 @@ function SuccessContent() {
               href={`/${locale}/profile`}
               className="block w-full py-3 bg-[#FFD700] text-[#0A1628] font-black rounded-2xl text-sm hover:bg-[#FFC200] transition-colors"
             >
-              {zh ? "查看余额 →" : "View Balance →"}
+              {lc(locale, "查看余额 →", "View Balance →")}
             </Link>
             <Link
               href={`/${locale}/matches`}
               className="block w-full py-3 bg-[#0F2040] border border-[#1E3A5F] text-gray-300 font-bold rounded-2xl text-sm hover:border-gray-500 transition-colors"
             >
-              {zh ? "去预测比赛" : "Go Predict Matches"}
+              {lc(locale, "去预测比赛", "Go Predict Matches")}
             </Link>
           </div>
         </div>

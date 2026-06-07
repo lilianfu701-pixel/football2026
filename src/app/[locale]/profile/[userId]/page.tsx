@@ -15,6 +15,7 @@ import {
 import { getCountryByCode } from "@/lib/countries";
 import ProfileTabs from "./ProfileTabs";
 import UserFollowButton from "@/components/UserFollowButton";
+import { lc } from "@/i18n/content";
 
 interface PageProps {
   params:       Promise<{ locale: string; userId: string }>;
@@ -155,7 +156,7 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
     const m = Math.floor(diff / 60000);
     const h = Math.floor(diff / 3600000);
     const d = Math.floor(diff / 86400000);
-    if (m < 1)  return zh ? "刚刚"      : "just now";
+    if (m < 1)  return lc(locale, "刚刚", "just now");
     if (m < 60) return zh ? `${m}分钟前` : `${m}m ago`;
     if (h < 24) return zh ? `${h}小时前` : `${h}h ago`;
     if (d < 30) return zh ? `${d}天前`   : `${d}d ago`;
@@ -257,25 +258,25 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
           <div className="mt-3 flex items-center gap-4">
             <Link href={`/${locale}/profile/${userId}?tab=followers`} className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
               <span className="text-white font-black text-sm">{(profile.follower_count ?? 0).toLocaleString()}</span>
-              <span className="text-gray-500 text-xs">{zh ? "粉丝" : "Followers"}</span>
+              <span className="text-gray-500 text-xs">{lc(locale, "粉丝", "Followers")}</span>
             </Link>
             <div className="w-px h-3 bg-[#1E3A5F]" />
             <Link href={`/${locale}/profile/${userId}?tab=following`} className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
               <span className="text-white font-black text-sm">{(profile.following_count ?? 0).toLocaleString()}</span>
-              <span className="text-gray-500 text-xs">{zh ? "关注" : "Following"}</span>
+              <span className="text-gray-500 text-xs">{lc(locale, "关注", "Following")}</span>
             </Link>
           </div>
 
           {/* Stats row */}
           <div className="mt-4 grid grid-cols-3 gap-3">
             <div className="bg-[#0A1628] border border-[#1E3A5F] rounded-xl p-3 text-center">
-              <p className="text-xs text-gray-500">{zh ? "财富等级" : "Wealth"}</p>
+              <p className="text-xs text-gray-500">{lc(locale, "财富等级", "Wealth")}</p>
               <p className="text-sm font-black" style={{ color: wealthLevel.color }}>
                 {wealthLevel.icon} {zh ? wealthLevel.nameZh : wealthLevel.name}
               </p>
             </div>
             <div className="bg-[#0A1628] border border-[#1E3A5F] rounded-xl p-3 text-center">
-              <p className="text-xs text-gray-500">{zh ? "荣誉等级" : "Honor"}</p>
+              <p className="text-xs text-gray-500">{lc(locale, "荣誉等级", "Honor")}</p>
               <p className="text-sm font-black" style={{ color: honorLevel.color }}>
                 {honorLevel.icon} {zh ? honorLevel.nameZh : honorLevel.name}
               </p>
@@ -314,7 +315,7 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
 
           {/* Member since */}
           <p className="text-[10px] text-gray-600 mt-3">
-            {zh ? "注册于" : "Member since"}{" "}
+            {lc(locale, "注册于", "Member since")}{" "}
             {new Date(profile.created_at).toLocaleDateString(zh ? "zh-CN" : "en-US", { year: "numeric", month: "long", day: "numeric" })}
           </p>
         </div>
@@ -348,7 +349,7 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
             {posts.length === 0 ? (
               <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-16 text-center">
                 <div className="text-4xl mb-3">📭</div>
-                <p className="text-gray-500 text-sm">{zh ? "还没有发布主题" : "No posts yet"}</p>
+                <p className="text-gray-500 text-sm">{lc(locale, "还没有发布主题", "No posts yet")}</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -391,7 +392,7 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
             {replies.length === 0 ? (
               <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-16 text-center">
                 <div className="text-4xl mb-3">📭</div>
-                <p className="text-gray-500 text-sm">{zh ? "还没有回复" : "No replies yet"}</p>
+                <p className="text-gray-500 text-sm">{lc(locale, "还没有回复", "No replies yet")}</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -415,7 +416,7 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
                           </span>
                         )}
                         <span className="text-xs text-gray-400 font-semibold truncate">
-                          {zh ? "回复：" : "Re: "}{fp?.title ?? ""}
+                          {lc(locale, "回复：", "Re: ")}{fp?.title ?? ""}
                         </span>
                         <span className="text-[10px] text-gray-600 shrink-0">{timeAgo(r.created_at)}</span>
                       </div>
@@ -440,7 +441,7 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
             {followers.length === 0 ? (
               <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-16 text-center">
                 <div className="text-4xl mb-3">👤</div>
-                <p className="text-gray-500 text-sm">{zh ? "还没有粉丝" : "No followers yet"}</p>
+                <p className="text-gray-500 text-sm">{lc(locale, "还没有粉丝", "No followers yet")}</p>
               </div>
             ) : (
               followers.map((u) => (
@@ -458,7 +459,7 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-black text-white group-hover:text-[#FFD700] transition-colors truncate">{u.nickname}</p>
-                    <p className="text-[10px] text-gray-600">{(u.follower_count ?? 0).toLocaleString()} {zh ? "粉丝" : "followers"}</p>
+                    <p className="text-[10px] text-gray-600">{(u.follower_count ?? 0).toLocaleString()} {lc(locale, "粉丝", "followers")}</p>
                   </div>
                   <svg className="w-4 h-4 text-gray-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -475,7 +476,7 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
             {following.length === 0 ? (
               <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-16 text-center">
                 <div className="text-4xl mb-3">👤</div>
-                <p className="text-gray-500 text-sm">{zh ? "还没有关注任何人" : "Not following anyone yet"}</p>
+                <p className="text-gray-500 text-sm">{lc(locale, "还没有关注任何人", "Not following anyone yet")}</p>
               </div>
             ) : (
               following.map((u) => (
@@ -493,7 +494,7 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-black text-white group-hover:text-[#FFD700] transition-colors truncate">{u.nickname}</p>
-                    <p className="text-[10px] text-gray-600">{(u.follower_count ?? 0).toLocaleString()} {zh ? "粉丝" : "followers"}</p>
+                    <p className="text-[10px] text-gray-600">{(u.follower_count ?? 0).toLocaleString()} {lc(locale, "粉丝", "followers")}</p>
                   </div>
                   <svg className="w-4 h-4 text-gray-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -512,7 +513,7 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
                 href={`/${locale}/profile/${userId}?tab=${tab}&page=${page - 1}`}
                 className="px-3 py-1.5 bg-[#0F2040] border border-[#1E3A5F] rounded-lg text-xs text-gray-400 hover:text-white transition-colors"
               >
-                {zh ? "上一页" : "Prev"}
+                {lc(locale, "上一页", "Prev")}
               </Link>
             )}
             <span className="text-xs text-gray-500">
@@ -523,7 +524,7 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
                 href={`/${locale}/profile/${userId}?tab=${tab}&page=${page + 1}`}
                 className="px-3 py-1.5 bg-[#0F2040] border border-[#1E3A5F] rounded-lg text-xs text-gray-400 hover:text-white transition-colors"
               >
-                {zh ? "下一页" : "Next"}
+                {lc(locale, "下一页", "Next")}
               </Link>
             )}
           </div>

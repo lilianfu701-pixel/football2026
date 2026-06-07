@@ -3,6 +3,8 @@
 import { useState, useMemo, useRef } from "react";
 import RichTextContent from "./RichTextContent";
 import { LANGUAGES, needsTranslation } from "@/lib/languages";
+import { lc } from "@/i18n/content";
+import { useLocale } from "next-intl";
 
 interface Props {
   originalHtml:       string;
@@ -16,6 +18,7 @@ interface Props {
 export default function TranslatedContent({
   originalHtml, cachedTranslations, defaultLang, type, id, zh,
 }: Props) {
+  const locale = useLocale();
   const [cache,        setCache]        = useState<Record<string, string>>(cachedTranslations);
   // per-lang loading flags — allows multiple simultaneous fetches
   const [loadingLangs, setLoadingLangs] = useState<Record<string, boolean>>({});
@@ -60,7 +63,7 @@ export default function TranslatedContent({
       }
       setCache(prev => ({ ...prev, [lang]: data.translated }));
     } catch {
-      setErrors(prev => ({ ...prev, [lang]: zh ? "网络错误" : "Network error" }));
+      setErrors(prev => ({ ...prev, [lang]: lc(locale, "网络错误", "Network error") }));
     } finally {
       fetchingRef.current.delete(lang);
       setLoadingLangs(prev => { const n = { ...prev }; delete n[lang]; return n; });
@@ -146,7 +149,7 @@ export default function TranslatedContent({
                 fetchingRef.current.delete(activeLang); // allow re-fetch
                 fetchLang(activeLang);
               }}
-              title={zh ? "重新翻译" : "Re-translate"}
+              title={lc(locale, "重新翻译", "Re-translate")}
               className="ml-auto text-[10px] text-gray-700 hover:text-gray-400 transition-colors"
             >
               🔄
@@ -160,14 +163,14 @@ export default function TranslatedContent({
           {/* No language selected */}
           {!activeLang && (
             <p className="text-xs text-gray-600">
-              {zh ? "点击上方语言旗帜查看翻译" : "Click a flag above to read in another language"}
+              {lc(locale, "点击上方语言旗帜查看翻译", "Click a flag above to read in another language")}
             </p>
           )}
 
           {/* No provider */}
           {activeLang && noProvider && (
             <p className="text-xs text-gray-500 italic">
-              {zh ? "翻译服务暂未配置" : "Translation service not configured"}
+              {lc(locale, "翻译服务暂未配置", "Translation service not configured")}
             </p>
           )}
 
@@ -185,7 +188,7 @@ export default function TranslatedContent({
               {/* Same language */}
               {isSame && !isLoading && (
                 <p className="text-xs text-gray-600 italic">
-                  {zh ? "原文已是此语言" : "Original is already in this language"}
+                  {lc(locale, "原文已是此语言", "Original is already in this language")}
                 </p>
               )}
 
@@ -202,7 +205,7 @@ export default function TranslatedContent({
                     }}
                     className="text-xs text-[#FFD700] font-semibold hover:text-[#FFC200]"
                   >
-                    {zh ? "重试" : "Retry"}
+                    {lc(locale, "重试", "Retry")}
                   </button>
                 </div>
               )}
@@ -215,7 +218,7 @@ export default function TranslatedContent({
               {/* Not yet loaded (first render before any click) */}
               {!activeTranslation && !isLoading && !activeError && (
                 <p className="text-xs text-gray-600 italic">
-                  {zh ? "点击旗帜加载翻译" : "Click a flag to load translation"}
+                  {lc(locale, "点击旗帜加载翻译", "Click a flag to load translation")}
                 </p>
               )}
             </>
@@ -226,7 +229,7 @@ export default function TranslatedContent({
         {activeTranslation && (
           <div className="px-4 py-1.5 border-t border-[#1E3A5F]/30 bg-[#080F1F]/60">
             <span className="text-[9px] text-gray-700">
-              🤖 {zh ? "AI 机器翻译，仅供参考" : "AI machine translation — for reference only"}
+              🤖 {lc(locale, "AI 机器翻译，仅供参考", "AI machine translation — for reference only")}
             </span>
           </div>
         )}

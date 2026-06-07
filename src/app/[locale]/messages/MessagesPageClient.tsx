@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { lc } from "@/i18n/content";
 
 interface Thread {
   partnerId:   string;
@@ -26,12 +27,12 @@ interface Props {
   following:      FollowUser[];
 }
 
-function timeAgo(d: string, zh: boolean) {
+function timeAgo(d: string, zh: boolean, locale: string) {
   const diff = Date.now() - new Date(d).getTime();
   const m = Math.floor(diff / 60_000);
   const h = Math.floor(diff / 3_600_000);
   const day = Math.floor(diff / 86_400_000);
-  if (m < 1)  return zh ? "刚刚" : "just now";
+  if (m < 1)  return lc(locale, "刚刚", "just now");
   if (m < 60) return zh ? `${m}分钟前` : `${m}m ago`;
   if (h < 24) return zh ? `${h}小时前` : `${h}h ago`;
   if (day < 7) return zh ? `${day}天前` : `${day}d ago`;
@@ -120,7 +121,7 @@ export default function MessagesPageClient({ locale, initialThreads, following }
         <div className="flex items-center justify-between mb-4 px-4 sm:px-0">
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-black text-white">
-              ✉️ {zh ? "私信" : "Messages"}
+              ✉️ {lc(locale, "私信", "Messages")}
             </h1>
             {totalUnread > 0 && (
               <span className="bg-red-500 text-white text-xs font-black px-2 py-0.5 rounded-full">
@@ -132,7 +133,7 @@ export default function MessagesPageClient({ locale, initialThreads, following }
             onClick={() => setShowSearch(true)}
             className="flex items-center gap-1.5 px-3 py-2 bg-[#FFD700] text-[#0A1628] font-black text-sm rounded-xl hover:bg-[#FFC200] transition-colors"
           >
-            ✏️ {zh ? "新建私信" : "New Message"}
+            ✏️ {lc(locale, "新建私信", "New Message")}
           </button>
         </div>
 
@@ -140,7 +141,7 @@ export default function MessagesPageClient({ locale, initialThreads, following }
         {following.length > 0 && (
           <div className="mb-4 px-4 sm:px-0">
             <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2 px-1">
-              {zh ? "我的关注" : "Following"}
+              {lc(locale, "我的关注", "Following")}
             </p>
             <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
               {following.map((f) => (
@@ -172,15 +173,15 @@ export default function MessagesPageClient({ locale, initialThreads, following }
           {threads.length === 0 && noThreadFollowing.length === 0 ? (
             <div className="py-20 text-center">
               <div className="text-5xl mb-4">✉️</div>
-              <p className="text-gray-400 font-bold">{zh ? "暂无私信" : "No messages yet"}</p>
+              <p className="text-gray-400 font-bold">{lc(locale, "暂无私信", "No messages yet")}</p>
               <p className="text-gray-600 text-sm mt-1">
-                {zh ? "点击「新建私信」开始对话" : "Click \"New Message\" to start chatting"}
+                {lc(locale, "点击「新建私信」开始对话", "Click \"New Message\" to start chatting")}
               </p>
               <button
                 onClick={() => setShowSearch(true)}
                 className="mt-4 px-5 py-2 bg-[#FFD700]/15 border border-[#FFD700]/30 text-[#FFD700] text-sm font-bold rounded-xl hover:bg-[#FFD700]/25 transition-colors"
               >
-                {zh ? "找人聊天 →" : "Find someone →"}
+                {lc(locale, "找人聊天 →", "Find someone →")}
               </button>
             </div>
           ) : (
@@ -205,11 +206,11 @@ export default function MessagesPageClient({ locale, initialThreads, following }
                         {t.nickname}
                       </p>
                       <span className="text-[10px] text-gray-600 shrink-0 ml-2">
-                        {timeAgo(t.lastTime, zh)}
+                        {timeAgo(t.lastTime, zh, locale)}
                       </span>
                     </div>
                     <p className={`text-xs truncate ${t.unreadCount > 0 ? "text-gray-300 font-medium" : "text-gray-500"}`}>
-                      {t.isMine && <span className="text-gray-600">{zh ? "你：" : "You: "}</span>}
+                      {t.isMine && <span className="text-gray-600">{lc(locale, "你：", "You: ")}</span>}
                       {t.lastMsg}
                     </p>
                   </div>
@@ -234,7 +235,7 @@ export default function MessagesPageClient({ locale, initialThreads, following }
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-gray-300">{f.nickname}</p>
-                    <p className="text-xs text-gray-600">{zh ? "开始对话…" : "Start a conversation…"}</p>
+                    <p className="text-xs text-gray-600">{lc(locale, "开始对话…", "Start a conversation…")}</p>
                   </div>
                   <svg className="w-4 h-4 text-gray-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -257,7 +258,7 @@ export default function MessagesPageClient({ locale, initialThreads, following }
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-[#1E3A5F]">
-              <h3 className="text-white font-black text-base">🔍 {zh ? "搜索用户" : "Find User"}</h3>
+              <h3 className="text-white font-black text-base">🔍 {lc(locale, "搜索用户", "Find User")}</h3>
               <button onClick={() => setShowSearch(false)} className="text-gray-500 hover:text-white text-xl leading-none">✕</button>
             </div>
 
@@ -265,7 +266,7 @@ export default function MessagesPageClient({ locale, initialThreads, following }
             {!searchQ.trim() && following.length > 0 && (
               <>
                 <p className="text-[10px] text-gray-500 uppercase tracking-widest px-4 pt-3 pb-1">
-                  {zh ? "我的关注" : "Following"}
+                  {lc(locale, "我的关注", "Following")}
                 </p>
                 <div className="max-h-48 overflow-y-auto">
                   {following.map((f) => (
@@ -277,7 +278,7 @@ export default function MessagesPageClient({ locale, initialThreads, following }
                     >
                       <Avatar avatarUrl={f.avatar_url} nickname={f.nickname} size={36} />
                       <span className="text-sm font-bold text-white flex-1">{f.nickname}</span>
-                      <span className="text-xs text-[#FFD700] font-bold">{zh ? "发消息 →" : "Message →"}</span>
+                      <span className="text-xs text-[#FFD700] font-bold">{lc(locale, "发消息 →", "Message →")}</span>
                     </Link>
                   ))}
                 </div>
@@ -293,7 +294,7 @@ export default function MessagesPageClient({ locale, initialThreads, following }
                   type="text"
                   value={searchQ}
                   onChange={(e) => setSearchQ(e.target.value)}
-                  placeholder={zh ? "输入用户昵称…" : "Search by nickname…"}
+                  placeholder={lc(locale, "输入用户昵称…", "Search by nickname…")}
                   className="flex-1 bg-transparent text-white text-sm outline-none placeholder-gray-600"
                 />
                 {searching && (
@@ -305,12 +306,12 @@ export default function MessagesPageClient({ locale, initialThreads, following }
             <div className="max-h-72 overflow-y-auto">
               {searchQ.trim() && !searching && results.length === 0 && (
                 <p className="text-center text-gray-600 text-sm py-8">
-                  {zh ? "未找到用户" : "No users found"}
+                  {lc(locale, "未找到用户", "No users found")}
                 </p>
               )}
               {!searchQ.trim() && following.length === 0 && (
                 <p className="text-center text-gray-600 text-sm py-8">
-                  {zh ? "输入昵称开始搜索" : "Type a nickname to search"}
+                  {lc(locale, "输入昵称开始搜索", "Type a nickname to search")}
                 </p>
               )}
               {results.map((u) => (
@@ -322,7 +323,7 @@ export default function MessagesPageClient({ locale, initialThreads, following }
                 >
                   <Avatar avatarUrl={u.avatar_url} nickname={u.nickname} size={36} />
                   <span className="text-sm font-bold text-white flex-1">{u.nickname}</span>
-                  <span className="text-xs text-[#FFD700] font-bold">{zh ? "发消息 →" : "Message →"}</span>
+                  <span className="text-xs text-[#FFD700] font-bold">{lc(locale, "发消息 →", "Message →")}</span>
                 </Link>
               ))}
             </div>

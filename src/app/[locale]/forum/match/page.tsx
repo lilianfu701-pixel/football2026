@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getFlagUrl, isTBD, getTeamDisplayName } from "@/lib/flags";
 import ForumPagination from "@/components/forum/Pagination";
+import { lc } from "@/i18n/content";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -27,42 +28,42 @@ const STAGE_LABELS: Record<string, Record<Stage | string, string>> = {
 
 const PAGE_SIZE = 10;
 
-function timeAgo(dateStr: string, zh: boolean): string {
+function timeAgo(dateStr: string, zh: boolean, locale: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60000);
   const h = Math.floor(diff / 3600000);
   const d = Math.floor(diff / 86400000);
-  if (m < 1)  return zh ? "刚刚"       : "just now";
+  if (m < 1)  return lc(locale, "刚刚", "just now");
   if (m < 60) return zh ? `${m}分钟前` : `${m}m ago`;
   if (h < 24) return zh ? `${h}小时前` : `${h}h ago`;
   if (d < 30) return zh ? `${d}天前`   : `${d}d ago`;
   return new Date(dateStr).toLocaleDateString(zh ? "zh-CN" : "en-US", { month: "short", day: "numeric" });
 }
 
-function formatDate(dateStr: string, zh: boolean) {
+function formatDate(dateStr: string, zh: boolean, locale: string) {
   const d = new Date(dateStr);
   return d.toLocaleDateString(zh ? "zh-CN" : "en-US", { month: "short", day: "numeric" });
 }
 
-function formatTime(dateStr: string, zh: boolean) {
+function formatTime(dateStr: string, zh: boolean, locale: string) {
   const d = new Date(dateStr);
   return d.toLocaleTimeString(zh ? "zh-CN" : "en-US", { hour: "2-digit", minute: "2-digit" });
 }
 
 type StatusInfo = { label: string; cls: string };
 
-function getStatusInfo(status: string, kickoff: string, zh: boolean): StatusInfo {
+function getStatusInfo(status: string, kickoff: string, zh: boolean, locale: string): StatusInfo {
   if (status === "live") {
-    return { label: zh ? "进行中" : "LIVE", cls: "bg-green-500/20 text-green-400 border-green-500/30 animate-pulse" };
+    return { label: lc(locale, "进行中", "LIVE"), cls: "bg-green-500/20 text-green-400 border-green-500/30 animate-pulse" };
   }
   if (status === "finished") {
-    return { label: zh ? "已结束" : "FT", cls: "bg-gray-500/20 text-gray-400 border-gray-500/30" };
+    return { label: lc(locale, "已结束", "FT"), cls: "bg-gray-500/20 text-gray-400 border-gray-500/30" };
   }
   const d = new Date(kickoff);
   if (d > new Date()) {
-    return { label: formatTime(kickoff, zh), cls: "bg-blue-500/10 text-blue-400 border-blue-500/20" };
+    return { label: formatTime(kickoff, zh, locale), cls: "bg-blue-500/10 text-blue-400 border-blue-500/20" };
   }
-  return { label: zh ? "待开赛" : "Upcoming", cls: "bg-gray-500/20 text-gray-400 border-gray-500/30" };
+  return { label: lc(locale, "待开赛", "Upcoming"), cls: "bg-gray-500/20 text-gray-400 border-gray-500/30" };
 }
 
 export default async function MatchForumPage({ params, searchParams }: PageProps) {
@@ -130,9 +131,9 @@ export default async function MatchForumPage({ params, searchParams }: PageProps
   threads.forEach((t) => { if (t.match_id) threadMap.set(t.match_id, t); });
 
   const SORT_OPTIONS = [
-    { key: "latest",  label: zh ? "最新"     : "Latest" },
-    { key: "hot",     label: zh ? "最热"     : "Hottest" },
-    { key: "replies", label: zh ? "最多回复" : "Most Replies" },
+    { key: "latest",  label: lc(locale, "最新", "Latest") },
+    { key: "hot",     label: lc(locale, "最热", "Hottest") },
+    { key: "replies", label: lc(locale, "最多回复", "Most Replies") },
   ];
 
   type PostRow = {
@@ -149,10 +150,10 @@ export default async function MatchForumPage({ params, searchParams }: PageProps
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
           <Link href={`/${locale}/forum`} className="hover:text-white transition-colors">
-            {zh ? "论坛" : "Forum"}
+            {lc(locale, "论坛", "Forum")}
           </Link>
           <span>/</span>
-          <span className="text-white font-semibold">⚽ {zh ? "赛事讨论" : "Match Talk"}</span>
+          <span className="text-white font-semibold">⚽ {lc(locale, "赛事讨论", "Match Talk")}</span>
         </div>
 
         {/* Header card */}
@@ -160,12 +161,12 @@ export default async function MatchForumPage({ params, searchParams }: PageProps
           <div className="flex items-center gap-4">
             <span className="text-4xl">⚽</span>
             <div>
-              <h1 className="text-xl font-black text-white">{zh ? "赛事讨论" : "Match Talk"}</h1>
+              <h1 className="text-xl font-black text-white">{lc(locale, "赛事讨论", "Match Talk")}</h1>
               <p className="text-gray-500 text-sm mt-0.5">
-                {zh ? "赛前预测、赛后复盘与即时讨论" : "Previews, post-match reviews & live match chat"}
+                {lc(locale, "赛前预测、赛后复盘与即时讨论", "Previews, post-match reviews & live match chat")}
               </p>
               <p className="text-[10px] text-gray-600 mt-1">
-                {(cat?.post_count ?? 0).toLocaleString()} {zh ? "篇帖子" : "posts"}
+                {(cat?.post_count ?? 0).toLocaleString()} {lc(locale, "篇帖子", "posts")}
               </p>
             </div>
           </div>
@@ -193,16 +194,16 @@ export default async function MatchForumPage({ params, searchParams }: PageProps
           <section className="mb-8">
             <div className="flex items-center gap-3 mb-3">
               <span className="text-[11px] font-black text-[#FFD700] uppercase tracking-widest">
-                📌 {zh ? "赛事专帖" : "Match Threads"}
+                📌 {lc(locale, "赛事专帖", "Match Threads")}
               </span>
               <div className="flex-1 h-px bg-[#1E3A5F]" />
-              <span className="text-[10px] text-gray-600">{matches.length} {zh ? "场" : "matches"}</span>
+              <span className="text-[10px] text-gray-600">{matches.length} {lc(locale, "场", "matches")}</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {matches.map((m) => {
                 const thread   = threadMap.get(m.id);
-                const status   = getStatusInfo(m.status, m.kickoff_time, zh);
+                const status   = getStatusInfo(m.status, m.kickoff_time, zh, locale);
                 const hasScore = m.home_score !== null && m.away_score !== null;
                 const homeTBD  = isTBD(m.home_team);
                 const awayTBD  = isTBD(m.away_team);
@@ -237,7 +238,7 @@ export default async function MatchForumPage({ params, searchParams }: PageProps
                       {/* Home team */}
                       <div className="flex-1 flex items-center gap-2 justify-end overflow-hidden">
                         <span className="text-sm font-bold text-white group-hover:text-[#FFD700] transition-colors truncate text-right">
-                          {homeTBD ? (zh ? "待定" : "TBD") : getTeamDisplayName(m.home_team, locale)}
+                          {homeTBD ? (lc(locale, "待定", "TBD")) : getTeamDisplayName(m.home_team, locale)}
                         </span>
                         {!homeTBD && (
                           <Image
@@ -267,7 +268,7 @@ export default async function MatchForumPage({ params, searchParams }: PageProps
                           />
                         )}
                         <span className="text-sm font-bold text-white group-hover:text-[#FFD700] transition-colors truncate">
-                          {awayTBD ? (zh ? "待定" : "TBD") : getTeamDisplayName(m.away_team, locale)}
+                          {awayTBD ? (lc(locale, "待定", "TBD")) : getTeamDisplayName(m.away_team, locale)}
                         </span>
                       </div>
                     </div>
@@ -275,7 +276,7 @@ export default async function MatchForumPage({ params, searchParams }: PageProps
                     {/* Footer */}
                     <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-[#1E3A5F]/50">
                       <span className="text-[10px] text-gray-600">
-                        {formatDate(m.kickoff_time, zh)}
+                        {formatDate(m.kickoff_time, zh, locale)}
                       </span>
                       {thread ? (
                         <span className="text-[10px] text-gray-500 flex items-center gap-2">
@@ -284,7 +285,7 @@ export default async function MatchForumPage({ params, searchParams }: PageProps
                         </span>
                       ) : (
                         <span className="text-[10px] text-[#FFD700]/70 font-bold">
-                          {zh ? "开启讨论 →" : "Open thread →"}
+                          {lc(locale, "开启讨论 →", "Open thread →")}
                         </span>
                       )}
                     </div>
@@ -299,7 +300,7 @@ export default async function MatchForumPage({ params, searchParams }: PageProps
         <section>
           <div className="flex items-center gap-3 mb-3">
             <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest">
-              💬 {zh ? "球迷帖子" : "Fan Posts"}
+              💬 {lc(locale, "球迷帖子", "Fan Posts")}
             </span>
             <div className="flex-1 h-px bg-[#1E3A5F]" />
           </div>
@@ -327,15 +328,14 @@ export default async function MatchForumPage({ params, searchParams }: PageProps
             totalPages={totalPages}
             buildHref={(p) => `/${locale}/forum/match?stage=${stage}&sort=${sort}&page=${p}`}
             zh={zh}
+            locale={locale}
           />
 
           {freePosts.length === 0 ? (
             <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-14 text-center">
               <div className="text-4xl mb-3">⚽</div>
               <p className="text-gray-500 text-sm">
-                {zh
-                  ? "赛事帖子将由系统自动生成"
-                  : "Match threads are generated automatically"}
+                {lc(locale, "赛事帖子将由系统自动生成", "Match threads are generated automatically")}
               </p>
             </div>
           ) : (
@@ -367,7 +367,7 @@ export default async function MatchForumPage({ params, searchParams }: PageProps
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {p.is_pinned && (
                           <span className="text-[9px] font-black bg-red-500/15 text-red-400 px-1.5 py-0.5 rounded border border-red-500/20">
-                            {zh ? "置顶" : "PIN"}
+                            {lc(locale, "置顶", "PIN")}
                           </span>
                         )}
                         {p.is_locked && (
@@ -382,7 +382,7 @@ export default async function MatchForumPage({ params, searchParams }: PageProps
                       <div className="flex items-center gap-2 mt-0.5 text-[10px] text-gray-500">
                         <span>@{author?.username ?? "?"}</span>
                         <span className="text-gray-600">·</span>
-                        <span>{timeAgo(p.last_reply_at ?? p.created_at, zh)}</span>
+                        <span>{timeAgo(p.last_reply_at ?? p.created_at, zh, locale)}</span>
                       </div>
                     </div>
 
@@ -403,6 +403,7 @@ export default async function MatchForumPage({ params, searchParams }: PageProps
             totalPages={totalPages}
             buildHref={(p) => `/${locale}/forum/match?stage=${stage}&sort=${sort}&page=${p}`}
             zh={zh}
+            locale={locale}
           />
         </section>
 

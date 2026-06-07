@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { lc } from "@/i18n/content";
 
 interface Props {
   locale: string;
@@ -31,12 +32,10 @@ export default function MobileAppBanner({ locale, zh }: Props) {
           <span className="text-xl shrink-0">📱</span>
           <p className="text-sm text-gray-300 truncate">
             <span className="font-black text-white">
-              {zh ? "手机版已上线" : "Mobile version available"}
+              {lc(locale, "手机版已上线", "Mobile version available")}
             </span>
             <span className="hidden sm:inline text-gray-400">
-              {zh
-                ? " · 添加到主屏幕，像 App 一样使用"
-                : " · Add to home screen for an app-like experience"}
+              {lc(locale, " · 添加到主屏幕，像 App 一样使用", " · Add to home screen for an app-like experience")}
             </span>
           </p>
         </div>
@@ -46,7 +45,7 @@ export default function MobileAppBanner({ locale, zh }: Props) {
           {/* QR code — hidden on small screens */}
           <div className="hidden md:flex flex-col items-center gap-1">
             <span className="text-[9px] text-gray-400 mb-0.5">
-              {zh ? "手机端请扫描" : "Scan on mobile"}
+              {lc(locale, "手机端请扫描", "Scan on mobile")}
             </span>
             <div className="bg-white p-1 rounded-lg">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -64,7 +63,7 @@ export default function MobileAppBanner({ locale, zh }: Props) {
             href={`/${locale}/m`}
             className="bg-[#FFD700] text-[#0A1628] font-black text-xs px-4 py-1.5 rounded-lg hover:bg-[#FFC200] transition-all whitespace-nowrap"
           >
-            {zh ? "打开手机版" : "Open Mobile"}
+            {lc(locale, "打开手机版", "Open Mobile")}
           </Link>
           <button
             onClick={dismiss}

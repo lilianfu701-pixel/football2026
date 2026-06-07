@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { getFlagCode } from "@/lib/flags";
+import { lc } from "@/i18n/content";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -59,7 +60,7 @@ function fmtDate(dateStr: string, zh: boolean): string {
   return `${months[d.getMonth()]} ${d.getDate()} ${hh}:${mm}`;
 }
 
-function StatusPill({ status, zh }: { status: string; zh: boolean }) {
+function StatusPill({ status, zh, locale }: { status: string; zh: boolean; locale: string }) {
   if (status === "live") {
     return (
       <span className="flex items-center gap-1 text-[10px] font-black text-red-400 bg-red-500/15 px-2 py-0.5 rounded-full shrink-0">
@@ -71,7 +72,7 @@ function StatusPill({ status, zh }: { status: string; zh: boolean }) {
   if (status === "finished") {
     return (
       <span className="text-[10px] font-bold text-gray-500 bg-gray-500/10 px-2 py-0.5 rounded-full shrink-0">
-        {zh ? "已结束" : "FT"}
+        {lc(locale, "已结束", "FT")}
       </span>
     );
   }
@@ -85,13 +86,13 @@ export default function ScheduleClient({ locale, groups, knockoutMatches }: Prop
   const groupNames = groups.map((g) => g.group);
 
   const STAGE_LABELS: Record<string, string> = {
-    group:   zh ? "小组赛" : "Groups",
-    round32: zh ? "32强" : "R32",
-    round16: zh ? "16强" : "R16",
-    quarter: zh ? "四分之一决赛" : "QF",
-    semi:    zh ? "半决赛" : "SF",
-    third:   zh ? "季军赛" : "3rd",
-    final:   zh ? "决赛" : "Final",
+    group:   lc(locale, "小组赛", "Groups"),
+    round32: lc(locale, "32强", "R32"),
+    round16: lc(locale, "16强", "R16"),
+    quarter: lc(locale, "四分之一决赛", "QF"),
+    semi:    lc(locale, "半决赛", "SF"),
+    third:   lc(locale, "季军赛", "3rd"),
+    final:   lc(locale, "决赛", "Final"),
   };
 
   const knockoutStages = Object.keys(knockoutMatches).filter(
@@ -110,10 +111,10 @@ export default function ScheduleClient({ locale, groups, knockoutMatches }: Prop
         {/* Header */}
         <div className="mb-5">
           <h1 className="text-2xl font-black text-white">
-            🗓️ {zh ? "赛程 & 积分榜" : "Schedule & Standings"}
+            🗓️ {lc(locale, "赛程 & 积分榜", "Schedule & Standings")}
           </h1>
           <p className="text-gray-500 text-sm mt-0.5">
-            {zh ? "2026 FIFA 世界杯 · 48 队 · 104 场" : "2026 FIFA World Cup · 48 Teams · 104 Matches"}
+            {lc(locale, "2026 FIFA 世界杯 · 48 队 · 104 场", "2026 FIFA World Cup · 48 Teams · 104 Matches")}
           </p>
         </div>
 
@@ -200,7 +201,7 @@ export default function ScheduleClient({ locale, groups, knockoutMatches }: Prop
                             <span className="text-sm font-bold text-white truncate">{s.team}</span>
                             {qualified && (
                               <span className="text-[9px] text-green-400 bg-green-500/15 px-1.5 py-0.5 rounded-full shrink-0 font-bold">
-                                {zh ? "出线" : "Q"}
+                                {lc(locale, "出线", "Q")}
                               </span>
                             )}
                           </div>
@@ -225,7 +226,7 @@ export default function ScheduleClient({ locale, groups, knockoutMatches }: Prop
                   <div className="px-4 py-2 border-t border-[#1E3A5F]/50 flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
                     <span className="text-[10px] text-gray-500">
-                      {zh ? "前2名直接晋级32强" : "Top 2 advance to Round of 32"}
+                      {lc(locale, "前2名直接晋级32强", "Top 2 advance to Round of 32")}
                     </span>
                   </div>
                 </div>
@@ -281,7 +282,7 @@ export default function ScheduleClient({ locale, groups, knockoutMatches }: Prop
                             <span className="text-xs font-bold text-white truncate">{m.away_team}</span>
                           </div>
                           {/* Status */}
-                          <StatusPill status={m.status} zh={zh} />
+                          <StatusPill status={m.status} zh={zh} locale={locale} />
                         </Link>
                       );
                     })}
@@ -298,7 +299,7 @@ export default function ScheduleClient({ locale, groups, knockoutMatches }: Prop
             {(knockoutMatches[activeTab] ?? []).length === 0 ? (
               <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-8 text-center">
                 <p className="text-gray-500 text-sm">
-                  {zh ? "对阵尚未确定" : "Fixtures not yet determined"}
+                  {lc(locale, "对阵尚未确定", "Fixtures not yet determined")}
                 </p>
               </div>
             ) : (
@@ -345,7 +346,7 @@ export default function ScheduleClient({ locale, groups, knockoutMatches }: Prop
                       <span className="text-sm font-black text-white truncate">{m.away_team}</span>
                     </div>
                     {/* Status */}
-                    <StatusPill status={m.status} zh={zh} />
+                    <StatusPill status={m.status} zh={zh} locale={locale} />
                   </Link>
                 );
               })

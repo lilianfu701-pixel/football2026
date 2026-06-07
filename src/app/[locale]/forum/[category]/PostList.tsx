@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getWealthLevel } from "@/lib/levels";
 import { needsTranslation } from "@/lib/languages";
+import { lc } from "@/i18n/content";
 
 export interface PostItem {
   id:            number;
@@ -37,12 +38,12 @@ interface Props {
   catSlug:             string;
 }
 
-function timeAgo(dateStr: string, zh: boolean): string {
+function timeAgo(dateStr: string, zh: boolean, locale: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60000);
   const h = Math.floor(diff / 3600000);
   const d = Math.floor(diff / 86400000);
-  if (m < 1)  return zh ? "刚刚"      : "just now";
+  if (m < 1)  return lc(locale, "刚刚", "just now");
   if (m < 60) return zh ? `${m}分钟前` : `${m}m ago`;
   if (h < 24) return zh ? `${h}小时前` : `${h}h ago`;
   if (d < 30) return zh ? `${d}天前`   : `${d}d ago`;
@@ -118,7 +119,7 @@ export default function PostList({ posts, cachedTranslations, postTagsMap = {}, 
       {posts.map((p) => {
         const author     = p.author;
         const wl         = getWealthLevel(author?.gc_balance ?? 0);
-        const name       = author?.nickname ?? (zh ? "系统" : "System");
+        const name       = author?.nickname ?? (lc(locale, "系统", "System"));
         const transTitle = trans[p.id];
         const isLoading  = loading.has(p.id);
         const tags       = postTagsMap[p.id] ?? [];
@@ -152,7 +153,7 @@ export default function PostList({ posts, cachedTranslations, postTagsMap = {}, 
               <div className="flex items-center gap-1.5 flex-wrap">
                 {p.is_pinned && (
                   <span className="text-[9px] font-black bg-red-500/15 text-red-400 px-1.5 py-0.5 rounded border border-red-500/20">
-                    {zh ? "置顶" : "PIN"}
+                    {lc(locale, "置顶", "PIN")}
                   </span>
                 )}
                 {p.is_locked && (
@@ -201,7 +202,7 @@ export default function PostList({ posts, cachedTranslations, postTagsMap = {}, 
               <div className="flex items-center gap-2 mt-0.5 text-[10px] text-gray-500">
                 <span>@{name}</span>
                 <span className="text-gray-600">·</span>
-                <span>{timeAgo(p.last_reply_at ?? p.created_at, zh)}</span>
+                <span>{timeAgo(p.last_reply_at ?? p.created_at, zh, locale)}</span>
               </div>
             </div>
 

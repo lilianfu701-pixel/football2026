@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { lc } from "@/i18n/content";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -21,12 +22,12 @@ interface NotifItem {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function timeAgo(dateStr: string, zh: boolean): string {
+function timeAgo(dateStr: string, zh: boolean, locale: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60_000);
   const h = Math.floor(diff / 3_600_000);
   const d = Math.floor(diff / 86_400_000);
-  if (m < 1)  return zh ? "刚刚"       : "just now";
+  if (m < 1)  return lc(locale, "刚刚", "just now");
   if (m < 60) return zh ? `${m}分钟前` : `${m}m ago`;
   if (h < 24) return zh ? `${h}小时前` : `${h}h ago`;
   if (d < 30) return zh ? `${d}天前`   : `${d}d ago`;
@@ -40,8 +41,8 @@ function NotifIcon({ type, gc_amount }: { type: string; gc_amount: number | null
   return <span>🔔</span>;
 }
 
-function NotifText({ n, zh }: { n: NotifItem; zh: boolean }) {
-  const actor = n.actor?.nickname ?? (zh ? "系统" : "System");
+function NotifText({ n, zh, locale }: { n: NotifItem; zh: boolean; locale: string }) {
+  const actor = n.actor?.nickname ?? (lc(locale, "系统", "System"));
   const title = n.post_title
     ? `「${n.post_title.slice(0, 24)}${n.post_title.length > 24 ? "…" : ""}」`
     : "";
@@ -72,7 +73,7 @@ function NotifText({ n, zh }: { n: NotifItem; zh: boolean }) {
     return (
       <span className="text-sm text-gray-300">
         <strong className="text-white">{actor}</strong>
-        {zh ? " 回复了你的帖子 " : " replied to your post "}
+        {lc(locale, " 回复了你的帖子 ", " replied to your post ")}
         {title && <span className="text-gray-200">{title}</span>}
       </span>
     );
@@ -96,7 +97,7 @@ function NotifText({ n, zh }: { n: NotifItem; zh: boolean }) {
 
   return (
     <span className="text-sm text-gray-300">
-      {n.reason ?? (zh ? "系统通知" : "System notification")}
+      {n.reason ?? (lc(locale, "系统通知", "System notification"))}
     </span>
   );
 }
@@ -128,7 +129,7 @@ export default function NotificationsPage() {
       // Mark all as read
       fetch("/api/notifications", { method: "PATCH" }).catch(() => {});
     } catch {
-      setError(zh ? "加载失败，请刷新重试" : "Failed to load, please refresh");
+      setError(lc(locale, "加载失败，请刷新重试", "Failed to load, please refresh"));
     } finally {
       setLoading(false);
     }
@@ -148,7 +149,7 @@ export default function NotificationsPage() {
         <div className="mb-5 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-black text-white">
-              🔔 {zh ? "通知中心" : "Notifications"}
+              🔔 {lc(locale, "通知中心", "Notifications")}
             </h1>
             {unread > 0 && (
               <p className="text-xs text-[#FFD700] mt-0.5">
@@ -161,7 +162,7 @@ export default function NotificationsPage() {
               onClick={() => fetch("/api/notifications", { method: "PATCH" }).then(fetchNotifs)}
               className="text-xs text-gray-400 hover:text-white bg-[#0F2040] border border-[#1E3A5F] px-3 py-2 rounded-xl transition-colors"
             >
-              {zh ? "全部已读" : "Mark all read"}
+              {lc(locale, "全部已读", "Mark all read")}
             </button>
           )}
         </div>
@@ -187,10 +188,10 @@ export default function NotificationsPage() {
           <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-10 text-center">
             <p className="text-4xl mb-3">🔔</p>
             <p className="text-gray-400 text-sm">
-              {zh ? "暂无通知" : "No notifications yet"}
+              {lc(locale, "暂无通知", "No notifications yet")}
             </p>
             <p className="text-gray-600 text-xs mt-1">
-              {zh ? "预测结算、被打赏或被回复时，通知将显示在这里。" : "Notifications for prediction settlements, tips, and replies will appear here."}
+              {lc(locale, "预测结算、被打赏或被回复时，通知将显示在这里。", "Notifications for prediction settlements, tips, and replies will appear here.")}
             </p>
           </div>
         )}
@@ -215,9 +216,9 @@ export default function NotificationsPage() {
                   </div>
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <NotifText n={n} zh={zh} />
+                    <NotifText n={n} zh={zh} locale={locale} />
                     <p className="text-[10px] text-gray-600 mt-1">
-                      {timeAgo(n.created_at, zh)}
+                      {timeAgo(n.created_at, zh, locale)}
                     </p>
                   </div>
                   {/* Unread dot */}
@@ -246,10 +247,10 @@ export default function NotificationsPage() {
         {/* Footer links */}
         <div className="mt-10 pt-6 border-t border-[#1E3A5F] flex flex-wrap gap-4 text-sm text-gray-500">
           <Link href={`/${locale}`} className="hover:text-[#FFD700]">
-            {zh ? "← 返回首页" : "← Back to Home"}
+            {lc(locale, "← 返回首页", "← Back to Home")}
           </Link>
           <Link href={`/${locale}/profile`} className="hover:text-[#FFD700]">
-            {zh ? "个人中心" : "My Profile"}
+            {lc(locale, "个人中心", "My Profile")}
           </Link>
         </div>
 

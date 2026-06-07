@@ -5,17 +5,18 @@ import Link from "next/link";
 import Image from "next/image";
 import { getWealthLevel } from "@/lib/levels";
 import ForumSearchBar from "@/components/forum/ForumSearchBar";
+import { lc } from "@/i18n/content";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
 }
 
-function timeAgo(dateStr: string, zh: boolean): string {
+function timeAgo(dateStr: string, zh: boolean, locale: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60000);
   const h = Math.floor(diff / 3600000);
   const d = Math.floor(diff / 86400000);
-  if (m < 1)  return zh ? "刚刚"      : "just now";
+  if (m < 1)  return lc(locale, "刚刚", "just now");
   if (m < 60) return zh ? `${m}分钟前` : `${m}m ago`;
   if (h < 24) return zh ? `${h}小时前` : `${h}h ago`;
   if (d < 30) return zh ? `${d}天前`   : `${d}d ago`;
@@ -123,7 +124,7 @@ export default async function ForumPage({ params }: PageProps) {
         <div className="flex items-start justify-between mb-4 gap-4">
           <div>
             <h1 className="text-2xl font-black text-white">
-              💬 {zh ? "GoalCoin 论坛" : "GoalCoin Forum"}
+              💬 {lc(locale, "GoalCoin 论坛", "GoalCoin Forum")}
             </h1>
             <p className="text-gray-500 text-sm mt-1">
               {zh
@@ -136,14 +137,14 @@ export default async function ForumPage({ params }: PageProps) {
               href={`/${locale}/forum/new`}
               className="shrink-0 flex items-center gap-2 bg-[#FFD700] text-[#0A1628] font-black px-4 py-2.5 rounded-xl text-sm hover:bg-[#FFC200] transition-colors"
             >
-              ✏️ {zh ? "发帖" : "New Post"}
+              ✏️ {lc(locale, "发帖", "New Post")}
             </Link>
           ) : (
             <Link
               href={`/${locale}/auth/login`}
               className="shrink-0 text-xs border border-[#1E3A5F] text-gray-400 px-4 py-2.5 rounded-xl hover:text-white transition-colors"
             >
-              {zh ? "登录后发帖" : "Login to post"}
+              {lc(locale, "登录后发帖", "Login to post")}
             </Link>
           )}
         </div>
@@ -169,7 +170,7 @@ export default async function ForumPage({ params }: PageProps) {
                   <div className={`flex items-center gap-3 mb-3 pl-3 border-l-4 ${meta.accent}`}>
                     <h2 className="text-sm font-black text-white tracking-wide">{groupLabel}</h2>
                     <span className="text-[10px] text-gray-600">
-                      {cats.reduce((s, c) => s + (c.post_count ?? 0), 0).toLocaleString()} {zh ? "帖" : "posts"}
+                      {cats.reduce((s, c) => s + (c.post_count ?? 0), 0).toLocaleString()} {lc(locale, "帖", "posts")}
                     </span>
                   </div>
 
@@ -201,7 +202,7 @@ export default async function ForumPage({ params }: PageProps) {
                                 {zh ? c.name_zh : c.name}
                               </p>
                               <span className="shrink-0 text-[10px] text-gray-600 font-semibold">
-                                {(c.post_count ?? 0).toLocaleString()} {zh ? "帖" : "posts"}
+                                {(c.post_count ?? 0).toLocaleString()} {lc(locale, "帖", "posts")}
                               </span>
                             </div>
                             {desc && (
@@ -226,7 +227,7 @@ export default async function ForumPage({ params }: PageProps) {
           {hotPosts.length > 0 && (
             <div>
               <h2 className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-3 flex items-center gap-2">
-                🔥 {zh ? "本周热帖" : "Hot This Week"}
+                🔥 {lc(locale, "本周热帖", "Hot This Week")}
               </h2>
               <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden divide-y divide-[#1E3A5F]/60">
                 {hotPosts.map((p, i) => {
@@ -272,7 +273,7 @@ export default async function ForumPage({ params }: PageProps) {
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-xs text-gray-500 uppercase tracking-widest font-bold flex items-center gap-2">
-                🕐 {zh ? "最新帖子" : "Latest Posts"}
+                🕐 {lc(locale, "最新帖子", "Latest Posts")}
               </h2>
             </div>
 
@@ -280,12 +281,12 @@ export default async function ForumPage({ params }: PageProps) {
               <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-16 text-center">
                 <div className="text-4xl mb-3">📭</div>
                 <p className="text-gray-500 text-sm mb-4">
-                  {zh ? "还没有帖子，来发第一帖！" : "No posts yet — be the first!"}
+                  {lc(locale, "还没有帖子，来发第一帖！", "No posts yet — be the first!")}
                 </p>
                 {user && (
                   <Link href={`/${locale}/forum/new`}
                     className="inline-block bg-[#FFD700] text-[#0A1628] font-black px-5 py-2.5 rounded-xl text-sm hover:bg-[#FFC200] transition-colors">
-                    ✏️ {zh ? "发帖" : "New Post"}
+                    ✏️ {lc(locale, "发帖", "New Post")}
                   </Link>
                 )}
               </div>
@@ -326,7 +327,7 @@ export default async function ForumPage({ params }: PageProps) {
                           </span>
                           <span className="text-[10px] text-gray-600">·</span>
                           <span className="text-[10px] text-gray-500">
-                            {timeAgo((p as PostRow).last_reply_at ?? p.created_at, zh)}
+                            {timeAgo((p as PostRow).last_reply_at ?? p.created_at, zh, locale)}
                           </span>
                         </div>
                       </div>
@@ -348,7 +349,7 @@ export default async function ForumPage({ params }: PageProps) {
             <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-xs font-black text-gray-500 uppercase tracking-widest">
-                  🏷 {zh ? "热门标签" : "Hot Tags"}
+                  🏷 {lc(locale, "热门标签", "Hot Tags")}
                 </span>
               </div>
               <div className="flex flex-wrap gap-1.5">

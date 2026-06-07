@@ -9,6 +9,7 @@ import AwardSidebarCard from "@/app/[locale]/matches/AwardSidebarCard";
 import FavoritesCard from "@/app/[locale]/matches/FavoritesCard";
 import InviteCard from "@/app/[locale]/matches/InviteCard";
 import SidebarGcBalance from "@/components/SidebarGcBalance";
+import { lc } from "@/i18n/content";
 
 interface Props { locale: string }
 
@@ -89,7 +90,7 @@ export default async function GlobalSidebar({ locale }: Props) {
     const gc    = profile?.gc_balance   ?? 0;
     const honor = profile?.honor_points ?? 0;
     const cc    = ((profile?.country_code ?? (user.user_metadata?.country_code as string | undefined) ?? "UN") as string).toUpperCase();
-    let countryName = zh ? "未知" : "Unknown";
+    let countryName = lc(locale, "未知", "Unknown");
     try { if (cc !== "UN") countryName = new Intl.DisplayNames([zh ? "zh-CN" : "en"], { type: "region" }).of(cc) ?? cc; }
     catch { /* keep default */ }
     const username  = profile?.nickname
@@ -130,21 +131,21 @@ export default async function GlobalSidebar({ locale }: Props) {
               </div>
               <div>
                 <p className="text-[#FFD700] font-black text-sm tracking-wide">GOAL COIN</p>
-                <p className="text-gray-400 text-xs">{zh ? "注册即送" : "Free on signup"}</p>
+                <p className="text-gray-400 text-xs">{lc(locale, "注册即送", "Free on signup")}</p>
               </div>
             </div>
             <div className="bg-[#0A1628]/60 rounded-xl p-4 mb-4 border border-[#FFD700]/10">
               <p className="text-[#FFD700] font-black text-2xl text-center">100,000</p>
-              <p className="text-gray-400 text-xs text-center mt-0.5">GC {zh ? "新用户礼包" : "Welcome Gift"}</p>
+              <p className="text-gray-400 text-xs text-center mt-0.5">GC {lc(locale, "新用户礼包", "Welcome Gift")}</p>
             </div>
             <div className="space-y-2">
               <Link href={`/${locale}/auth/register`}
                 className="block w-full text-center bg-[#FFD700] text-[#0A1628] font-black py-2.5 rounded-xl text-sm hover:bg-[#FFC200] transition-colors">
-                🚀 {zh ? "免费注册领取" : "Register Free & Claim"}
+                🚀 {lc(locale, "免费注册领取", "Register Free & Claim")}
               </Link>
               <Link href={`/${locale}/auth/login`}
                 className="block w-full text-center border border-[#1E3A5F] text-gray-400 hover:text-white hover:border-[#FFD700]/30 font-semibold py-2 rounded-xl text-xs transition-colors">
-                {zh ? "已有账号？登录" : "Already have an account? Login"}
+                {lc(locale, "已有账号？登录", "Already have an account? Login")}
               </Link>
             </div>
           </div>
@@ -175,7 +176,7 @@ export default async function GlobalSidebar({ locale }: Props) {
                   <p className="text-gray-500 text-xs truncate">{sp.countryName}</p>
                   <Link href={`/${locale}/profile`}
                     className="text-[10px] text-gray-600 hover:text-[#FFD700] transition-colors shrink-0">
-                    {zh ? "编辑" : "Edit"} →
+                    {lc(locale, "编辑", "Edit")} →
                   </Link>
                 </div>
               </div>
@@ -183,14 +184,14 @@ export default async function GlobalSidebar({ locale }: Props) {
           </div>
           <div className="px-5 py-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500">{zh ? "财富值" : "Wealth"}</span>
+              <span className="text-xs text-gray-500">{lc(locale, "财富值", "Wealth")}</span>
               <span className="text-xs font-black px-2 py-0.5 rounded-full"
                 style={{ color: sp.wl.color, backgroundColor: sp.wl.bgColor + "80" }}>
                 {sp.wl.icon} {zh ? sp.wl.nameZh : sp.wl.name}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500">{zh ? "荣誉值" : "Honor"}</span>
+              <span className="text-xs text-gray-500">{lc(locale, "荣誉值", "Honor")}</span>
               <span className="text-xs font-black px-2 py-0.5 rounded-full"
                 style={{ color: sp.hl.color, backgroundColor: sp.hl.color + "22" }}>
                 {sp.hl.icon} {zh ? sp.hl.nameZh : sp.hl.name}
@@ -201,7 +202,7 @@ export default async function GlobalSidebar({ locale }: Props) {
                 <div className="w-7 h-7 rounded-full overflow-hidden shrink-0">
                   <Image src="/icons/levels/GC.png" alt="GoalCoin" width={28} height={28} className="w-full h-full object-cover" unoptimized />
                 </div>
-                <span className="text-xs text-gray-400">{zh ? "GC 余额" : "GC Balance"}</span>
+                <span className="text-xs text-gray-400">{lc(locale, "GC 余额", "GC Balance")}</span>
               </div>
               <SidebarGcBalance zh={zh} />
             </div>
@@ -210,7 +211,7 @@ export default async function GlobalSidebar({ locale }: Props) {
                 className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-gradient-to-b from-[#FFD700]/15 to-[#FF8C00]/10 border border-[#FFD700]/25 hover:border-[#FFD700]/60 hover:from-[#FFD700]/25 transition-all group">
                 <span className="text-xl">💳</span>
                 <span className="text-xs font-black text-[#FFD700] group-hover:text-[#FFC200] transition-colors">
-                  {zh ? "充值" : "Top Up"}
+                  {lc(locale, "充值", "Top Up")}
                 </span>
               </Link>
             </div>
@@ -219,7 +220,7 @@ export default async function GlobalSidebar({ locale }: Props) {
               <div className="flex items-center gap-2">
                 <span className="text-sm">📜</span>
                 <span className="text-xs text-gray-400 group-hover:text-white transition-colors font-medium">
-                  {zh ? "GC 交易记录" : "GC History"}
+                  {lc(locale, "GC 交易记录", "GC History")}
                 </span>
               </div>
               <svg className="w-3 h-3 text-gray-600 group-hover:text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -234,23 +235,23 @@ export default async function GlobalSidebar({ locale }: Props) {
       {user && sp && (
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
           <div className="px-5 pt-4 pb-3 bg-gradient-to-r from-[#7C6FE0]/10 to-transparent border-b border-[#1E3A5F]">
-            <p className="text-sm font-black text-white">🎯 {zh ? "我的预测" : "My Predictions"}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{zh ? "本届世界杯预测战绩" : "World Cup 2026 prediction record"}</p>
+            <p className="text-sm font-black text-white">🎯 {lc(locale, "我的预测", "My Predictions")}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{lc(locale, "本届世界杯预测战绩", "World Cup 2026 prediction record")}</p>
           </div>
           <div className="px-5 py-4 space-y-3">
             <div className="grid grid-cols-2 gap-2.5">
               <div className="bg-[#0A1628] rounded-xl px-3 py-3 text-center border border-[#1E3A5F]">
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1.5 leading-none">{zh ? "预测场次" : "Total Bets"}</p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1.5 leading-none">{lc(locale, "预测场次", "Total Bets")}</p>
                 <p className="text-2xl font-black text-white leading-none">{totalBets}</p>
               </div>
               <div className="bg-[#0A1628] rounded-xl px-3 py-3 text-center border border-green-500/20">
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1.5 leading-none">{zh ? "赢得场次" : "Won"}</p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1.5 leading-none">{lc(locale, "赢得场次", "Won")}</p>
                 <p className="text-2xl font-black text-green-400 leading-none">{wonBets}</p>
               </div>
             </div>
             <div className="bg-[#0A1628] rounded-xl px-4 py-3 border border-[#1E3A5F]">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-gray-400 font-medium">{zh ? "胜率" : "Win Rate"}</span>
+                <span className="text-xs text-gray-400 font-medium">{lc(locale, "胜率", "Win Rate")}</span>
                 <span className="text-sm font-black text-[#FFD700]">{winRate}%</span>
               </div>
               <div className="h-2 bg-[#1E3A5F] rounded-full overflow-hidden">
@@ -262,18 +263,18 @@ export default async function GlobalSidebar({ locale }: Props) {
                 }} />
               </div>
               {totalBets === 0 && (
-                <p className="text-[10px] text-gray-600 mt-1.5 text-center">{zh ? "还没有预测记录" : "No predictions yet"}</p>
+                <p className="text-[10px] text-gray-600 mt-1.5 text-center">{lc(locale, "还没有预测记录", "No predictions yet")}</p>
               )}
             </div>
             <div className="flex items-center justify-between px-1 py-1">
-              <span className="text-xs text-gray-500">{zh ? "当前荣誉积分" : "Honor Points"}</span>
+              <span className="text-xs text-gray-500">{lc(locale, "当前荣誉积分", "Honor Points")}</span>
               <span className="text-sm font-black" style={{ color: sp.hl.color }}>{sp.hl.icon} {sp.honor.toLocaleString()}</span>
             </div>
           </div>
           <div className="px-5 pb-4">
             <Link href={`/${locale}/predict`}
               className="block w-full text-center bg-[#1E3A5F] hover:bg-[#7C6FE0]/30 border border-[#1E3A5F] hover:border-[#7C6FE0]/50 text-gray-300 hover:text-white font-semibold py-2.5 rounded-xl text-sm transition-all">
-              📋 {zh ? "查看全部记录" : "View All Records"}
+              📋 {lc(locale, "查看全部记录", "View All Records")}
             </Link>
           </div>
         </div>
@@ -310,15 +311,15 @@ export default async function GlobalSidebar({ locale }: Props) {
           { title: "Most anticipated match of the group stage?", href: "match", views: "762" },
         ];
         const myLinks = [
-          { icon: "📝", label: zh ? "我的话题" : "My Topics",  href: `/${locale}/forum/my-topics`  },
-          { icon: "💬", label: zh ? "我的跟帖" : "My Replies", href: `/${locale}/forum/my-replies` },
+          { icon: "📝", label: lc(locale, "我的话题", "My Topics"),  href: `/${locale}/forum/my-topics`  },
+          { icon: "💬", label: lc(locale, "我的跟帖", "My Replies"), href: `/${locale}/forum/my-replies` },
         ];
         return (
           <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
             <div className="px-5 pt-4 pb-3 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white">💬 {zh ? "论坛" : "Forum"}</h3>
+              <h3 className="text-sm font-bold text-white">💬 {lc(locale, "论坛", "Forum")}</h3>
               <Link href={`/${locale}/forum`} className="text-xs text-[#7C6FE0] hover:text-white font-semibold transition-colors">
-                {zh ? "进入论坛 →" : "Enter →"}
+                {lc(locale, "进入论坛 →", "Enter →")}
               </Link>
             </div>
             {user && (
@@ -338,7 +339,7 @@ export default async function GlobalSidebar({ locale }: Props) {
               </>
             )}
             <div className="px-5 pb-4">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">🔥 {zh ? "热门话题" : "Hot Topics"}</p>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">🔥 {lc(locale, "热门话题", "Hot Topics")}</p>
               <div className="space-y-2.5">
                 {hotTopics.map((topic, i) => (
                   <Link key={i} href={`/${locale}/forum/${topic.href}`} className="flex items-start gap-2.5 group">
@@ -360,8 +361,8 @@ export default async function GlobalSidebar({ locale }: Props) {
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xl">📱</span>
           <div>
-            <p className="text-sm font-black text-white">{zh ? "手机 App 安装" : "Mobile App"}</p>
-            <p className="text-xs text-gray-400">{zh ? "iOS & Android 全平台支持" : "iOS & Android"}</p>
+            <p className="text-sm font-black text-white">{lc(locale, "手机 App 安装", "Mobile App")}</p>
+            <p className="text-xs text-gray-400">{lc(locale, "iOS & Android 全平台支持", "iOS & Android")}</p>
           </div>
         </div>
         <div className="flex justify-center mb-4">
@@ -371,7 +372,7 @@ export default async function GlobalSidebar({ locale }: Props) {
               alt="App download QR" width={150} height={150} className="rounded-xl" unoptimized />
           </div>
         </div>
-        <p className="text-center text-xs text-gray-500 mb-3">{zh ? "扫描二维码立即安装" : "Scan QR code to install"}</p>
+        <p className="text-center text-xs text-gray-500 mb-3">{lc(locale, "扫描二维码立即安装", "Scan QR code to install")}</p>
         <div className="flex gap-2">
           <a href={`/${locale}/m`}
             className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#1E3A5F] hover:bg-[#1E3A5F]/80 border border-[#1E3A5F] text-gray-300 hover:text-white text-xs font-semibold transition-all">

@@ -1,3 +1,4 @@
+import { lc } from "@/i18n/content";
 /** Shared HTML email templates for Football2026.net */
 
 const BASE_URL = "https://football2026.net";
@@ -39,11 +40,11 @@ function shell(body: string): string {
 export function confirmEmailHtml(confirmUrl: string, locale = "zh"): string {
   const zh = locale === "zh";
   return shell(`
-    <h1 class="title">${zh ? "✅ 确认你的邮箱" : "✅ Confirm your email"}</h1>
-    <p class="sub">${zh ? "感谢注册 Football2026！点击下方按钮激活账号。" : "Thanks for signing up! Click below to activate your account."}</p>
-    <a href="${confirmUrl}" class="btn">${zh ? "激活账号" : "Activate Account"}</a>
+    <h1 class="title">${lc(locale, "✅ 确认你的邮箱", "✅ Confirm your email")}</h1>
+    <p class="sub">${lc(locale, "感谢注册 Football2026！点击下方按钮激活账号。", "Thanks for signing up! Click below to activate your account.")}</p>
+    <a href="${confirmUrl}" class="btn">${lc(locale, "激活账号", "Activate Account")}</a>
     <hr class="divider">
-    <p class="note">${zh ? "此链接 24 小时内有效。如果不是你注册的，请忽略此邮件。" : "This link expires in 24 hours. If you didn't register, please ignore this email."}</p>
+    <p class="note">${lc(locale, "此链接 24 小时内有效。如果不是你注册的，请忽略此邮件。", "This link expires in 24 hours. If you didn't register, please ignore this email.")}</p>
   `);
 }
 
@@ -52,11 +53,11 @@ export function confirmEmailHtml(confirmUrl: string, locale = "zh"): string {
 export function resetPasswordHtml(resetUrl: string, locale = "zh"): string {
   const zh = locale === "zh";
   return shell(`
-    <h1 class="title">${zh ? "🔑 重置密码" : "🔑 Reset your password"}</h1>
-    <p class="sub">${zh ? "我们收到了你的密码重置请求，点击下方按钮设置新密码。" : "We received a password reset request. Click below to set a new password."}</p>
-    <a href="${resetUrl}" class="btn">${zh ? "重置密码" : "Reset Password"}</a>
+    <h1 class="title">${lc(locale, "🔑 重置密码", "🔑 Reset your password")}</h1>
+    <p class="sub">${lc(locale, "我们收到了你的密码重置请求，点击下方按钮设置新密码。", "We received a password reset request. Click below to set a new password.")}</p>
+    <a href="${resetUrl}" class="btn">${lc(locale, "重置密码", "Reset Password")}</a>
     <hr class="divider">
-    <p class="note">${zh ? "此链接 1 小时内有效。如果不是你发起的，请忽略此邮件，你的账号是安全的。" : "This link expires in 1 hour. If you didn't request this, your account is safe."}</p>
+    <p class="note">${lc(locale, "此链接 1 小时内有效。如果不是你发起的，请忽略此邮件，你的账号是安全的。", "This link expires in 1 hour. If you didn't request this, your account is safe.")}</p>
   `);
 }
 
@@ -69,21 +70,22 @@ export function gcAwardedHtml(opts: {
   reason: string;
   locale?: string;
 }): string {
-  const zh = (opts.locale ?? "zh") === "zh";
+  const locale = opts.locale ?? "zh";
+  const zh = locale === "zh";
   const fmt = (n: number) =>
     n >= 1_000_000 ? (n / 1_000_000).toFixed(2) + "M" : n.toLocaleString();
   return shell(`
-    <h1 class="title">${zh ? "🪙 GoalCoin 到账啦！" : "🪙 GoalCoins Received!"}</h1>
+    <h1 class="title">${lc(locale, "🪙 GoalCoin 到账啦！", "🪙 GoalCoins Received!")}</h1>
     <p class="sub">${zh ? `嗨 ${opts.nickname}，你获得了新的 GC：` : `Hi ${opts.nickname}, you received new GC:`}</p>
     <div class="badge">+${fmt(opts.amount)} GC</div>
     <p style="font-size:13px;color:#94a3b8;margin:4px 0 20px;">
-      ${zh ? "原因：" : "Reason: "}${opts.reason}
+      ${lc(locale, "原因：", "Reason: ")}${opts.reason}
     </p>
     <p style="font-size:13px;color:#64748b;">
       ${zh ? `当前余额：<strong style="color:#FFD700">${fmt(opts.newBalance)} GC</strong>` : `Current balance: <strong style="color:#FFD700">${fmt(opts.newBalance)} GC</strong>`}
     </p>
     <hr class="divider">
-    <a href="${BASE_URL}/zh/profile" class="btn" style="font-size:13px;padding:10px 20px;">${zh ? "查看账户" : "View Account"}</a>
+    <a href="${BASE_URL}/zh/profile" class="btn" style="font-size:13px;padding:10px 20px;">${lc(locale, "查看账户", "View Account")}</a>
   `);
 }
 
@@ -96,17 +98,18 @@ export function predictionWonHtml(opts: {
   gcWon: number;
   locale?: string;
 }): string {
-  const zh = (opts.locale ?? "zh") === "zh";
+  const locale = opts.locale ?? "zh";
+  const zh = locale === "zh";
   const fmt = (n: number) =>
     n >= 1_000_000 ? (n / 1_000_000).toFixed(2) + "M" : n.toLocaleString();
   return shell(`
-    <h1 class="title">${zh ? "🎉 预测命中！" : "🎉 Prediction Won!"}</h1>
+    <h1 class="title">${lc(locale, "🎉 预测命中！", "🎉 Prediction Won!")}</h1>
     <p class="sub">${zh ? `嗨 ${opts.nickname}，你的预测命中了：` : `Hi ${opts.nickname}, your prediction was correct:`}</p>
     <p style="font-size:15px;font-weight:700;color:#fff;margin:0 0 4px;">${opts.matchTitle}</p>
-    <p style="font-size:13px;color:#94a3b8;margin:0 0 16px;">${zh ? "你的预测：" : "Your prediction: "}<strong style="color:#FFD700">${opts.prediction}</strong></p>
+    <p style="font-size:13px;color:#94a3b8;margin:0 0 16px;">${lc(locale, "你的预测：", "Your prediction: ")}<strong style="color:#FFD700">${opts.prediction}</strong></p>
     <div class="badge">+${fmt(opts.gcWon)} GC</div>
     <hr class="divider">
-    <a href="${BASE_URL}/zh/predict" class="btn" style="font-size:13px;padding:10px 20px;">${zh ? "继续预测" : "Keep Predicting"}</a>
+    <a href="${BASE_URL}/zh/predict" class="btn" style="font-size:13px;padding:10px 20px;">${lc(locale, "继续预测", "Keep Predicting")}</a>
   `);
 }
 
@@ -118,29 +121,31 @@ export function levelUpHtml(opts: {
   levelName: string;
   locale?: string;
 }): string {
-  const zh = (opts.locale ?? "zh") === "zh";
+  const locale = opts.locale ?? "zh";
+  const zh = locale === "zh";
   return shell(`
-    <h1 class="title">${zh ? "⬆️ 恭喜升级！" : "⬆️ Level Up!"}</h1>
+    <h1 class="title">${lc(locale, "⬆️ 恭喜升级！", "⬆️ Level Up!")}</h1>
     <p class="sub">${zh ? `嗨 ${opts.nickname}，你已升至新等级：` : `Hi ${opts.nickname}, you've reached a new level:`}</p>
     <div class="badge">Lv.${opts.newLevel} · ${opts.levelName}</div>
-    <p style="font-size:13px;color:#94a3b8;margin:16px 0;">${zh ? "继续预测和参与活动，解锁更多特权！" : "Keep predicting and participating to unlock more perks!"}</p>
+    <p style="font-size:13px;color:#94a3b8;margin:16px 0;">${lc(locale, "继续预测和参与活动，解锁更多特权！", "Keep predicting and participating to unlock more perks!")}</p>
     <hr class="divider">
-    <a href="${BASE_URL}/zh/profile" class="btn" style="font-size:13px;padding:10px 20px;">${zh ? "查看等级" : "View Level"}</a>
+    <a href="${BASE_URL}/zh/profile" class="btn" style="font-size:13px;padding:10px 20px;">${lc(locale, "查看等级", "View Level")}</a>
   `);
 }
 
 // ── Notification: welcome ───────────────────────────────────────────────────
 
 export function welcomeHtml(opts: { nickname: string; locale?: string }): string {
-  const zh = (opts.locale ?? "zh") === "zh";
+  const locale = opts.locale ?? "zh";
+  const zh = locale === "zh";
   return shell(`
-    <h1 class="title">${zh ? "👋 欢迎加入 Football2026！" : "👋 Welcome to Football2026!"}</h1>
+    <h1 class="title">${lc(locale, "👋 欢迎加入 Football2026！", "👋 Welcome to Football2026!")}</h1>
     <p class="sub">${zh ? `嗨 ${opts.nickname}！账号已激活，免费领取 10,000 GC 开始你的预测之旅。` : `Hi ${opts.nickname}! Your account is ready. Claim 10,000 free GC and start predicting.`}</p>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin:20px 0;">
-      <a href="${BASE_URL}/zh/matches" class="btn">⚽ ${zh ? "查看赛事" : "Browse Matches"}</a>
-      <a href="${BASE_URL}/zh/predict" class="btn" style="background:#1E3A5F;color:#FFD700;">🎯 ${zh ? "开始预测" : "Start Predicting"}</a>
+      <a href="${BASE_URL}/zh/matches" class="btn">⚽ ${lc(locale, "查看赛事", "Browse Matches")}</a>
+      <a href="${BASE_URL}/zh/predict" class="btn" style="background:#1E3A5F;color:#FFD700;">🎯 ${lc(locale, "开始预测", "Start Predicting")}</a>
     </div>
     <hr class="divider">
-    <p class="note">${zh ? "每日签到可领取 GC，邀请好友还有额外奖励。" : "Check in daily for GC rewards, and earn bonuses by inviting friends."}</p>
+    <p class="note">${lc(locale, "每日签到可领取 GC，邀请好友还有额外奖励。", "Check in daily for GC rewards, and earn bonuses by inviting friends.")}</p>
   `);
 }

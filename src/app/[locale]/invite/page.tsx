@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import InvitePageClient from "./InvitePageClient";
 import { PER_INVITE_GC } from "@/lib/inviteMilestones";
+import { lc } from "@/i18n/content";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -116,12 +117,10 @@ export default async function InvitePage({ params }: PageProps) {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-black text-white">
-            🤝 {zh ? "邀请好友" : "Invite Friends"}
+            🤝 {lc(locale, "邀请好友", "Invite Friends")}
           </h1>
           <p className="text-gray-500 text-sm mt-1">
-            {zh
-              ? "每成功邀请一人，你和好友各得 500,000 GC"
-              : "Each invite earns you & your friend 500,000 GC each"}
+            {lc(locale, "每成功邀请一人，你和好友各得 500,000 GC", "Each invite earns you & your friend 500,000 GC each")}
           </p>
         </div>
 

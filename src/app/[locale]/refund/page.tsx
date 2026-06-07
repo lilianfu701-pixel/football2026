@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { lc } from "@/i18n/content";
 
 interface Props {
   params: Promise<{ locale: string }>;
@@ -9,10 +10,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const zh = locale === "zh";
   return {
-    title: zh ? "退款政策 | Football2026" : "Refund Policy | Football2026",
-    description: zh
-      ? "Football2026 退款政策。GoalCoin (GC) 充值为虚拟数字商品，到账后通常不可退款，但符合条件的情形可申请退款。"
-      : "Football2026 Refund Policy. GoalCoin (GC) top-ups are virtual digital goods and are generally non-refundable once credited, with exceptions for eligible cases.",
+    title: lc(locale, "退款政策 | Football2026", "Refund Policy | Football2026"),
+    description: lc(locale, "Football2026 退款政策。GoalCoin (GC) 充值为虚拟数字商品，到账后通常不可退款，但符合条件的情形可申请退款。", "Football2026 Refund Policy. GoalCoin (GC) top-ups are virtual digital goods and are generally non-refundable once credited, with exceptions for eligible cases."),
   };
 }
 
@@ -29,13 +28,13 @@ export default async function RefundPage({ params }: Props) {
           <div className="text-sm text-gray-500 mb-2">
             <Link href={`/${locale}`} className="hover:text-[#FFD700]">Football2026</Link>
             <span className="mx-2">/</span>
-            <span>{zh ? "退款政策" : "Refund Policy"}</span>
+            <span>{lc(locale, "退款政策", "Refund Policy")}</span>
           </div>
           <h1 className="text-3xl font-black text-white">
-            {zh ? "退款政策" : "Refund Policy"}
+            {lc(locale, "退款政策", "Refund Policy")}
           </h1>
           <p className="text-gray-500 text-sm mt-2">
-            {zh ? "最后更新：2026年6月1日" : "Last updated: June 1, 2026"}
+            {lc(locale, "最后更新：2026年6月1日", "Last updated: June 1, 2026")}
           </p>
         </div>
 
@@ -47,19 +46,17 @@ export default async function RefundPage({ params }: Props) {
           {/* ── 1. Overview ── */}
           <section>
             <h2 className="text-xl font-black text-white mb-3">
-              {zh ? "1. 概述" : "1. Overview"}
+              {lc(locale, "1. 概述", "1. Overview")}
             </h2>
             <p>
-              {zh
-                ? "本退款政策适用于您在 Football2026（https://football2026.net）购买的所有 GoalCoin (GC) 充值包及其他虚拟商品。购买前请仔细阅读本政策。完成购买即表示您已理解并接受本退款政策。"
-                : "This Refund Policy applies to all GoalCoin (GC) top-up packages and other virtual goods purchased on Football2026 (https://football2026.net). Please read this policy carefully before purchasing. By completing a purchase, you confirm that you understand and accept this Refund Policy."}
+              {lc(locale, "本退款政策适用于您在 Football2026（https://football2026.net）购买的所有 GoalCoin (GC) 充值包及其他虚拟商品。购买前请仔细阅读本政策。完成购买即表示您已理解并接受本退款政策。", "This Refund Policy applies to all GoalCoin (GC) top-up packages and other virtual goods purchased on Football2026 (https://football2026.net). Please read this policy carefully before purchasing. By completing a purchase, you confirm that you understand and accept this Refund Policy.")}
             </p>
           </section>
 
           {/* ── 2. Nature of GC — CRITICAL ── */}
           <section className="bg-[#FFD700]/8 border border-[#FFD700]/30 rounded-2xl p-6">
             <h2 className="text-xl font-black text-[#FFD700] mb-3">
-              {zh ? "2. 虚拟商品性质" : "2. Nature of Virtual Goods"}
+              {lc(locale, "2. 虚拟商品性质", "2. Nature of Virtual Goods")}
             </h2>
             <ul className="space-y-3 list-none">
               {(zh ? [
@@ -82,12 +79,10 @@ export default async function RefundPage({ params }: Props) {
           {/* ── 3. Eligible for Refund ── */}
           <section>
             <h2 className="text-xl font-black text-white mb-3">
-              {zh ? "3. 可申请退款的情形" : "3. Cases Eligible for a Refund"}
+              {lc(locale, "3. 可申请退款的情形", "3. Cases Eligible for a Refund")}
             </h2>
             <p className="mb-3">
-              {zh
-                ? "尽管 GC 充值原则上不可退款，但在以下情形下，您可以申请退款："
-                : "Although GC top-ups are non-refundable in principle, you may request a refund in the following cases:"}
+              {lc(locale, "尽管 GC 充值原则上不可退款，但在以下情形下，您可以申请退款：", "Although GC top-ups are non-refundable in principle, you may request a refund in the following cases:")}
             </p>
             <ul className="space-y-2 list-disc list-inside text-gray-400">
               {(zh ? [
@@ -109,7 +104,7 @@ export default async function RefundPage({ params }: Props) {
           {/* ── 4. Not Eligible ── */}
           <section>
             <h2 className="text-xl font-black text-white mb-3">
-              {zh ? "4. 不予退款的情形" : "4. Cases Not Eligible for a Refund"}
+              {lc(locale, "4. 不予退款的情形", "4. Cases Not Eligible for a Refund")}
             </h2>
             <ul className="space-y-2 list-disc list-inside text-gray-400">
               {(zh ? [
@@ -131,12 +126,10 @@ export default async function RefundPage({ params }: Props) {
           {/* ── 5. How to Request ── */}
           <section>
             <h2 className="text-xl font-black text-white mb-3">
-              {zh ? "5. 如何申请退款" : "5. How to Request a Refund"}
+              {lc(locale, "5. 如何申请退款", "5. How to Request a Refund")}
             </h2>
             <p className="mb-3">
-              {zh
-                ? "如需申请退款，请在交易发生后 14 天内通过 support@football2026.net 联系我们，并提供以下信息："
-                : "To request a refund, please contact us at support@football2026.net within 14 days of the transaction, providing the following information:"}
+              {lc(locale, "如需申请退款，请在交易发生后 14 天内通过 support@football2026.net 联系我们，并提供以下信息：", "To request a refund, please contact us at support@football2026.net within 14 days of the transaction, providing the following information:")}
             </p>
             <ul className="space-y-2 list-disc list-inside text-gray-400">
               {(zh ? [
@@ -158,41 +151,33 @@ export default async function RefundPage({ params }: Props) {
           {/* ── 6. Processing ── */}
           <section>
             <h2 className="text-xl font-black text-white mb-3">
-              {zh ? "6. 退款处理时间与方式" : "6. Processing Time & Method"}
+              {lc(locale, "6. 退款处理时间与方式", "6. Processing Time & Method")}
             </h2>
             <p className="mb-2">
-              {zh
-                ? "我们会在收到您的退款申请后 5 个工作日内审核并回复。审核通过的退款将原路退回至您的原支付方式（银行卡、PayPal 等）。"
-                : "We will review and respond to your refund request within 5 business days of receipt. Approved refunds will be returned to your original payment method (bank card, PayPal, etc.)."}
+              {lc(locale, "我们会在收到您的退款申请后 5 个工作日内审核并回复。审核通过的退款将原路退回至您的原支付方式（银行卡、PayPal 等）。", "We will review and respond to your refund request within 5 business days of receipt. Approved refunds will be returned to your original payment method (bank card, PayPal, etc.).")}
             </p>
             <p>
-              {zh
-                ? "退款到账时间取决于您的支付机构，通常需要 5–10 个工作日。退款金额将以原支付币种结算。已发放的对应 GC 将从您的账户中扣回。"
-                : "The time for the refund to appear depends on your payment provider and usually takes 5–10 business days. Refunds are settled in the original payment currency. The corresponding GC credited will be deducted from your account."}
+              {lc(locale, "退款到账时间取决于您的支付机构，通常需要 5–10 个工作日。退款金额将以原支付币种结算。已发放的对应 GC 将从您的账户中扣回。", "The time for the refund to appear depends on your payment provider and usually takes 5–10 business days. Refunds are settled in the original payment currency. The corresponding GC credited will be deducted from your account.")}
             </p>
           </section>
 
           {/* ── 7. Chargebacks ── */}
           <section>
             <h2 className="text-xl font-black text-white mb-3">
-              {zh ? "7. 拒付（Chargeback）" : "7. Chargebacks"}
+              {lc(locale, "7. 拒付（Chargeback）", "7. Chargebacks")}
             </h2>
             <p>
-              {zh
-                ? "在通过银行或支付机构发起拒付前，请先联系我们解决问题。未经沟通直接发起的恶意拒付可能导致您的账户被暂停。我们保留对滥用拒付行为采取相应措施的权利。"
-                : "Before initiating a chargeback through your bank or payment provider, please contact us first to resolve the issue. Malicious chargebacks filed without prior communication may result in suspension of your account. We reserve the right to take action against chargeback abuse."}
+              {lc(locale, "在通过银行或支付机构发起拒付前，请先联系我们解决问题。未经沟通直接发起的恶意拒付可能导致您的账户被暂停。我们保留对滥用拒付行为采取相应措施的权利。", "Before initiating a chargeback through your bank or payment provider, please contact us first to resolve the issue. Malicious chargebacks filed without prior communication may result in suspension of your account. We reserve the right to take action against chargeback abuse.")}
             </p>
           </section>
 
           {/* ── 8. Contact ── */}
           <section>
             <h2 className="text-xl font-black text-white mb-3">
-              {zh ? "8. 联系我们" : "8. Contact Us"}
+              {lc(locale, "8. 联系我们", "8. Contact Us")}
             </h2>
             <p>
-              {zh
-                ? "如有关于退款政策的任何疑问，请通过以下方式联系我们："
-                : "If you have any questions about this Refund Policy, please contact us at:"}
+              {lc(locale, "如有关于退款政策的任何疑问，请通过以下方式联系我们：", "If you have any questions about this Refund Policy, please contact us at:")}
             </p>
             <div className="mt-3 bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-4 text-sm">
               <p className="text-[#FFD700] font-bold">Football2026</p>
@@ -206,16 +191,16 @@ export default async function RefundPage({ params }: Props) {
         {/* Bottom nav */}
         <div className="mt-12 pt-6 border-t border-[#1E3A5F] flex flex-wrap gap-4 text-sm text-gray-500">
           <Link href={`/${locale}`} className="hover:text-[#FFD700]">
-            {zh ? "← 返回首页" : "← Back to Home"}
+            {lc(locale, "← 返回首页", "← Back to Home")}
           </Link>
           <Link href={`/${locale}/terms`} className="hover:text-[#FFD700]">
-            {zh ? "服务条款" : "Terms of Service"}
+            {lc(locale, "服务条款", "Terms of Service")}
           </Link>
           <Link href={`/${locale}/privacy`} className="hover:text-[#FFD700]">
-            {zh ? "隐私政策" : "Privacy Policy"}
+            {lc(locale, "隐私政策", "Privacy Policy")}
           </Link>
           <Link href={`/${locale}/help`} className="hover:text-[#FFD700]">
-            {zh ? "帮助中心" : "Help Center"}
+            {lc(locale, "帮助中心", "Help Center")}
           </Link>
         </div>
 

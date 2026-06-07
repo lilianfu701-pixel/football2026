@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatGc } from "@/lib/levels";
 import { gcTransactionLabel } from "@/lib/gcTransactionLabels";
+import { lc } from "@/i18n/content";
 
 interface TransactionsPageProps {
   params:       Promise<{ locale: string }>;
@@ -94,7 +95,7 @@ export default async function TransactionsPage({ params, searchParams }: Transac
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black text-white">
-            {zh ? "GC 全部流水" : "All GC Transactions"}
+            {lc(locale, "GC 全部流水", "All GC Transactions")}
           </h1>
           <p className="text-gray-500 text-sm mt-0.5">
             {zh ? `共 ${totalCount} 条记录` : `${totalCount} records`}
@@ -104,7 +105,7 @@ export default async function TransactionsPage({ params, searchParams }: Transac
           href={`/${locale}/profile`}
           className="shrink-0 text-xs text-gray-400 hover:text-white border border-[#1E3A5F] hover:border-[#FFD700]/50 rounded-xl px-3 py-2 transition-colors"
         >
-          ← {zh ? "返回概览" : "Back"}
+          ← {lc(locale, "返回概览", "Back")}
         </Link>
       </div>
 
@@ -164,7 +165,7 @@ export default async function TransactionsPage({ params, searchParams }: Transac
           </div>
         ) : (
           <div className="text-center py-12 text-gray-600 text-sm">
-            {zh ? "暂无交易记录" : "No transactions found"}
+            {lc(locale, "暂无交易记录", "No transactions found")}
           </div>
         )}
       </div>
@@ -177,7 +178,7 @@ export default async function TransactionsPage({ params, searchParams }: Transac
               href={pageHref(itemPage - 1)}
               className="px-3 py-1.5 bg-[#0F2040] border border-[#1E3A5F] rounded-lg text-xs text-gray-400 hover:text-white transition-colors"
             >
-              {zh ? "上一页" : "Prev"}
+              {lc(locale, "上一页", "Prev")}
             </Link>
           )}
           <span className="text-xs text-gray-500">
@@ -188,7 +189,7 @@ export default async function TransactionsPage({ params, searchParams }: Transac
               href={pageHref(itemPage + 1)}
               className="px-3 py-1.5 bg-[#0F2040] border border-[#1E3A5F] rounded-lg text-xs text-gray-400 hover:text-white transition-colors"
             >
-              {zh ? "下一页" : "Next"}
+              {lc(locale, "下一页", "Next")}
             </Link>
           )}
         </div>

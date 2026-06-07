@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { lc } from "@/i18n/content";
+import { useLocale } from "next-intl";
 
 interface Props {
   matchId: number;
@@ -10,32 +12,36 @@ interface Props {
   zh?: boolean;
 }
 
-const ALERTS = (homeTeam: string, awayTeam: string, zh: boolean) => [
+const ALERTS = (homeTeam: string, awayTeam: string, locale: string) => {
+  const zh = locale === "zh";
+  return [
   {
     icon: "⏰",
-    title: zh ? "开赛提醒" : "Kick-off Alert",
+    title: lc(locale, "开赛提醒", "Kick-off Alert"),
     body: zh ? `${homeTeam} vs ${awayTeam} 即将开赛！` : `${homeTeam} vs ${awayTeam} starts soon!`,
   },
   {
     icon: "⚽",
-    title: zh ? "进球快报" : "Goal Alert",
+    title: lc(locale, "进球快报", "Goal Alert"),
     body: zh ? `进球！${homeTeam} 1 - 0 ${awayTeam}` : `GOAL! ${homeTeam} 1 - 0 ${awayTeam}`,
   },
   {
     icon: "🟡",
-    title: zh ? "红黄牌事件" : "Card Event",
+    title: lc(locale, "红黄牌事件", "Card Event"),
     body: zh ? `${homeTeam} 球员收到黄牌` : `${homeTeam} player receives a yellow card`,
   },
   {
     icon: "🏁",
-    title: zh ? "全场结束" : "Final Result",
+    title: lc(locale, "全场结束", "Final Result"),
     body: zh ? `全场：${homeTeam} 2 - 1 ${awayTeam}` : `FT: ${homeTeam} 2 - 1 ${awayTeam}`,
   },
-];
+  ];
+};
 
 export default function MatchFollowButton({
   matchId, initialFollowing, homeTeam, awayTeam, zh = false,
 }: Props) {
+  const locale = useLocale();
   const [following, setFollowing] = useState(initialFollowing);
   const [loading, setLoading]     = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -93,7 +99,7 @@ export default function MatchFollowButton({
     if ("Notification" in window && Notification.permission === "default") {
       const perm = await Notification.requestPermission();
       if (perm === "granted") {
-        new Notification(zh ? "⚽ 关注成功！" : "⚽ Following match!", {
+        new Notification(lc(locale, "⚽ 关注成功！", "⚽ Following match!"), {
           body: zh
             ? `${homeTeam} vs ${awayTeam} 开赛时将第一时间通知您`
             : `You'll be notified when ${homeTeam} vs ${awayTeam} starts`,
@@ -115,7 +121,7 @@ export default function MatchFollowButton({
     }
   }
 
-  const alerts = ALERTS(homeTeam, awayTeam, zh);
+  const alerts = ALERTS(homeTeam, awayTeam, locale);
 
   return (
     <>
@@ -130,7 +136,7 @@ export default function MatchFollowButton({
         }`}
       >
         <span className="text-sm">{following ? "🔔" : "🔕"}</span>
-        <span>{following ? (zh ? "已关注" : "Following") : (zh ? "关注比赛" : "Follow")}</span>
+        <span>{following ? (lc(locale, "已关注", "Following")) : (lc(locale, "关注比赛", "Follow"))}</span>
       </button>
 
       {/* Modal overlay */}
@@ -148,7 +154,7 @@ export default function MatchFollowButton({
             {/* Header */}
             <div className="px-5 pt-5 pb-3">
               <h3 className="text-white font-black text-lg">
-                🔔 {zh ? "关注这场比赛" : "Follow This Match"}
+                🔔 {lc(locale, "关注这场比赛", "Follow This Match")}
               </h3>
               <p className="text-gray-400 text-xs mt-1">
                 {zh
@@ -167,7 +173,7 @@ export default function MatchFollowButton({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-[10px] font-bold text-gray-400">Football2026</span>
-                      <span className="text-[10px] text-gray-600">· {zh ? "刚刚" : "now"}</span>
+                      <span className="text-[10px] text-gray-600">· {lc(locale, "刚刚", "now")}</span>
                     </div>
                     <p className="text-xs font-semibold text-white truncate">{a.icon} {a.title}</p>
                     <p className="text-[11px] text-gray-400 truncate">{a.body}</p>
@@ -181,17 +187,13 @@ export default function MatchFollowButton({
               <div className="flex items-start gap-2 text-[11px] text-gray-400">
                 <span className="text-base shrink-0">💻</span>
                 <span>
-                  {zh
-                    ? "电脑端：通知弹出在屏幕右下角（Windows）或右上角（macOS），即使网页最小化也会显示"
-                    : "Desktop: Notifications pop up at bottom-right (Windows) or top-right (macOS), even when minimized"}
+                  {lc(locale, "电脑端：通知弹出在屏幕右下角（Windows）或右上角（macOS），即使网页最小化也会显示", "Desktop: Notifications pop up at bottom-right (Windows) or top-right (macOS), even when minimized")}
                 </span>
               </div>
               <div className="flex items-start gap-2 text-[11px] text-gray-400">
                 <span className="text-base shrink-0">📱</span>
                 <span>
-                  {zh
-                    ? "手机端：通知出现在锁屏和通知栏，手机熄屏时也能收到"
-                    : "Mobile: Alerts appear on your lock screen and notification center, even with screen off"}
+                  {lc(locale, "手机端：通知出现在锁屏和通知栏，手机熄屏时也能收到", "Mobile: Alerts appear on your lock screen and notification center, even with screen off")}
                 </span>
               </div>
             </div>
@@ -199,9 +201,7 @@ export default function MatchFollowButton({
             {/* Permission denied warning */}
             {permDenied && (
               <div className="mx-5 mb-3 bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2 text-xs text-red-400">
-                {zh
-                  ? "⚠️ 您拒绝了通知权限。请点击浏览器地址栏左侧的🔒图标 → 通知 → 允许，然后刷新页面重试。"
-                  : "⚠️ Notifications blocked. Click the 🔒 icon in your address bar → Notifications → Allow, then refresh."}
+                {lc(locale, "⚠️ 您拒绝了通知权限。请点击浏览器地址栏左侧的🔒图标 → 通知 → 允许，然后刷新页面重试。", "⚠️ Notifications blocked. Click the 🔒 icon in your address bar → Notifications → Allow, then refresh.")}
               </div>
             )}
 
@@ -212,13 +212,13 @@ export default function MatchFollowButton({
                 disabled={loading}
                 className="flex-1 bg-[#FFD700] text-[#0A1628] font-black py-2.5 rounded-xl text-sm hover:bg-[#FFC200] transition-colors disabled:opacity-50"
               >
-                {zh ? "开启通知" : "Enable Notifications"}
+                {lc(locale, "开启通知", "Enable Notifications")}
               </button>
               <button
                 onClick={() => { setShowModal(false); setPermDenied(false); }}
                 className="px-4 py-2.5 border border-[#1E3A5F] text-gray-400 font-semibold rounded-xl text-sm hover:text-white hover:border-gray-500 transition-colors"
               >
-                {zh ? "以后" : "Later"}
+                {lc(locale, "以后", "Later")}
               </button>
             </div>
           </div>

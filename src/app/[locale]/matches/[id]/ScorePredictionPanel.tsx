@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useGcBalance } from "@/context/GcBalance";
 import { calcScoreOdds, netPayout } from "@/lib/scoreOdds";
+import { lc } from "@/i18n/content";
 
 interface TeamColors { primary: string; secondary: string; }
 
@@ -148,7 +149,7 @@ export default function ScorePredictionPanel({
 
   async function handleSubmit() {
     if (!scoreReady) {
-      setError(zh ? "请填写双方比分" : "Please enter both scores");
+      setError(lc(locale, "请填写双方比分", "Please enter both scores"));
       return;
     }
     if (amount < MIN_BET) {
@@ -156,7 +157,7 @@ export default function ScorePredictionPanel({
       return;
     }
     if (amount > gcBalance) {
-      setError(zh ? "GC余额不足" : "Insufficient GC");
+      setError(lc(locale, "GC余额不足", "Insufficient GC"));
       return;
     }
 
@@ -177,13 +178,13 @@ export default function ScorePredictionPanel({
       const data = await res.json();
       if (!res.ok) {
         const errMap: Record<string, string> = {
-          Unauthorized:            zh ? "请先登录"       : "Please log in",
-          "Match not found":       zh ? "比赛不存在"     : "Match not found",
-          "Match already started": zh ? "比赛已开始"     : "Match already started",
-          "Insufficient GC":       zh ? "GC余额不足"     : "Insufficient GC",
-          "GC deduction failed":   zh ? "GC扣除失败"     : "GC deduction failed",
-          "Insert failed":         zh ? "写入失败，请重试" : "Insert failed",
-          "Invalid score":         zh ? "比分无效"       : "Invalid score",
+          Unauthorized:            lc(locale, "请先登录", "Please log in"),
+          "Match not found":       lc(locale, "比赛不存在", "Match not found"),
+          "Match already started": lc(locale, "比赛已开始", "Match already started"),
+          "Insufficient GC":       lc(locale, "GC余额不足", "Insufficient GC"),
+          "GC deduction failed":   lc(locale, "GC扣除失败", "GC deduction failed"),
+          "Insert failed":         lc(locale, "写入失败，请重试", "Insert failed"),
+          "Invalid score":         lc(locale, "比分无效", "Invalid score"),
         };
         setError(errMap[data.error ?? ""] ?? `${data.error}`);
       } else {
@@ -221,7 +222,7 @@ export default function ScorePredictionPanel({
         setNeedsRefresh(true);
       }
     } catch {
-      setError(zh ? "网络异常，请重试" : "Network error");
+      setError(lc(locale, "网络异常，请重试", "Network error"));
     } finally {
       setLoading(false);
     }
@@ -229,7 +230,7 @@ export default function ScorePredictionPanel({
 
   async function handleDelete(betId: string, betAmount: number) {
     if (!canCancel) {
-      setError(zh ? "已过取消截止时间" : "Cancel window has closed");
+      setError(lc(locale, "已过取消截止时间", "Cancel window has closed"));
       return;
     }
     setDeleting(betId);
@@ -243,9 +244,9 @@ export default function ScorePredictionPanel({
       const data = await res.json();
       if (!res.ok) {
         const errMap: Record<string, string> = {
-          "Bet not found":              zh ? "注单不存在"     : "Bet not found",
-          "Cannot cancel a settled bet": zh ? "已结算，无法取消" : "Already settled",
-          "Cancel window closed (within 1 hour of kickoff)": zh ? "已过取消截止时间" : "Cancel window closed",
+          "Bet not found":              lc(locale, "注单不存在", "Bet not found"),
+          "Cannot cancel a settled bet": lc(locale, "已结算，无法取消", "Already settled"),
+          "Cancel window closed (within 1 hour of kickoff)": lc(locale, "已过取消截止时间", "Cancel window closed"),
         };
         setError(errMap[data.error ?? ""] ?? data.error);
       } else {
@@ -258,7 +259,7 @@ export default function ScorePredictionPanel({
         setNeedsRefresh(true);
       }
     } catch {
-      setError(zh ? "网络异常，请重试" : "Network error");
+      setError(lc(locale, "网络异常，请重试", "Network error"));
     } finally {
       setDeleting(null);
     }
@@ -271,7 +272,7 @@ export default function ScorePredictionPanel({
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-bold text-white">
-          {zh ? "🎯 比分预测" : "🎯 Score Prediction"}
+          {lc(locale, "🎯 比分预测", "🎯 Score Prediction")}
         </h3>
         {myBets.length > 0 && (
           <span className="text-xs text-gray-500">
@@ -321,11 +322,11 @@ export default function ScorePredictionPanel({
       {scoreReady && liveOdds && (
         <div className="mt-3 flex items-center justify-between bg-[#0A1628] rounded-xl px-4 py-2.5">
           <div>
-            <p className="text-[10px] text-gray-500">{zh ? "倍率" : "Odds"}</p>
+            <p className="text-[10px] text-gray-500">{lc(locale, "倍率", "Odds")}</p>
             <p className="text-[#FFD700] font-black text-lg leading-none mt-0.5">{fmtOdds(liveOdds)}</p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] text-gray-500">{zh ? "若猜中可得" : "If correct"}</p>
+            <p className="text-[10px] text-gray-500">{lc(locale, "若猜中可得", "If correct")}</p>
             <p className="text-green-400 font-black text-lg leading-none mt-0.5">
               🪙 {formatGc(potentialNet)}
             </p>
@@ -338,13 +339,13 @@ export default function ScorePredictionPanel({
 
         {/* Balance */}
         <div className="flex items-center justify-between bg-[#0A1628] rounded-xl px-3 py-2">
-          <span className="text-xs text-gray-500">{zh ? "可用余额" : "Available"}</span>
+          <span className="text-xs text-gray-500">{lc(locale, "可用余额", "Available")}</span>
           <span className="text-sm font-black text-[#FFD700]">🪙 {formatGc(gcBalance)} GC</span>
         </div>
 
         {/* Quick-bet presets */}
         <div>
-          <p className="text-[11px] text-gray-500 mb-1.5">{zh ? "快速下注" : "Quick bet"}</p>
+          <p className="text-[11px] text-gray-500 mb-1.5">{lc(locale, "快速下注", "Quick bet")}</p>
           <div className="grid grid-cols-5 gap-1.5">
             {PCT_PRESETS.map(({ pct, label }) => {
               const q      = Math.max(Math.floor(gcBalance * pct), 1);
@@ -372,7 +373,7 @@ export default function ScorePredictionPanel({
                   : "bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20 hover:border-red-400/50"
               }`}
             >
-              <span className="text-[11px]">{zh ? "全押" : "All in"}</span>
+              <span className="text-[11px]">{lc(locale, "全押", "All in")}</span>
               <span className="text-[9px] opacity-70 mt-0.5">{formatGc(gcBalance)}</span>
             </button>
           </div>
@@ -408,18 +409,16 @@ export default function ScorePredictionPanel({
           className="w-full bg-[#FFD700] text-[#0A1628] font-black py-3 rounded-xl text-sm hover:bg-[#FFC200] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading
-            ? (zh ? "提交中…" : "Placing…")
+            ? (lc(locale, "提交中…", "Placing…"))
             : !scoreReady
-            ? (zh ? "请填写比分" : "Enter a score first")
+            ? (lc(locale, "请填写比分", "Enter a score first"))
             : liveOdds
             ? (zh ? `以 ${fmtOdds(liveOdds)} 预测 ${parsedHome}:${parsedAway} →` : `Predict ${parsedHome}:${parsedAway} at ${fmtOdds(liveOdds)} →`)
-            : (zh ? "确认预测 →" : "Place Prediction →")}
+            : (lc(locale, "确认预测 →", "Place Prediction →"))}
         </button>
 
         <p className="text-[10px] text-gray-600 text-center leading-relaxed">
-          {zh
-            ? "倍率由泊松模型科学计算，含15%庄家优势。GoalCoin 为虚拟积分，不具备实际价值。"
-            : "Odds calculated via Poisson model with 15% house margin. GC is virtual entertainment currency."}
+          {lc(locale, "倍率由泊松模型科学计算，含15%庄家优势。GoalCoin 为虚拟积分，不具备实际价值。", "Odds calculated via Poisson model with 15% house margin. GC is virtual entertainment currency.")}
         </p>
       </div>
 
@@ -430,7 +429,7 @@ export default function ScorePredictionPanel({
           {/* Section title + cancel deadline */}
           <div className="flex items-center justify-between mb-2">
             <p className="text-[11px] text-gray-500 font-bold">
-              {zh ? "我的注单" : "My bets"}
+              {lc(locale, "我的注单", "My bets")}
             </p>
             {canCancel && countdown && (
               <span className="text-[10px] text-orange-400 font-bold">
@@ -439,18 +438,18 @@ export default function ScorePredictionPanel({
             )}
             {!canCancel && kickoffTime && (
               <span className="text-[10px] text-gray-600">
-                {zh ? "已过取消截止" : "Cancellation closed"}
+                {lc(locale, "已过取消截止", "Cancellation closed")}
               </span>
             )}
           </div>
 
           {/* Column headers */}
           <div className="grid grid-cols-[2.5rem_2.5rem_3.5rem_3.5rem_1fr] gap-x-2 px-1 mb-1">
-            <span className="text-[10px] text-gray-600">{zh ? "比分" : "Score"}</span>
-            <span className="text-[10px] text-gray-600">{zh ? "倍率" : "Odds"}</span>
-            <span className="text-[10px] text-gray-600">{zh ? "消耗" : "Bet"}</span>
-            <span className="text-[10px] text-gray-600">{zh ? "若中" : "Win"}</span>
-            <span className="text-[10px] text-gray-600 text-right">{zh ? "状态" : "Status"}</span>
+            <span className="text-[10px] text-gray-600">{lc(locale, "比分", "Score")}</span>
+            <span className="text-[10px] text-gray-600">{lc(locale, "倍率", "Odds")}</span>
+            <span className="text-[10px] text-gray-600">{lc(locale, "消耗", "Bet")}</span>
+            <span className="text-[10px] text-gray-600">{lc(locale, "若中", "Win")}</span>
+            <span className="text-[10px] text-gray-600 text-right">{lc(locale, "状态", "Status")}</span>
           </div>
 
           <div className="space-y-1.5">
@@ -490,9 +489,9 @@ export default function ScorePredictionPanel({
                       b.status === "lost" ? "text-red-400"   :
                       "text-blue-400"
                     }`}>
-                      {b.status === "won"  ? (zh ? "✅ 中了" : "✅ Won")  :
-                       b.status === "lost" ? (zh ? "❌ 未中" : "❌ Lost") :
-                                             (zh ? "⏳ 待开" : "⏳ Pending")}
+                      {b.status === "won"  ? (lc(locale, "✅ 中了", "✅ Won"))  :
+                       b.status === "lost" ? (lc(locale, "❌ 未中", "❌ Lost")) :
+                                             (lc(locale, "⏳ 待开", "⏳ Pending"))}
                     </span>
 
                     {isPending && canCancel && (
@@ -501,7 +500,7 @@ export default function ScorePredictionPanel({
                         disabled={isDel}
                         className="text-[10px] text-red-400/70 hover:text-red-400 border border-red-500/20 hover:border-red-400/50 rounded px-1.5 py-0.5 transition-colors disabled:opacity-40"
                       >
-                        {isDel ? "…" : (zh ? "取消" : "Del")}
+                        {isDel ? "…" : (lc(locale, "取消", "Del"))}
                       </button>
                     )}
                   </div>

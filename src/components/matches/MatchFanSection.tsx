@@ -5,6 +5,8 @@ import { ComposableMap, Geographies, Geography, Marker, type GeoFeature } from "
 import { COUNTRY_CENTROIDS } from "@/lib/countryCentroids";
 import { createClient } from "@/lib/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { lc } from "@/i18n/content";
+import { useLocale } from "next-intl";
 
 const GEO_URL = "/countries-110m.json";
 
@@ -140,8 +142,10 @@ interface Props {
   awayColors: TeamColors;
   zh?:        boolean;
   loggedIn?:  boolean;
+  canPersistProps?: boolean;
   userVote?:  "home" | "neutral" | "away" | null;
   showCurrentUserMarker?: boolean;
+  mobileAudioUnlock?: boolean;
 }
 
 const MAX_DOTS_PER_COUNTRY = 60;
@@ -529,13 +533,36 @@ const PROP_SOUND_URLS: Record<PropType, string> = {
 // cache so every call after the first is zero-latency.
 
 let _ac: AudioContext | null = null;
+let _audioUnlockPromise: Promise<void> | null = null;
 
 function getAC(): AudioContext | null {
   if (typeof window === "undefined") return null;
   try {
-    if (!_ac || _ac.state === "closed") _ac = new AudioContext();
+    const AudioContextConstructor =
+      window.AudioContext ??
+      (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextConstructor) return null;
+    if (!_ac || _ac.state === "closed") _ac = new AudioContextConstructor();
     return _ac;
   } catch { return null; }
+}
+
+function unlockPropAudio(): void {
+  const ctx = getAC();
+  if (!ctx) return;
+
+  const resumePromise = ctx.state === "suspended" ? ctx.resume() : Promise.resolve();
+  const source = ctx.createBufferSource();
+  source.buffer = ctx.createBuffer(1, Math.max(1, Math.round(ctx.sampleRate * 0.12)), ctx.sampleRate);
+  source.connect(ctx.destination);
+  source.start(0);
+  source.onended = () => source.disconnect();
+
+  _audioUnlockPromise = resumePromise
+    .then(() => undefined)
+    .catch((error) => {
+      console.warn("[sound] unlock failed:", error);
+    });
 }
 
 // Module-level cache survives re-renders
@@ -550,6 +577,7 @@ async function playPropSound(type: PropType, volume = 0.85): Promise<void> {
   try {
     const ctx = getAC();
     if (!ctx) return;
+    if (_audioUnlockPromise) await _audioUnlockPromise;
     if (ctx.state === "suspended") await ctx.resume();
 
     if (!_audioCache.has(type)) {
@@ -575,7 +603,8 @@ async function playPropSound(type: PropType, volume = 0.85): Promise<void> {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColors, awayColors, zh, loggedIn, userVote, showCurrentUserMarker = false }: Props) {
+export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColors, awayColors, zh, loggedIn, canPersistProps = true, userVote, showCurrentUserMarker = false, mobileAudioUnlock = false }: Props) {
+  const locale = useLocale();
   const [dots,      setDots]      = useState<VoterDot[]>([]);
   const [totals,    setTotals]    = useState({ home: 0, neutral: 0, away: 0 });
   const [tooltip,   setTooltip]   = useState<TooltipState | null>(null);
@@ -770,7 +799,7 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
     if (launching || !effectiveLoggedIn) return;
     // Block neutral or unvoted users
     if (!effectiveUserVote || effectiveUserVote === "neutral") {
-      setPropError(zh ? "请先选择支持的队伍才能使用道具" : "Please support a team first to use props");
+      setPropError(lc(locale, "请先选择支持的队伍才能使用道具", "Please support a team first to use props"));
       return;
     }
     const now     = Date.now();
@@ -779,11 +808,43 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
       setCooldownLeft(Math.ceil(FIREWORK_COOLDOWN - elapsed));
       return;
     }
-    // Create AudioContext synchronously during user gesture so it starts running
-    getAC();
+    // Mobile browsers require an audio source to start inside the user gesture.
+    if (mobileAudioUnlock && soundOn) unlockPropAudio();
+    else getAC();
     setLaunching(true);
     setPropError(null);
     try {
+      if (!canPersistProps) {
+        const color = effectiveUserVote === "away" ? awayColors.primary : homeColors.primary;
+        const localPayload: Omit<FireworkItem, "particles"> = {
+          id: `local-${matchId}-${Date.now()}`,
+          country_code: "US",
+          lat: 20,
+          lng: 10,
+          color,
+          username: lc(locale, "我", "Me"),
+          prop_type: propType,
+          isSelf: true,
+        };
+
+        lastLaunchRef.current = Date.now();
+        setCooldownLeft(FIREWORK_COOLDOWN);
+        const tick = setInterval(() => {
+          setCooldownLeft((prev) => {
+            if (prev <= 1) { clearInterval(tick); return 0; }
+            return prev - 1;
+          });
+        }, 1000);
+
+        spawnFirework(localPayload, soundOn, true);
+        const toastMsg = zh
+          ? (propType === "firework" ? "礼花升空！" : propType === "goal" ? "进球！" : propType === "rally" ? "加油！" : "嘘声！")
+          : (propType === "firework" ? "Fireworks launched!" : propType === "goal" ? "GOAL!" : propType === "rally" ? "Rally!" : "Boo!");
+        setPropToast(toastMsg);
+        setTimeout(() => setPropToast(null), 2500);
+        return;
+      }
+
       const res  = await fetch("/api/match-props/fireworks", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
@@ -792,11 +853,11 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
       const data = await res.json();
       if (!res.ok) {
         if (data.error === "neutral_vote") {
-          setPropError(zh ? "请先选择支持的队伍才能使用道具" : "Please support a team first to use props");
+          setPropError(lc(locale, "请先选择支持的队伍才能使用道具", "Please support a team first to use props"));
         } else if (data.error === "insufficient_gc") {
-          setPropError(zh ? "GC 余额不足" : "Insufficient GoalCoins");
+          setPropError(lc(locale, "GC 余额不足", "Insufficient GoalCoins"));
         } else {
-          setPropError(data.message ?? data.error ?? (zh ? "操作失败" : "Failed"));
+          setPropError(data.message ?? data.error ?? (lc(locale, "操作失败", "Failed")));
         }
         return;
       }
@@ -823,7 +884,7 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
         channelRef.current.send({ type: "broadcast", event: "fw", payload: data.payload });
       }
     } catch {
-      setPropError(zh ? "网络错误" : "Network error");
+      setPropError(lc(locale, "网络错误", "Network error"));
     } finally {
       setLaunching(false);
     }
@@ -862,12 +923,12 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-bold text-gray-200">
-            🌍 {zh ? "全球球迷支持地图" : "Global Fan Support Map"}
+            🌍 {lc(locale, "全球球迷支持地图", "Global Fan Support Map")}
           </h3>
           <span className="text-xs text-gray-500">
             {mapTotal > 0
               ? (zh ? `${mapTotal} 人 · ${countryCount} 个国家` : `${mapTotal} fans · ${countryCount} countries`)
-              : (zh ? "暂无投票" : "No votes yet")}
+              : (lc(locale, "暂无投票", "No votes yet"))}
           </span>
         </div>
 
@@ -913,13 +974,13 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
             className="mb-3 rounded-md border border-[#FFD700]/35 bg-[#FFD700]/10 px-2 py-1 text-[11px] font-bold text-[#FFD700] disabled:opacity-60"
           >
             {locationStatus === "locating"
-              ? (zh ? "正在定位…" : "Locating…")
-              : (zh ? "允许定位后显示我的位置" : "Allow location to show my position")}
+              ? (lc(locale, "正在定位…", "Locating…"))
+              : (lc(locale, "允许定位后显示我的位置", "Allow location to show my position"))}
           </button>
         )}
         {showCurrentUserMarker && (userVote === "home" || userVote === "away") && userMapPos && (
           <p className="mb-3 text-[11px] font-bold text-emerald-300">
-            {zh ? "已获取当前位置" : "Current location detected"}
+            {lc(locale, "已获取当前位置", "Current location detected")}
           </p>
         )}
 
@@ -933,7 +994,7 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
           {loading ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="text-gray-600 text-xs animate-pulse">
-                {zh ? "地图加载中…" : "Loading…"}
+                {lc(locale, "地图加载中…", "Loading…")}
               </span>
             </div>
           ) : (
@@ -1299,7 +1360,7 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
                           opacity:       0,
                           animation:     "gc-rally-pulse 2.1s ease-out 0.55s forwards",
                         }}>
-                          {zh ? "加油!" : "GO!"}
+                          {lc(locale, "加油!", "GO!")}
                         </div>
                         {RALLY_CONFETTI.map((s, si) => (
                           <div key={`confetti-${si}`} style={{
@@ -1409,11 +1470,11 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
           <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">
               <h4 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">
-                🎮 {zh ? "道具" : "Props"}
+                🎮 {lc(locale, "道具", "Props")}
               </h4>
               {/* Realtime channel indicator */}
               <span
-                title={channelReady ? (zh ? "实时连接中" : "Live connected") : (zh ? "连接中…" : "Connecting…")}
+                title={channelReady ? (lc(locale, "实时连接中", "Live connected")) : (lc(locale, "连接中…", "Connecting…"))}
                 className={`w-1.5 h-1.5 rounded-full inline-block transition-colors ${
                   channelReady ? "bg-green-500 shadow-[0_0_4px_#22c55e]" : "bg-gray-600"
                 }`}
@@ -1428,7 +1489,7 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
               {/* Sound toggle */}
               <button
                 onClick={() => setSoundOn((v) => !v)}
-                title={soundOn ? (zh ? "点击静音" : "Mute sounds") : (zh ? "点击开声" : "Unmute sounds")}
+                title={soundOn ? (lc(locale, "点击静音", "Mute sounds")) : (lc(locale, "点击开声", "Unmute sounds"))}
                 className="text-base leading-none text-gray-500 hover:text-gray-300 transition-colors select-none"
               >
                 {soundOn ? "🔊" : "🔇"}
@@ -1441,9 +1502,7 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
             <div className="mb-2.5 flex items-center gap-2 bg-[#1A2D4A] border border-[#FFD700]/20 rounded-xl px-3 py-2">
               <span className="text-sm shrink-0">⚠️</span>
               <p className="text-[11px] text-[#FFD700]/80 leading-snug">
-                {zh
-                  ? "道具仅限支持某一方的球迷使用，请先在下方选择支持队伍"
-                  : "Props are for fans who support a team. Please vote for a side below."}
+                {lc(locale, "道具仅限支持某一方的球迷使用，请先在下方选择支持队伍", "Props are for fans who support a team. Please vote for a side below.")}
               </p>
             </div>
           )}
@@ -1463,9 +1522,9 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
               const borderOn = isBoo ? "border-red-500/50 hover:border-red-500 hover:bg-red-500/10"
                                      : "border-[#FFD700]/50 hover:border-[#FFD700] hover:bg-[#FFD700]/10";
               const disabledTitle = !effectiveLoggedIn
-                ? (zh ? "登录后使用" : "Login to use")
+                ? (lc(locale, "登录后使用", "Login to use"))
                 : (!effectiveUserVote || effectiveUserVote === "neutral")
-                  ? (zh ? "请先选择支持队伍" : "Support a team first")
+                  ? (lc(locale, "请先选择支持队伍", "Support a team first"))
                   : undefined;
               return (
                 <button
@@ -1500,7 +1559,7 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
 
           {!effectiveLoggedIn && (
             <p className="text-[10px] text-gray-600 mt-2">
-              {zh ? "登录后可使用道具" : "Login to use props"}
+              {lc(locale, "登录后可使用道具", "Login to use props")}
             </p>
           )}
         </div>

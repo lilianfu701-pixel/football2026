@@ -5,6 +5,7 @@ import Link from "next/link";
 import PredictClient from "./PredictClient";
 import AwardBettingUI from "@/app/[locale]/awards/AwardBettingUI";
 import { getBetPhase } from "@/lib/awardPhase";
+import { lc } from "@/i18n/content";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -139,10 +140,10 @@ export default async function PredictPage({ params }: PageProps) {
         {/* Page title */}
         <div className="mb-6">
           <h1 className="text-2xl font-black text-white">
-            🎯 {zh ? "预测中心" : "Prediction Hub"}
+            🎯 {lc(locale, "预测中心", "Prediction Hub")}
           </h1>
           <p className="text-gray-500 text-sm mt-1">
-            {zh ? "预测比赛、追踪战绩、赢取 GoalCoin" : "Predict matches, track results, win GoalCoins"}
+            {lc(locale, "预测比赛、追踪战绩、赢取 GoalCoin", "Predict matches, track results, win GoalCoins")}
           </p>
         </div>
 
@@ -151,19 +152,19 @@ export default async function PredictPage({ params }: PageProps) {
           <div className="bg-[#0F2040] border border-[#FFD700]/20 rounded-2xl p-6 text-center mb-6">
             <div className="text-4xl mb-3">🔒</div>
             <p className="text-white font-bold text-lg mb-1">
-              {zh ? "登录后开始预测" : "Login to Start Predicting"}
+              {lc(locale, "登录后开始预测", "Login to Start Predicting")}
             </p>
             <p className="text-gray-500 text-sm mb-5">
-              {zh ? "注册免费领取 10 万 GC，马上开始助威！" : "Register free, get 100K GC, start predicting now!"}
+              {lc(locale, "注册免费领取 10 万 GC，马上开始助威！", "Register free, get 100K GC, start predicting now!")}
             </p>
             <div className="flex gap-3 justify-center">
               <Link href={`/${locale}/auth/login`}
                 className="px-6 py-2.5 bg-[#FFD700] text-[#0A1628] font-black rounded-xl text-sm hover:bg-[#FFC200] transition-colors">
-                {zh ? "登录" : "Login"}
+                {lc(locale, "登录", "Login")}
               </Link>
               <Link href={`/${locale}/auth/register`}
                 className="px-6 py-2.5 border border-[#1E3A5F] text-gray-300 font-semibold rounded-xl text-sm hover:border-[#FFD700]/50 hover:text-white transition-colors">
-                {zh ? "免费注册" : "Register Free"}
+                {lc(locale, "免费注册", "Register Free")}
               </Link>
             </div>
           </div>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getFlagUrl, getTeamDisplayName } from "@/lib/flags";
 import FollowButton from "@/components/players/FollowButton";
+import { lc } from "@/i18n/content";
 
 interface Props {
   params: Promise<{ locale: string; id: string }>;
@@ -107,7 +108,7 @@ export default async function PlayerPage({ params }: Props) {
         {/* Breadcrumb */}
         <nav className="text-xs text-gray-500 flex items-center gap-1 flex-wrap">
           <Link href={`/${locale}/players`} className="hover:text-[#FFD700]">
-            {zh ? "球员" : "Players"}
+            {lc(locale, "球员", "Players")}
           </Link>
           <span>/</span>
           <Link href={`/${locale}/teams/${encodeURIComponent(p.team)}`} className="hover:text-[#FFD700]">
@@ -209,35 +210,35 @@ export default async function PlayerPage({ params }: Props) {
         {/* ── Stats grid ── */}
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
           <div className="px-5 py-3.5 border-b border-[#1E3A5F]">
-            <h2 className="font-black text-sm">{zh ? "📋 球员资料" : "📋 Player Info"}</h2>
+            <h2 className="font-black text-sm">{lc(locale, "📋 球员资料", "📋 Player Info")}</h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-[#1E3A5F]/30">
             {[
               {
-                label:  zh ? "年龄" : "Age",
+                label:  lc(locale, "年龄", "Age"),
                 value:  age != null ? `${age}` : "—",
                 sub:    p.date_of_birth
                   ? new Date(p.date_of_birth).toLocaleDateString(zh ? "zh-CN" : "en-US", { year: "numeric", month: "short", day: "numeric" })
                   : undefined,
               },
               {
-                label: zh ? "位置" : "Position",
+                label: lc(locale, "位置", "Position"),
                 value: posMeta ? (zh ? posMeta.zh : posMeta.en) : "—",
               },
               {
-                label: zh ? "俱乐部" : "Club",
+                label: lc(locale, "俱乐部", "Club"),
                 value: p.club ?? "—",
               },
               {
-                label: zh ? "身高" : "Height",
+                label: lc(locale, "身高", "Height"),
                 value: p.height_cm ? `${p.height_cm} cm` : "—",
               },
               {
-                label: zh ? "身价" : "Market Value",
+                label: lc(locale, "身价", "Market Value"),
                 value: p.market_value ?? "—",
               },
               {
-                label: zh ? "号码" : "Shirt",
+                label: lc(locale, "号码", "Shirt"),
                 value: p.shirt_number != null ? `#${p.shirt_number}` : "—",
               },
             ].map(({ label, value, sub }) => (
@@ -253,7 +254,7 @@ export default async function PlayerPage({ params }: Props) {
         {/* ── Bio ── */}
         {(zh ? p.bio_zh : p.bio_en) && (
           <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5">
-            <h2 className="font-black text-sm mb-3">📖 {zh ? "球员简介" : "About"}</h2>
+            <h2 className="font-black text-sm mb-3">📖 {lc(locale, "球员简介", "About")}</h2>
             <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">
               {zh ? p.bio_zh : p.bio_en}
             </p>
@@ -274,7 +275,7 @@ export default async function PlayerPage({ params }: Props) {
               </h2>
               <Link href={`/${locale}/teams/${encodeURIComponent(p.team)}`}
                 className="text-[10px] text-gray-500 hover:text-[#FFD700]">
-                {zh ? "球队详情" : "Team page"} →
+                {lc(locale, "球队详情", "Team page")} →
               </Link>
             </div>
             <div className="divide-y divide-[#1E3A5F]/30">

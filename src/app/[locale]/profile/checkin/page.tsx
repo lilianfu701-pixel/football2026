@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getWealthLevel } from "@/lib/levels";
 import CheckinClient from "./CheckinClient";
+import { lc } from "@/i18n/content";
 
 interface Props {
   params: Promise<{ locale: string }>;
@@ -14,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const zh = locale === "zh";
   return {
-    title: zh ? "每日签到 | Football2026" : "Daily Check-in | Football2026",
+    title: lc(locale, "每日签到 | Football2026", "Daily Check-in | Football2026"),
   };
 }
 
@@ -74,10 +75,10 @@ export default async function CheckinPage({ params }: Props) {
         {/* Header */}
         <div className="mb-5">
           <h1 className="text-2xl font-black text-white">
-            📅 {zh ? "每日签到" : "Daily Check-in"}
+            📅 {lc(locale, "每日签到", "Daily Check-in")}
           </h1>
           <p className="text-gray-500 text-sm mt-0.5">
-            {zh ? "每天签到免费领取 GC，连签奖励更高！" : "Check in daily for free GC — streaks earn more!"}
+            {lc(locale, "每天签到免费领取 GC，连签奖励更高！", "Check in daily for free GC — streaks earn more!")}
           </p>
         </div>
 

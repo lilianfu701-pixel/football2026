@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { getMaxAmount, makePresets, fmtGC } from "@/lib/forum/ratingCap";
+import { lc } from "@/i18n/content";
 
 interface Props {
   mode:           "transfer-btn";
@@ -74,7 +75,7 @@ export default function ProfileTabs({
         onClick={() => { setShowModal(true); setResult(null); setSelectedPreset(presets[1] ?? presets[0] ?? null); setCustomAmt(""); }}
         className="shrink-0 flex items-center gap-2 bg-[#FFD700] text-[#0A1628] font-black px-4 py-2.5 rounded-xl text-sm hover:bg-[#FFC200] transition-colors"
       >
-        🪙 {zh ? "转 GC" : "Send GC"}
+        🪙 {lc(locale, "转 GC", "Send GC")}
       </button>
 
       {/* Modal Overlay */}
@@ -90,14 +91,14 @@ export default function ProfileTabs({
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-black text-white">
-                🪙 {zh ? "GC 转账" : "Transfer GC"}
+                🪙 {lc(locale, "GC 转账", "Transfer GC")}
               </h2>
               <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-white text-lg">✕</button>
             </div>
 
             {/* Target */}
             <div className="bg-[#0A1628] rounded-xl p-3 mb-4 flex items-center justify-between">
-              <span className="text-sm text-gray-400">{zh ? "对象" : "To"}</span>
+              <span className="text-sm text-gray-400">{lc(locale, "对象", "To")}</span>
               <span className="text-sm font-bold text-white">{targetNickname}</span>
             </div>
 
@@ -112,7 +113,7 @@ export default function ProfileTabs({
                     : "bg-[#0A1628] border-[#1E3A5F] text-gray-500 hover:text-white"
                 }`}
               >
-                ➕ {zh ? "加分（转赠）" : "Give (+)"}
+                ➕ {lc(locale, "加分（转赠）", "Give (+)")}
               </button>
               <button
                 type="button"
@@ -123,13 +124,13 @@ export default function ProfileTabs({
                     : "bg-[#0A1628] border-[#1E3A5F] text-gray-500 hover:text-white"
                 }`}
               >
-                ➖ {zh ? "扣分（扣除）" : "Deduct (-)"}
+                ➖ {lc(locale, "扣分（扣除）", "Deduct (-)")}
               </button>
             </div>
 
             {/* Max hint */}
             <div className="text-[10px] text-gray-500 mb-2 text-right">
-              {zh ? "上限" : "Max"}: <span className="text-[#FFD700] font-bold">{fmtGC(maxAmount)} GC</span>
+              {lc(locale, "上限", "Max")}: <span className="text-[#FFD700] font-bold">{fmtGC(maxAmount)} GC</span>
             </div>
 
             {/* Presets */}
@@ -157,7 +158,7 @@ export default function ProfileTabs({
               max={maxAmount}
               value={customAmt}
               onChange={(e) => { setCustomAmt(e.target.value); setSelectedPreset(null); }}
-              placeholder={zh ? "自定义金额" : "Custom amount"}
+              placeholder={lc(locale, "自定义金额", "Custom amount")}
               className="w-full bg-[#0A1628] border border-[#1E3A5F] text-white rounded-xl px-4 py-3 text-sm mb-3
                          focus:outline-none focus:border-[#FFD700] focus:ring-1 focus:ring-[#FFD700] transition-colors placeholder-gray-600"
             />
@@ -168,7 +169,7 @@ export default function ProfileTabs({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               maxLength={100}
-              placeholder={zh ? "转账原因（可选）" : "Reason (optional)"}
+              placeholder={lc(locale, "转账原因（可选）", "Reason (optional)")}
               className="w-full bg-[#0A1628] border border-[#1E3A5F] text-white rounded-xl px-4 py-3 text-sm mb-4
                          focus:outline-none focus:border-[#FFD700] focus:ring-1 focus:ring-[#FFD700] transition-colors placeholder-gray-600"
             />
@@ -206,7 +207,7 @@ export default function ProfileTabs({
               }`}
             >
               {submitting
-                ? (zh ? "处理中…" : "Processing...")
+                ? (lc(locale, "处理中…", "Processing..."))
                 : direction === "give"
                   ? (zh ? `确认转赠 ${fmtGC(finalAmount)} GC` : `Confirm Send ${fmtGC(finalAmount)} GC`)
                   : (zh ? `确认扣除 ${fmtGC(finalAmount)} GC` : `Confirm Deduct ${fmtGC(finalAmount)} GC`)}

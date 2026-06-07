@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { getFlagUrl, getTeamDisplayName } from "@/lib/flags";
+import { lc } from "@/i18n/content";
+import { useLocale } from "next-intl";
 
 // ── World Cup 2026 venue & city translations ─────────────────────────────────
 const VENUE_ZH: Record<string, string> = {
@@ -90,6 +92,7 @@ export default function MatchHero({
   homeColors: hc = DEFAULT_HOME,
   awayColors: ac = DEFAULT_AWAY,
 }: Props) {
+  const locale = useLocale();
   const router = useRouter();
   const [votes, setVotes] = useState(initialVotes);
   const [myVote, setMyVote] = useState(initialMyVote);
@@ -175,14 +178,14 @@ export default function MatchHero({
         <span className="text-sm font-bold text-gray-400">
           {groupName
             ? (zh ? `${groupName}组 · 小组赛` : `Group ${groupName} · Group Stage`)
-            : (zh ? "世界杯 2026" : "World Cup 2026")}
+            : (lc(locale, "世界杯 2026", "World Cup 2026"))}
         </span>
         <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold ${
           isLive     ? "text-green-400 bg-green-400/10 animate-pulse" :
           isFinished ? "text-gray-500 bg-gray-500/10" :
                        "text-blue-400 bg-blue-400/10"
         }`}>
-          {isLive ? "🔴 LIVE" : isFinished ? (zh ? "已结束" : "Full Time") : (zh ? "未开赛" : "Upcoming")}
+          {isLive ? "🔴 LIVE" : isFinished ? (lc(locale, "已结束", "Full Time")) : (lc(locale, "未开赛", "Upcoming"))}
         </span>
       </div>
 
@@ -277,7 +280,7 @@ export default function MatchHero({
             } disabled:opacity-50`}
           >
             <div className="text-base leading-none mb-0.5">🤝</div>
-            <div>{zh ? "中立" : "Neutral"}</div>
+            <div>{lc(locale, "中立", "Neutral")}</div>
             {total > 0 && (
               <div className="mt-1">
                 <div className="h-1 bg-[#1E3A5F] rounded-full overflow-hidden mx-3">
@@ -319,7 +322,7 @@ export default function MatchHero({
 
         {!canVote && (
           <p className="text-[10px] text-gray-600 text-center mt-1.5">
-            {zh ? "登录后参与投票" : "Login to vote"}
+            {lc(locale, "登录后参与投票", "Login to vote")}
           </p>
         )}
       </div>

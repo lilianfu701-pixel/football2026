@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { getFlagUrl, isTBD, getTeamDisplayName } from "@/lib/flags";
+import { lc } from "@/i18n/content";
 
 export interface BriefMatch {
   id: number;
@@ -72,9 +73,9 @@ export default function FavoritesCard({ matches, locale, dbFollowedIds }: Props)
       {/* Header */}
       <div className="px-5 pt-4 pb-3 bg-gradient-to-r from-red-500/10 to-transparent border-b border-[#1E3A5F] flex items-center justify-between">
         <div>
-          <p className="text-sm font-black text-white">❤️ {zh ? "我的收藏" : "My Favorites"}</p>
+          <p className="text-sm font-black text-white">❤️ {lc(locale, "我的收藏", "My Favorites")}</p>
           <p className="text-xs text-gray-500 mt-0.5">
-            {zh ? "已关注的比赛" : "Matches you're following"}
+            {lc(locale, "已关注的比赛", "Matches you're following")}
           </p>
         </div>
         {favoriteMatches.length > 0 && (
@@ -82,7 +83,7 @@ export default function FavoritesCard({ matches, locale, dbFollowedIds }: Props)
             href={`/${locale}/matches`}
             className="text-xs text-[#7C6FE0] hover:text-white font-semibold transition-colors whitespace-nowrap"
           >
-            {zh ? "管理 →" : "Manage →"}
+            {lc(locale, "管理 →", "Manage →")}
           </Link>
         )}
       </div>
@@ -93,15 +94,13 @@ export default function FavoritesCard({ matches, locale, dbFollowedIds }: Props)
           <div className="text-center py-2">
             <p className="text-3xl mb-2">🔕</p>
             <p className="text-xs text-gray-500 mb-4 leading-relaxed">
-              {zh
-                ? "还没有收藏任何比赛\n在比赛列表点击关注按钮"
-                : "No favorites yet.\nFollow a match to get push alerts."}
+              {lc(locale, "还没有收藏任何比赛\n在比赛列表点击关注按钮", "No favorites yet.\nFollow a match to get push alerts.")}
             </p>
             <Link
               href={`/${locale}/matches`}
               className="inline-flex items-center justify-center gap-1.5 w-full px-3 py-2.5 rounded-xl bg-[#FFD700] text-[#0A1628] text-xs font-black hover:bg-[#FFC200] transition-colors"
             >
-              🔔 {zh ? "收藏比赛，开启推送通知" : "Follow matches & get alerts"}
+              🔔 {lc(locale, "收藏比赛，开启推送通知", "Follow matches & get alerts")}
             </Link>
           </div>
         ) : (
@@ -176,11 +175,11 @@ export default function FavoritesCard({ matches, locale, dbFollowedIds }: Props)
                   <div className="mt-1.5 flex items-center justify-center">
                     {isLive ? (
                       <span className="text-[10px] text-green-400 font-bold animate-pulse">
-                        🔴 {zh ? "正在直播" : "LIVE"}
+                        🔴 {lc(locale, "正在直播", "LIVE")}
                       </span>
                     ) : isFinished ? (
                       <span className="text-[10px] text-gray-500">
-                        {zh ? "已结束" : "Full Time"}
+                        {lc(locale, "已结束", "Full Time")}
                       </span>
                     ) : countdown ? (
                       <span className="text-[10px] text-orange-400/80 font-medium">
@@ -197,7 +196,7 @@ export default function FavoritesCard({ matches, locale, dbFollowedIds }: Props)
               href={`/${locale}/profile/favorites`}
               className="block w-full text-center bg-[#1E3A5F] hover:bg-[#7C6FE0]/30 border border-[#1E3A5F] hover:border-[#7C6FE0]/50 text-gray-400 hover:text-white font-semibold py-2 rounded-xl text-xs transition-all"
             >
-              {zh ? "管理收藏 →" : "Manage Favorites →"}
+              {lc(locale, "管理收藏 →", "Manage Favorites →")}
             </Link>
           </div>
         )}

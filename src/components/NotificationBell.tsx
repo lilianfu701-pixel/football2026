@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import { lc } from "@/i18n/content";
 
 interface NotifItem {
   id:         number;
@@ -20,12 +21,12 @@ interface Props {
   locale: string;
 }
 
-function timeAgo(dateStr: string, zh: boolean): string {
+function timeAgo(dateStr: string, zh: boolean, locale: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60_000);
   const h = Math.floor(diff / 3_600_000);
   const d = Math.floor(diff / 86_400_000);
-  if (m < 1)  return zh ? "刚刚"       : "just now";
+  if (m < 1)  return lc(locale, "刚刚", "just now");
   if (m < 60) return zh ? `${m}分钟前` : `${m}m ago`;
   if (h < 24) return zh ? `${h}小时前` : `${h}h ago`;
   if (d < 30) return zh ? `${d}天前`   : `${d}d ago`;
@@ -37,8 +38,8 @@ function NotifIcon({ type, gc_amount }: { type: string; gc_amount: number | null
   return <span>💬</span>;
 }
 
-function NotifText({ n, zh }: { n: NotifItem; zh: boolean }) {
-  const actor = n.actor?.nickname ?? (zh ? "某用户" : "Someone");
+function NotifText({ n, zh, locale }: { n: NotifItem; zh: boolean; locale: string }) {
+  const actor = n.actor?.nickname ?? (lc(locale, "某用户", "Someone"));
   const title = n.post_title
     ? `「${n.post_title.slice(0, 20)}${n.post_title.length > 20 ? "…" : ""}」`
     : "";
@@ -155,7 +156,7 @@ export default function NotificationBell({ locale }: Props) {
       {/* Bell button */}
       <button
         onClick={handleOpen}
-        title={zh ? "通知" : "Notifications"}
+        title={lc(locale, "通知", "Notifications")}
         className="relative flex items-center justify-center w-9 h-9 rounded-xl text-gray-400 hover:text-white hover:bg-[#1E3A5F] transition-colors"
       >
         {/* Bell SVG */}
@@ -182,9 +183,9 @@ export default function NotificationBell({ locale }: Props) {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#1E3A5F]/70">
             <span className="text-sm font-black text-white">
-              🔔 {zh ? "通知" : "Notifications"}
+              🔔 {lc(locale, "通知", "Notifications")}
               {unread > 0 && (
-                <span className="ml-2 text-xs font-bold text-red-400">{unread} {zh ? "条未读" : "unread"}</span>
+                <span className="ml-2 text-xs font-bold text-red-400">{unread} {lc(locale, "条未读", "unread")}</span>
               )}
             </span>
             {unread > 0 && (
@@ -193,7 +194,7 @@ export default function NotificationBell({ locale }: Props) {
                 disabled={loading}
                 className="text-[11px] font-bold text-[#FFD700]/70 hover:text-[#FFD700] transition-colors disabled:opacity-50"
               >
-                {zh ? "全部已读" : "Mark all read"}
+                {lc(locale, "全部已读", "Mark all read")}
               </button>
             )}
           </div>
@@ -202,7 +203,7 @@ export default function NotificationBell({ locale }: Props) {
           <div className="max-h-[400px] overflow-y-auto">
             {notifs.length === 0 ? (
               <div className="px-4 py-8 text-center text-sm text-gray-600">
-                {zh ? "暂无通知" : "No notifications yet"}
+                {lc(locale, "暂无通知", "No notifications yet")}
               </div>
             ) : (
               notifs.map((n) => (
@@ -226,9 +227,9 @@ export default function NotificationBell({ locale }: Props) {
                   {/* Text */}
                   <div className="flex-1 min-w-0">
                     <p className="text-[12px] text-gray-400 leading-relaxed">
-                      <NotifText n={n} zh={zh} />
+                      <NotifText n={n} zh={zh} locale={locale} />
                     </p>
-                    <p className="text-[10px] text-gray-600 mt-0.5">{timeAgo(n.created_at, zh)}</p>
+                    <p className="text-[10px] text-gray-600 mt-0.5">{timeAgo(n.created_at, zh, locale)}</p>
                   </div>
 
                   {/* Unread dot */}
@@ -247,7 +248,7 @@ export default function NotificationBell({ locale }: Props) {
               onClick={() => setOpen(false)}
               className="text-[11px] text-[#FFD700]/70 hover:text-[#FFD700] transition-colors font-bold"
             >
-              {zh ? "查看全部通知 →" : "View all notifications →"}
+              {lc(locale, "查看全部通知 →", "View all notifications →")}
             </Link>
           </div>
         </div>

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { SHARE_LABELS } from "@/lib/languages";
 import { useGcBalance } from "@/context/GcBalance";
+import { lc } from "@/i18n/content";
 
 interface Props {
   title:            string;
@@ -157,7 +158,7 @@ export default function ShareButtons({ title, translatedTitle, locale, zh, usern
       setCopied(true);
       setTimeout(() => setCopied(false), 2400);
     } catch {
-      prompt(zh ? "复制链接：" : "Copy link:", url);
+      prompt(lc(locale, "复制链接：", "Copy link:"), url);
     }
     triggerReward(url);
   }
@@ -180,7 +181,7 @@ export default function ShareButtons({ title, translatedTitle, locale, zh, usern
         </span>
       ) : (
         <span className="text-[11px] font-bold text-[#FFD700]/80 bg-[#FFD700]/8 border border-[#FFD700]/20 px-2 py-1 rounded-lg shrink-0 whitespace-nowrap">
-          🎁 {zh ? "分享得 1M GC" : "Share +1M GC"}
+          🎁 {lc(locale, "分享得 1M GC", "Share +1M GC")}
         </span>
       )}
 
@@ -188,7 +189,7 @@ export default function ShareButtons({ title, translatedTitle, locale, zh, usern
       {canNative && (
         <button
           onClick={handleNative}
-          title={zh ? "系统一键分享（含微信）" : "Share via system (incl. WeChat)"}
+          title={lc(locale, "系统一键分享（含微信）", "Share via system (incl. WeChat)")}
           className={`${btn} hover:bg-[#FFD700]/15 hover:border-[#FFD700]/40 hover:text-[#FFD700]`}
         >
           📤
@@ -199,7 +200,7 @@ export default function ShareButtons({ title, translatedTitle, locale, zh, usern
       <div className="relative">
         <button
           onClick={() => setShowQr((v) => !v)}
-          title={zh ? "微信扫码分享" : "WeChat — Scan QR"}
+          title={lc(locale, "微信扫码分享", "WeChat — Scan QR")}
           className={`${btn} ${
             showQr
               ? "bg-[#07C160]/20 border-[#07C160]/50 text-[#07C160]"
@@ -219,7 +220,7 @@ export default function ShareButtons({ title, translatedTitle, locale, zh, usern
               <div className="flex items-center gap-1.5">
                 <span className="text-sm text-[#07C160]">💬</span>
                 <p className="text-[11px] font-black text-[#07C160] uppercase tracking-wider">
-                  {zh ? "微信扫码分享" : "WeChat Share"}
+                  {lc(locale, "微信扫码分享", "WeChat Share")}
                 </p>
               </div>
               {qrSrc ? (
@@ -239,7 +240,7 @@ export default function ShareButtons({ title, translatedTitle, locale, zh, usern
                 </div>
               )}
               <p className="text-[10px] text-gray-500 text-center leading-relaxed">
-                {zh ? "打开微信 → 发现 → 扫一扫" : "WeChat → Discover → Scan QR"}
+                {lc(locale, "打开微信 → 发现 → 扫一扫", "WeChat → Discover → Scan QR")}
               </p>
               {username && (
                 <p className="text-[9px] text-[#FFD700]/50 text-center">
@@ -266,7 +267,7 @@ export default function ShareButtons({ title, translatedTitle, locale, zh, usern
       {/* Copy link */}
       <button
         onClick={handleCopy}
-        title={zh ? "复制链接" : "Copy link"}
+        title={lc(locale, "复制链接", "Copy link")}
         className={`${btn} ${
           copied
             ? "bg-green-500/15 border-green-500/40 text-green-400"
@@ -278,7 +279,7 @@ export default function ShareButtons({ title, translatedTitle, locale, zh, usern
 
       {copied && !gcToast && (
         <span className="text-xs text-green-400 font-bold animate-pulse">
-          {zh ? "已复制！" : "Copied!"}
+          {lc(locale, "已复制！", "Copied!")}
         </span>
       )}
     </div>

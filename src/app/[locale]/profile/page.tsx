@@ -18,6 +18,7 @@ import { PROFILE_REWARDS } from "@/lib/profileRewards";
 import { AWARD_META, dbToAwardKey } from "@/data/players";
 import Link from "next/link";
 import Image from "next/image";
+import { lc } from "@/i18n/content";
 
 interface ProfilePageProps {
   params:       Promise<{ locale: string }>;
@@ -296,7 +297,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
     const m = Math.floor(diff / 60000);
     const h = Math.floor(diff / 3600000);
     const d = Math.floor(diff / 86400000);
-    if (m < 1)  return zh ? "刚刚"      : "just now";
+    if (m < 1)  return lc(locale, "刚刚", "just now");
     if (m < 60) return zh ? `${m}分钟前` : `${m}m ago`;
     if (h < 24) return zh ? `${h}小时前` : `${h}h ago`;
     if (d < 30) return zh ? `${d}天前`   : `${d}d ago`;
@@ -406,7 +407,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
           {/* GC Balance */}
           <div className="mt-5 bg-[#0A1628] border border-[#1E3A5F] rounded-xl p-4">
             <div className="flex items-center justify-between mb-1">
-              <p className="text-gray-500 text-xs">{zh ? "GoalCoin 余额" : "GoalCoin Balance"}</p>
+              <p className="text-gray-500 text-xs">{lc(locale, "GoalCoin 余额", "GoalCoin Balance")}</p>
               <Link
                 href={`/${locale}/profile/topup`}
                 className="flex items-center gap-1 px-2.5 py-1 bg-[#FFD700]/15 hover:bg-[#FFD700]/25 border border-[#FFD700]/40 hover:border-[#FFD700]/70 text-[#FFD700] text-[11px] font-black rounded-lg transition-all"
@@ -447,7 +448,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
         {profile.bio && (
           <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5 mb-6">
             <h3 className="text-gray-500 text-xs font-semibold uppercase tracking-wide mb-2">
-              {zh ? "自我介绍" : "Bio"}
+              {lc(locale, "自我介绍", "Bio")}
             </h3>
             <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">
               {profile.bio}
@@ -479,10 +480,10 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
             <h3 className="text-white font-bold text-base mb-4">预测统计</h3>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: zh ? "总预测" : "Total Bets",  value: totalBets,              icon: "🎯" },
-                { label: zh ? "胜率"   : "Win Rate",    value: `${winRate}%`,          icon: "✅" },
-                { label: zh ? "赢了"   : "Won",         value: wonBets,                icon: "🏆" },
-                { label: zh ? "总投注" : "Wagered",     value: formatGc(totalWagered), icon: "🪙" },
+                { label: lc(locale, "总预测", "Total Bets"),  value: totalBets,              icon: "🎯" },
+                { label: lc(locale, "胜率", "Win Rate"),    value: `${winRate}%`,          icon: "✅" },
+                { label: lc(locale, "赢了", "Won"),         value: wonBets,                icon: "🏆" },
+                { label: lc(locale, "总投注", "Wagered"),     value: formatGc(totalWagered), icon: "🪙" },
               ].map((stat, i) => (
                 <div key={i} className="bg-[#0A1628] rounded-xl p-3">
                   <p className="text-lg mb-0.5">{stat.icon}</p>
@@ -528,7 +529,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
             />
           </div>
           <p className="text-gray-600 text-xs mt-2">
-            {zh ? "通过精准预测赚取荣誉积分" : "Earn honor points by making accurate predictions"}
+            {lc(locale, "通过精准预测赚取荣誉积分", "Earn honor points by making accurate predictions")}
           </p>
         </div>
 
@@ -540,7 +541,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
               href={`/${locale}/profile/transactions`}
               className="text-[#FFD700] text-xs hover:underline"
             >
-              {zh ? "全部记录 →" : "View All →"}
+              {lc(locale, "全部记录 →", "View All →")}
             </Link>
           </div>
 
@@ -573,7 +574,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
             </div>
           ) : (
             <div className="text-center py-6 text-gray-600 text-sm">
-              {zh ? "暂无交易记录，先去签到领取每日 GC 吧！" : "No transactions yet. Claim your daily GC to get started!"}
+              {lc(locale, "暂无交易记录，先去签到领取每日 GC 吧！", "No transactions yet. Claim your daily GC to get started!")}
             </div>
           )}
         </div>
@@ -586,7 +587,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
               href={`/${locale}/profile?tab=bets`}
               className="text-[#FFD700] text-xs hover:underline"
             >
-              {zh ? "全部记录 →" : "View All →"}
+              {lc(locale, "全部记录 →", "View All →")}
             </Link>
           </div>
 
@@ -601,10 +602,10 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                   >
                     <div>
                       <p className="text-sm text-white">
-                        {match ? `${match.home_team} vs ${match.away_team}` : (zh ? "比赛" : "Match")}
+                        {match ? `${match.home_team} vs ${match.away_team}` : (lc(locale, "比赛", "Match"))}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {zh ? "投注：" : "Wagered: "}{formatGc(bet.gc_amount)} GC
+                        {lc(locale, "投注：", "Wagered: ")}{formatGc(bet.gc_amount)} GC
                       </p>
                     </div>
                     <span
@@ -619,12 +620,12 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                       }`}
                     >
                       {bet.status === "pending"
-                        ? (zh ? "待结算" : "Pending")
+                        ? (lc(locale, "待结算", "Pending"))
                         : bet.status === "won"
-                        ? (zh ? "赢" : "Won")
+                        ? (lc(locale, "赢", "Won"))
                         : bet.status === "lost"
-                        ? (zh ? "输" : "Lost")
-                        : (zh ? "已退款" : "Refunded")}
+                        ? (lc(locale, "输", "Lost"))
+                        : (lc(locale, "已退款", "Refunded"))}
                     </span>
                   </div>
                 );
@@ -632,9 +633,9 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
             </div>
           ) : (
             <div className="text-center py-6 text-gray-600 text-sm">
-              {zh ? "还没有预测记录。" : "No predictions yet."}{" "}
+              {lc(locale, "还没有预测记录。", "No predictions yet.")}{" "}
               <Link href={`/${locale}/matches`} className="text-[#FFD700] hover:underline">
-                {zh ? "去看比赛 →" : "Browse matches →"}
+                {lc(locale, "去看比赛 →", "Browse matches →")}
               </Link>
             </div>
           )}
@@ -644,17 +645,17 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
         {tab === "overview" && (
           <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5 mt-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white font-bold">💬 {zh ? "论坛活动" : "Forum Activity"}</h3>
+              <h3 className="text-white font-bold">💬 {lc(locale, "论坛活动", "Forum Activity")}</h3>
               <Link href={`/${locale}/forum`} className="text-[#FFD700] text-xs hover:underline">
-                {zh ? "去论坛 →" : "Browse →"}
+                {lc(locale, "去论坛 →", "Browse →")}
               </Link>
             </div>
             <div className="grid grid-cols-4 gap-3">
               {[
-                { label: zh ? "发帖" : "Posts",    value: postCount ?? 0,    icon: "📝", tab: "my-posts" },
-                { label: zh ? "回复" : "Replies",   value: replyCount ?? 0,   icon: "💬", tab: "my-replies" },
-                { label: zh ? "收藏" : "Bookmarks", value: bookmarkCount ?? 0, icon: "🔖", tab: "bookmarks" },
-                { label: zh ? "加减分" : "Ratings",  value: ratingsGivenCount ?? 0, icon: "⭐", tab: "my-ratings" },
+                { label: lc(locale, "发帖", "Posts"),    value: postCount ?? 0,    icon: "📝", tab: "my-posts" },
+                { label: lc(locale, "回复", "Replies"),   value: replyCount ?? 0,   icon: "💬", tab: "my-replies" },
+                { label: lc(locale, "收藏", "Bookmarks"), value: bookmarkCount ?? 0, icon: "🔖", tab: "bookmarks" },
+                { label: lc(locale, "加减分", "Ratings"),  value: ratingsGivenCount ?? 0, icon: "⭐", tab: "my-ratings" },
               ].map((s) => (
                 <Link key={s.tab} href={`/${locale}/profile?tab=${s.tab}`}
                   className="bg-[#0A1628] rounded-xl p-3 hover:border-[#FFD700]/30 border border-transparent transition-all text-center">
@@ -671,9 +672,9 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
         {tab === "overview" && (
           <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5 mt-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white font-bold">⭐ {zh ? "关注的球员" : "Followed Players"}</h3>
+              <h3 className="text-white font-bold">⭐ {lc(locale, "关注的球员", "Followed Players")}</h3>
               <Link href={`/${locale}/players`} className="text-[#FFD700] text-xs hover:underline">
-                {zh ? "浏览球员 →" : "Browse →"}
+                {lc(locale, "浏览球员 →", "Browse →")}
               </Link>
             </div>
             {followedPlayers.length > 0 ? (
@@ -707,7 +708,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
               </div>
             ) : (
               <p className="text-gray-500 text-sm text-center py-4">
-                {zh ? "还没有关注的球员，去球员页关注你喜欢的球星吧。" : "No followed players yet — browse and follow your favorites."}
+                {lc(locale, "还没有关注的球员，去球员页关注你喜欢的球星吧。", "No followed players yet — browse and follow your favorites.")}
               </p>
             )}
           </div>
@@ -718,12 +719,12 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
           <div className="flex gap-2 mb-4">
             {(["overview", "bets", "my-posts", "my-replies", "bookmarks", "my-ratings"] as const).map((t) => {
               const labels = {
-                "overview":   zh ? "📊 概览"    : "📊 Overview",
-                "bets":       zh ? "🎯 预测"    : "🎯 Bets",
-                "my-posts":   zh ? "📝 主题"    : "📝 Posts",
-                "my-replies": zh ? "💬 回复"    : "💬 Replies",
-                "bookmarks":  zh ? "🔖 收藏"    : "🔖 Saved",
-                "my-ratings": zh ? "⭐ 加减分"  : "⭐ Ratings",
+                "overview":   lc(locale, "📊 概览", "📊 Overview"),
+                "bets":       lc(locale, "🎯 预测", "🎯 Bets"),
+                "my-posts":   lc(locale, "📝 主题", "📝 Posts"),
+                "my-replies": lc(locale, "💬 回复", "💬 Replies"),
+                "bookmarks":  lc(locale, "🔖 收藏", "🔖 Saved"),
+                "my-ratings": lc(locale, "⭐ 加减分", "⭐ Ratings"),
               };
               return (
                 <Link
@@ -748,9 +749,9 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
               <div className="flex gap-1 bg-[#0A1628] border border-[#1E3A5F] rounded-xl p-1">
                 {(["match", "score", "award"] as const).map((bt) => {
                   const btLabels = {
-                    match: zh ? "比赛预测" : "Match Bets",
-                    score: zh ? "比分预测" : "Score Bets",
-                    award: zh ? "大奖预测" : "Award Bets",
+                    match: lc(locale, "比赛预测", "Match Bets"),
+                    score: lc(locale, "比分预测", "Score Bets"),
+                    award: lc(locale, "大奖预测", "Award Bets"),
                   };
                   const counts = { match: allBets.length, score: scoreBets.length, award: awardBets?.length ?? 0 };
                   return (
@@ -773,8 +774,8 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
               {betsTab === "match" && (
                 allBets.length === 0 ? (
                   <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-12 text-center">
-                    <p className="text-gray-500 text-sm">{zh ? "还没有比赛预测记录" : "No match bets yet"}</p>
-                    <Link href={`/${locale}/predict`} className="inline-block mt-3 text-[#FFD700] text-xs hover:underline">{zh ? "去预测 →" : "Place a bet →"}</Link>
+                    <p className="text-gray-500 text-sm">{lc(locale, "还没有比赛预测记录", "No match bets yet")}</p>
+                    <Link href={`/${locale}/predict`} className="inline-block mt-3 text-[#FFD700] text-xs hover:underline">{lc(locale, "去预测 →", "Place a bet →")}</Link>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -786,7 +787,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                         ? (zh ? `${m?.home_team ?? ""} 胜` : `${m?.home_team ?? ""} Win`)
                         : bet.prediction === "away"
                         ? (zh ? `${m?.away_team ?? ""} 胜` : `${m?.away_team ?? ""} Win`)
-                        : (zh ? "平局" : "Draw");
+                        : (lc(locale, "平局", "Draw"));
                       return (
                         <div key={bet.id} className={`bg-[#0F2040] border rounded-xl p-3.5 ${isWon ? "border-green-500/20" : isLost ? "border-red-500/20" : "border-[#1E3A5F]"}`}>
                           <div className="flex items-center justify-between gap-3">
@@ -799,7 +800,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                             </div>
                             <div className="shrink-0 text-right">
                               <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isWon ? "bg-green-500/15 text-green-400" : isLost ? "bg-red-500/15 text-red-400" : "bg-blue-500/15 text-blue-400"}`}>
-                                {isWon ? (zh ? "🎉 赢" : "🎉 Won") : isLost ? (zh ? "💔 输" : "💔 Lost") : (zh ? "⏳ 待结算" : "⏳ Pending")}
+                                {isWon ? (lc(locale, "🎉 赢", "🎉 Won")) : isLost ? (lc(locale, "💔 输", "💔 Lost")) : (lc(locale, "⏳ 待结算", "⏳ Pending"))}
                               </span>
                               <p className={`text-xs font-black mt-1 ${isWon ? "text-green-400" : isLost ? "text-red-400" : "text-gray-500"}`}>
                                 {isWon ? `+${formatGc(bet.potential_payout ?? 0)}` : isLost ? `-${formatGc(bet.gc_amount)}` : `→ ${formatGc(bet.potential_payout ?? 0)}`}
@@ -817,8 +818,8 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
               {betsTab === "score" && (
                 scoreBets.length === 0 ? (
                   <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-12 text-center">
-                    <p className="text-gray-500 text-sm">{zh ? "还没有比分预测记录" : "No score bets yet"}</p>
-                    <Link href={`/${locale}/predict`} className="inline-block mt-3 text-[#FFD700] text-xs hover:underline">{zh ? "去预测 →" : "Place a bet →"}</Link>
+                    <p className="text-gray-500 text-sm">{lc(locale, "还没有比分预测记录", "No score bets yet")}</p>
+                    <Link href={`/${locale}/predict`} className="inline-block mt-3 text-[#FFD700] text-xs hover:underline">{lc(locale, "去预测 →", "Place a bet →")}</Link>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -833,13 +834,13 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-bold text-white truncate">{m ? `${m.home_team} vs ${m.away_team}` : "—"}</p>
                               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                <span className="text-xs font-bold text-[#FFD700]">{zh ? "比分：" : "Score: "}{bet.score_home} – {bet.score_away}</span>
+                                <span className="text-xs font-bold text-[#FFD700]">{lc(locale, "比分：", "Score: ")}{bet.score_home} – {bet.score_away}</span>
                                 <span className="text-[10px] text-gray-600">{formatGc(Number(bet.gc_amount))} GC · ×{bet.odds_multiplier}</span>
                               </div>
                             </div>
                             <div className="shrink-0 text-right">
                               <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isWon ? "bg-green-500/15 text-green-400" : isLost ? "bg-red-500/15 text-red-400" : "bg-blue-500/15 text-blue-400"}`}>
-                                {isWon ? (zh ? "🎉 赢" : "🎉 Won") : isLost ? (zh ? "💔 输" : "💔 Lost") : (zh ? "⏳ 待结算" : "⏳ Pending")}
+                                {isWon ? (lc(locale, "🎉 赢", "🎉 Won")) : isLost ? (lc(locale, "💔 输", "💔 Lost")) : (lc(locale, "⏳ 待结算", "⏳ Pending"))}
                               </span>
                               <p className={`text-xs font-black mt-1 ${isWon ? "text-green-400" : isLost ? "text-red-400" : "text-gray-500"}`}>
                                 {isWon ? `+${formatGc(potential)}` : isLost ? `-${formatGc(Number(bet.gc_amount))}` : `→ ${formatGc(potential)}`}
@@ -857,8 +858,8 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
               {betsTab === "award" && (
                 (awardBets?.length ?? 0) === 0 ? (
                   <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-12 text-center">
-                    <p className="text-gray-500 text-sm">{zh ? "还没有大奖预测记录" : "No award bets yet"}</p>
-                    <Link href={`/${locale}/awards`} className="inline-block mt-3 text-[#FFD700] text-xs hover:underline">{zh ? "去预测 →" : "Place a bet →"}</Link>
+                    <p className="text-gray-500 text-sm">{lc(locale, "还没有大奖预测记录", "No award bets yet")}</p>
+                    <Link href={`/${locale}/awards`} className="inline-block mt-3 text-[#FFD700] text-xs hover:underline">{lc(locale, "去预测 →", "Place a bet →")}</Link>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -881,7 +882,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                             </div>
                             <div className="shrink-0 text-right">
                               <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isWon ? "bg-green-500/15 text-green-400" : isLost ? "bg-red-500/15 text-red-400" : "bg-blue-500/15 text-blue-400"}`}>
-                                {isWon ? (zh ? "🎉 赢" : "🎉 Won") : isLost ? (zh ? "💔 输" : "💔 Lost") : (zh ? "⏳ 待结算" : "⏳ Pending")}
+                                {isWon ? (lc(locale, "🎉 赢", "🎉 Won")) : isLost ? (lc(locale, "💔 输", "💔 Lost")) : (lc(locale, "⏳ 待结算", "⏳ Pending"))}
                               </span>
                               <p className={`text-xs font-black mt-1 ${isWon ? "text-green-400" : isLost ? "text-red-400" : "text-gray-500"}`}>
                                 {isWon ? `+${formatGc(potential)}` : isLost ? `-${formatGc(Number(bet.gc_amount))}` : `→ ${formatGc(potential)}`}
@@ -903,10 +904,10 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
               {myPosts.length === 0 ? (
                 <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-16 text-center">
                   <div className="text-4xl mb-3">📭</div>
-                  <p className="text-gray-500 text-sm mb-3">{zh ? "还没有发布主题" : "No posts yet"}</p>
+                  <p className="text-gray-500 text-sm mb-3">{lc(locale, "还没有发布主题", "No posts yet")}</p>
                   <Link href={`/${locale}/forum/new`}
                     className="inline-block bg-[#FFD700] text-[#0A1628] font-black px-5 py-2.5 rounded-xl text-sm hover:bg-[#FFC200] transition-colors">
-                    ✏️ {zh ? "发帖" : "New Post"}
+                    ✏️ {lc(locale, "发帖", "New Post")}
                   </Link>
                 </div>
               ) : (
@@ -944,7 +945,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
               {myReplies.length === 0 ? (
                 <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-16 text-center">
                   <div className="text-4xl mb-3">📭</div>
-                  <p className="text-gray-500 text-sm">{zh ? "还没有回复" : "No replies yet"}</p>
+                  <p className="text-gray-500 text-sm">{lc(locale, "还没有回复", "No replies yet")}</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -963,7 +964,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                             </span>
                           )}
                           <span className="text-xs text-gray-400 font-semibold truncate">
-                            {zh ? "回复：" : "Re: "}{fp?.title ?? ""}
+                            {lc(locale, "回复：", "Re: ")}{fp?.title ?? ""}
                           </span>
                           <span className="text-[10px] text-gray-600 shrink-0">{timeAgo(r.created_at)}</span>
                         </div>
@@ -985,7 +986,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
               {myBookmarks.length === 0 ? (
                 <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-16 text-center">
                   <div className="text-4xl mb-3">🔖</div>
-                  <p className="text-gray-500 text-sm">{zh ? "还没有收藏帖子" : "No bookmarks yet"}</p>
+                  <p className="text-gray-500 text-sm">{lc(locale, "还没有收藏帖子", "No bookmarks yet")}</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -1030,7 +1031,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                     className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all ${
                       ratingsDir === dir ? "bg-[#FFD700] text-[#0A1628]" : "text-gray-500 hover:text-white"
                     }`}>
-                    {dir === "given" ? (zh ? "我给出的" : "Given") : (zh ? "我收到的" : "Received")}
+                    {dir === "given" ? (lc(locale, "我给出的", "Given")) : (lc(locale, "我收到的", "Received"))}
                   </Link>
                 ))}
               </div>
@@ -1040,8 +1041,8 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                   <div className="text-4xl mb-3">⭐</div>
                   <p className="text-gray-500 text-sm">
                     {ratingsDir === "given"
-                      ? (zh ? "还没有给过加减分" : "No ratings given yet")
-                      : (zh ? "还没有收到加减分" : "No ratings received yet")}
+                      ? (lc(locale, "还没有给过加减分", "No ratings given yet"))
+                      : (lc(locale, "还没有收到加减分", "No ratings received yet"))}
                   </p>
                 </div>
               ) : (
@@ -1092,14 +1093,14 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
               {itemPage > 1 && (
                 <Link href={`/${locale}/profile?tab=${tab}&page=${itemPage - 1}${tab === "my-ratings" ? `&ratingsDir=${ratingsDir}` : ""}`}
                   className="px-3 py-1.5 bg-[#0F2040] border border-[#1E3A5F] rounded-lg text-xs text-gray-400 hover:text-white transition-colors">
-                  {zh ? "上一页" : "Prev"}
+                  {lc(locale, "上一页", "Prev")}
                 </Link>
               )}
               <span className="text-xs text-gray-500">{itemPage} / {itemTotalPages}</span>
               {itemPage < itemTotalPages && (
                 <Link href={`/${locale}/profile?tab=${tab}&page=${itemPage + 1}${tab === "my-ratings" ? `&ratingsDir=${ratingsDir}` : ""}`}
                   className="px-3 py-1.5 bg-[#0F2040] border border-[#1E3A5F] rounded-lg text-xs text-gray-400 hover:text-white transition-colors">
-                  {zh ? "下一页" : "Next"}
+                  {lc(locale, "下一页", "Next")}
                 </Link>
               )}
             </div>

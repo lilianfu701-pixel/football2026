@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { lc } from "@/i18n/content";
 
 interface Props {
   locale:        string;
@@ -36,7 +37,7 @@ export default function ForumSearchBar({ locale, defaultValue = "", zh = false }
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={zh ? "搜索帖子标题、内容…" : "Search posts, titles, content…"}
+          placeholder={lc(locale, "搜索帖子标题、内容…", "Search posts, titles, content…")}
           className="w-full bg-[#080F1F] border border-[#1E3A5F] hover:border-[#2A4A7F]
                      focus:border-[#FFD700]/40 rounded-xl pl-9 pr-8 py-2.5 text-sm
                      text-white placeholder-gray-600 outline-none transition-colors"
@@ -61,7 +62,7 @@ export default function ForumSearchBar({ locale, defaultValue = "", zh = false }
         className="shrink-0 bg-[#FFD700] text-[#0A1628] font-black px-4 py-2.5
                    rounded-xl text-sm hover:bg-[#FFC200] transition-colors disabled:opacity-40"
       >
-        {zh ? "搜索" : "Search"}
+        {lc(locale, "搜索", "Search")}
       </button>
     </form>
   );

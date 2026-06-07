@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { lc } from "@/i18n/content";
 
 interface Message {
   id:          number;
@@ -26,14 +27,14 @@ function formatTime(d: string, zh: boolean) {
   return new Date(d).toLocaleTimeString(zh ? "zh-CN" : "en-US", { hour: "2-digit", minute: "2-digit" });
 }
 
-function formatDate(d: string, zh: boolean) {
+function formatDate(d: string, zh: boolean, locale: string) {
   const date = new Date(d);
   const today = new Date();
   const yesterday = new Date(Date.now() - 86_400_000);
   const isSameDay = (a: Date, b: Date) =>
     a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-  if (isSameDay(date, today))     return zh ? "今天" : "Today";
-  if (isSameDay(date, yesterday)) return zh ? "昨天" : "Yesterday";
+  if (isSameDay(date, today))     return lc(locale, "今天", "Today");
+  if (isSameDay(date, yesterday)) return lc(locale, "昨天", "Yesterday");
   return date.toLocaleDateString(zh ? "zh-CN" : "en-US", { month: "short", day: "numeric", year: date.getFullYear() !== today.getFullYear() ? "numeric" : undefined });
 }
 
@@ -44,13 +45,13 @@ interface MsgGroup {
   msg?:    Message;
 }
 
-function buildGroups(messages: Message[], zh: boolean): MsgGroup[] {
+function buildGroups(messages: Message[], zh: boolean, locale: string): MsgGroup[] {
   const groups: MsgGroup[] = [];
   let lastDate = "";
   for (const m of messages) {
     const d = new Date(m.created_at).toDateString();
     if (d !== lastDate) {
-      groups.push({ type: "date", label: formatDate(m.created_at, zh) });
+      groups.push({ type: "date", label: formatDate(m.created_at, zh, locale) });
       lastDate = d;
     }
     groups.push({ type: "msg", msg: m });
@@ -117,7 +118,7 @@ export default function ConversationClient({ locale, zh, myId, partner, initialM
       setMessages((prev) => [...prev, newMsg]);
       latestIdRef.current = data.id;
     } catch {
-      setErr(zh ? "发送失败，请重试" : "Failed to send, please retry");
+      setErr(lc(locale, "发送失败，请重试", "Failed to send, please retry"));
       setText(content);
     } finally {
       setSending(false);
@@ -125,7 +126,7 @@ export default function ConversationClient({ locale, zh, myId, partner, initialM
     }
   }
 
-  const groups = buildGroups(messages, zh);
+  const groups = buildGroups(messages, zh, locale);
 
   return (
     <div className="flex flex-col bg-[#0A1628] text-white" style={{ height: "100dvh" }}>
@@ -152,7 +153,7 @@ export default function ConversationClient({ locale, zh, myId, partner, initialM
           )}
           <div className="min-w-0">
             <p className="text-sm font-black text-white truncate">{partner.nickname}</p>
-            <p className="text-[10px] text-gray-500">{zh ? "点击查看主页" : "View profile"}</p>
+            <p className="text-[10px] text-gray-500">{lc(locale, "点击查看主页", "View profile")}</p>
           </div>
         </Link>
       </div>
@@ -218,7 +219,7 @@ export default function ConversationClient({ locale, zh, myId, partner, initialM
                       <span className="text-[10px] text-gray-600">{formatTime(m.created_at, zh)}</span>
                       {isMine && (
                         <span className={`text-[10px] ${m.is_read ? "text-[#FFD700]/60" : "text-gray-600"}`}>
-                          {m.is_read ? (zh ? "已读" : "✓✓") : (zh ? "未读" : "✓")}
+                          {m.is_read ? (lc(locale, "已读", "✓✓")) : (lc(locale, "未读", "✓"))}
                         </span>
                       )}
                     </div>
@@ -244,7 +245,7 @@ export default function ConversationClient({ locale, zh, myId, partner, initialM
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
             maxLength={1000}
-            placeholder={zh ? "输入消息…" : "Type a message…"}
+            placeholder={lc(locale, "输入消息…", "Type a message…")}
             className="flex-1 bg-[#080F1F] border border-[#2A4A7F] rounded-2xl px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-[#FFD700]/40 transition-colors"
           />
           <button

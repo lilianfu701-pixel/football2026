@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { getFlagUrl, getTeamDisplayName } from "@/lib/flags";
+import { lc } from "@/i18n/content";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -40,12 +41,12 @@ interface ProfileRow {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function timeAgo(dateStr: string, zh: boolean): string {
+function timeAgo(dateStr: string, zh: boolean, locale: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60_000);
   const h = Math.floor(diff / 3_600_000);
   const d = Math.floor(diff / 86_400_000);
-  if (m < 1)  return zh ? "刚刚"       : "just now";
+  if (m < 1)  return lc(locale, "刚刚", "just now");
   if (m < 60) return zh ? `${m}分钟前` : `${m}m ago`;
   if (h < 24) return zh ? `${h}小时前` : `${h}h ago`;
   return zh ? `${d}天前` : `${d}d ago`;
@@ -69,10 +70,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const zh = locale === "zh";
   return {
-    title: zh ? "好友动态 | Football2026" : "Following Feed | Football2026",
-    description: zh
-      ? "查看你关注的用户的最新预测动态。"
-      : "See the latest prediction activity from people you follow.",
+    title: lc(locale, "好友动态 | Football2026", "Following Feed | Football2026"),
+    description: lc(locale, "查看你关注的用户的最新预测动态。", "See the latest prediction activity from people you follow."),
   };
 }
 
@@ -85,9 +84,9 @@ function EmptyState({ zh, locale, icon, title, body, cta, ctaHref }: {
   return (
     <div className="min-h-screen bg-[#0A1628] text-white pb-20 pt-8">
       <div className="mb-5">
-        <h1 className="text-2xl font-black text-white">🌐 {zh ? "好友动态" : "Following Feed"}</h1>
+        <h1 className="text-2xl font-black text-white">🌐 {lc(locale, "好友动态", "Following Feed")}</h1>
         <p className="text-gray-500 text-sm mt-0.5">
-          {zh ? "查看你关注的用户的最新预测" : "Latest predictions from users you follow"}
+          {lc(locale, "查看你关注的用户的最新预测", "Latest predictions from users you follow")}
         </p>
       </div>
       <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-10 text-center">
@@ -119,9 +118,9 @@ export default async function FeedPage({ params }: Props) {
       <EmptyState
         zh={zh} locale={locale}
         icon="🔐"
-        title={zh ? "登录后查看好友动态" : "Log in to see your feed"}
-        body={zh ? "登录后即可查看你关注的用户的最新预测记录。" : "Log in to see the latest predictions from users you follow."}
-        cta={zh ? "立即登录" : "Log In"}
+        title={lc(locale, "登录后查看好友动态", "Log in to see your feed")}
+        body={lc(locale, "登录后即可查看你关注的用户的最新预测记录。", "Log in to see the latest predictions from users you follow.")}
+        cta={lc(locale, "立即登录", "Log In")}
         ctaHref={`/${locale}/auth/login`}
       />
     );
@@ -140,9 +139,9 @@ export default async function FeedPage({ params }: Props) {
       <EmptyState
         zh={zh} locale={locale}
         icon="👥"
-        title={zh ? "还没有关注任何人" : "No one followed yet"}
-        body={zh ? "去排行榜发现感兴趣的预测达人，关注后就能在这里看到他们的动态。" : "Discover top predictors on the leaderboard and follow them to see their activity here."}
-        cta={zh ? "查看排行榜 →" : "View Leaderboard →"}
+        title={lc(locale, "还没有关注任何人", "No one followed yet")}
+        body={lc(locale, "去排行榜发现感兴趣的预测达人，关注后就能在这里看到他们的动态。", "Discover top predictors on the leaderboard and follow them to see their activity here.")}
+        cta={lc(locale, "查看排行榜 →", "View Leaderboard →")}
         ctaHref={`/${locale}/leaderboard`}
       />
     );
@@ -186,7 +185,7 @@ export default async function FeedPage({ params }: Props) {
 
       {/* Header */}
       <div className="mb-5">
-        <h1 className="text-2xl font-black text-white">🌐 {zh ? "好友动态" : "Following Feed"}</h1>
+        <h1 className="text-2xl font-black text-white">🌐 {lc(locale, "好友动态", "Following Feed")}</h1>
         <p className="text-gray-500 text-sm mt-0.5">
           {zh
             ? `关注了 ${followingIds.length} 人 · 最新预测动态`
@@ -198,7 +197,7 @@ export default async function FeedPage({ params }: Props) {
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-10 text-center">
           <div className="text-4xl mb-3">😴</div>
           <p className="text-gray-400 text-sm">
-            {zh ? "你关注的用户还没有发起预测" : "Users you follow haven't made any predictions yet"}
+            {lc(locale, "你关注的用户还没有发起预测", "Users you follow haven't made any predictions yet")}
           </p>
         </div>
       ) : (
@@ -224,13 +223,13 @@ export default async function FeedPage({ params }: Props) {
                       {(profile?.nickname ?? "?")[0].toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white">{profile?.nickname ?? (zh ? "用户" : "User")}</p>
-                      <p className="text-[10px] text-gray-600">{timeAgo(bet.created_at, zh)}</p>
+                      <p className="text-sm font-bold text-white">{profile?.nickname ?? (lc(locale, "用户", "User"))}</p>
+                      <p className="text-[10px] text-gray-600">{timeAgo(bet.created_at, zh, locale)}</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <span className={`text-xs font-black ${won ? "text-green-400" : lost ? "text-red-400" : "text-gray-500"}`}>
-                      {won ? (zh ? "✓ 胜" : "✓ Won") : lost ? (zh ? "✗ 负" : "✗ Lost") : (zh ? "待定" : "Pending")}
+                      {won ? (lc(locale, "✓ 胜", "✓ Won")) : lost ? (lc(locale, "✗ 负", "✗ Lost")) : (lc(locale, "待定", "Pending"))}
                     </span>
                     {bet.gc_amount > 0 && (
                       <p className="text-[10px] text-[#FFD700] font-semibold">
@@ -281,7 +280,7 @@ export default async function FeedPage({ params }: Props) {
 
                 {/* Prediction pill */}
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-gray-600">{zh ? "预测：" : "Picked:"}</span>
+                  <span className="text-[10px] text-gray-600">{lc(locale, "预测：", "Picked:")}</span>
                   <span className={`text-xs font-black px-2 py-0.5 rounded-lg ${
                     won  ? "bg-green-500/15 text-green-400" :
                     lost ? "bg-red-500/15   text-red-400"   :

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { lc } from "@/i18n/content";
 
 const WC_START = new Date("2026-06-11T20:00:00+00:00"); // Opening match UTC
 
@@ -61,7 +62,7 @@ export default function CountdownHero({ locale, zh, isLoggedIn, totalMatches }: 
         {/* Tournament badge */}
         <div className="inline-flex items-center gap-2 bg-[#FFD700]/10 border border-[#FFD700]/25 text-[#FFD700] text-xs sm:text-sm px-4 py-1.5 rounded-full mb-7 font-bold tracking-wide">
           <span>🏆</span>
-          <span>{zh ? "2026年世界杯足球赛 美国·加拿大·墨西哥" : "World Cup 2026™ · USA · Canada · Mexico"}</span>
+          <span>{lc(locale, "2026年世界杯足球赛 美国·加拿大·墨西哥", "World Cup 2026™ · USA · Canada · Mexico")}</span>
         </div>
 
         {/* Main title */}
@@ -74,9 +75,7 @@ export default function CountdownHero({ locale, zh, isLoggedIn, totalMatches }: 
         </h1>
 
         <p className="text-gray-400 text-base sm:text-lg max-w-xl mx-auto mb-10">
-          {zh
-            ? "预测比赛结果 · 赢取 GoalCoin · 登顶排行榜"
-            : "Predict matches · Earn GoalCoins · Dominate the leaderboard"}
+          {lc(locale, "预测比赛结果 · 赢取 GoalCoin · 登顶排行榜", "Predict matches · Earn GoalCoins · Dominate the leaderboard")}
         </p>
 
         {/* Countdown — only rendered after client hydration to avoid SSR mismatch */}
@@ -85,7 +84,7 @@ export default function CountdownHero({ locale, zh, isLoggedIn, totalMatches }: 
             /* SSR / pre-hydration placeholder — same dimensions, no digits */
             <div>
               <p className="text-gray-600 text-xs uppercase tracking-[0.2em] mb-5">
-                {zh ? "距世界杯开幕" : "World Cup kicks off in"}
+                {lc(locale, "距世界杯开幕", "World Cup kicks off in")}
               </p>
               <div className="flex justify-center gap-3 sm:gap-6">
                 {(["DAYS","HOURS","MINUTES","SECONDS"] as const).map((label) => (
@@ -101,7 +100,7 @@ export default function CountdownHero({ locale, zh, isLoggedIn, totalMatches }: 
           ) : !finished ? (
             <div>
               <p className="text-gray-600 text-xs uppercase tracking-[0.2em] mb-5">
-                {zh ? "距世界杯开幕" : "World Cup kicks off in"}
+                {lc(locale, "距世界杯开幕", "World Cup kicks off in")}
               </p>
               <div className="flex justify-center gap-3 sm:gap-6">
                 {units.map((u) => (
@@ -124,7 +123,7 @@ export default function CountdownHero({ locale, zh, isLoggedIn, totalMatches }: 
             </div>
           ) : (
             <p className="text-[#FFD700] text-2xl font-black animate-pulse">
-              {zh ? "🔴 世界杯进行中！" : "🔴 World Cup is LIVE!"}
+              {lc(locale, "🔴 世界杯进行中！", "🔴 World Cup is LIVE!")}
             </p>
           )}
         </div>
@@ -132,9 +131,9 @@ export default function CountdownHero({ locale, zh, isLoggedIn, totalMatches }: 
         {/* Stats strip */}
         <div className="flex justify-center gap-8 sm:gap-16 mb-10">
           {[
-            { n: "48",            label: zh ? "场比赛" : "Matches" },
-            { n: "32",            label: zh ? "支球队" : "Teams" },
-            { n: totalMatches > 0 ? String(totalMatches) : "∞", label: zh ? "场可预测" : "Predictions" },
+            { n: "48",            label: lc(locale, "场比赛", "Matches") },
+            { n: "32",            label: lc(locale, "支球队", "Teams") },
+            { n: totalMatches > 0 ? String(totalMatches) : "∞", label: lc(locale, "场可预测", "Predictions") },
           ].map((s) => (
             <div key={s.label} className="text-center">
               <div
@@ -154,20 +153,20 @@ export default function CountdownHero({ locale, zh, isLoggedIn, totalMatches }: 
             href={`/${locale}/matches`}
             className="inline-flex items-center justify-center gap-2 bg-[#FFD700] text-[#0A1628] font-black px-8 py-3.5 rounded-2xl text-base hover:bg-[#FFC200] transition-all hover:scale-[1.02] shadow-lg shadow-[#FFD700]/20"
           >
-            ⚽ {zh ? "立即助威" : "Predict Now"}
+            ⚽ {lc(locale, "立即助威", "Predict Now")}
           </Link>
           <Link
             href={`/${locale}/matches`}
             className="inline-flex items-center justify-center gap-2 border border-[#1E3A5F] text-gray-300 px-8 py-3.5 rounded-2xl text-base hover:border-[#FFD700]/40 hover:text-white transition-all"
           >
-            📅 {zh ? "查看赛程" : "View Schedule"}
+            📅 {lc(locale, "查看赛程", "View Schedule")}
           </Link>
           {!isLoggedIn && (
             <Link
               href={`/${locale}/auth/register`}
               className="inline-flex items-center justify-center gap-2 border border-[#FFD700]/30 text-[#FFD700] px-8 py-3.5 rounded-2xl text-base hover:bg-[#FFD700]/10 transition-all"
             >
-              🎁 {zh ? "免费注册领10万GC" : "Register & Get 100K GC"}
+              🎁 {lc(locale, "免费注册领10万GC", "Register & Get 100K GC")}
             </Link>
           )}
         </div>

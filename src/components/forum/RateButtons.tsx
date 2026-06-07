@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import { lc } from "@/i18n/content";
 
 const RatingModal = dynamic(() => import("./RatingModal"), { ssr: false });
 
@@ -27,7 +28,7 @@ export default function RateButtons({
   if (!userId || !authorId) return null;
   if (done) return (
     <span className="text-[10px] text-[#FFD700]/50 font-bold px-1">
-      ✓ {zh ? "已操作" : "Done"}
+      ✓ {lc(locale, "已操作", "Done")}
     </span>
   );
 
@@ -41,7 +42,7 @@ export default function RateButtons({
                      hover:bg-[#FFD700]/20 hover:border-[#FFD700]/55 hover:text-[#FFD700]
                      transition-all"
         >
-          🎁 {zh ? "打赏" : "Tip"}
+          🎁 {lc(locale, "打赏", "Tip")}
         </button>
         <button
           onClick={() => { setMode("punish"); setShowModal(true); }}
@@ -50,7 +51,7 @@ export default function RateButtons({
                      hover:bg-red-500/18 hover:border-red-500/45 hover:text-red-400
                      transition-all"
         >
-          🔨 {zh ? "扣分" : "Punish"}
+          🔨 {lc(locale, "扣分", "Punish")}
         </button>
       </div>
 

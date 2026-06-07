@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import TranslatedContent from "@/components/forum/TranslatedContent";
 import PostActions from "@/app/[locale]/forum/thread/[id]/PostActions";
+import { lc } from "@/i18n/content";
 
 const RichTextEditor = dynamic(() => import("@/components/forum/RichTextEditor"), { ssr: false });
 
@@ -44,12 +45,12 @@ interface Props {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function timeAgoShort(dateStr: string, zh: boolean): string {
+function timeAgoShort(dateStr: string, zh: boolean, locale: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60_000);
   const h = Math.floor(diff / 3_600_000);
   const d = Math.floor(diff / 86_400_000);
-  if (m < 1)   return zh ? "刚刚"       : "just now";
+  if (m < 1)   return lc(locale, "刚刚", "just now");
   if (m < 60)  return zh ? `${m}分钟前` : `${m}m ago`;
   if (h < 24)  return zh ? `${h}小时前` : `${h}h ago`;
   return             zh ? `${d}天前`   : `${d}d ago`;
@@ -104,11 +105,11 @@ export default function EditableFloor({
       .trim();
 
     if (!textOnly && !hasImage) {
-      setEditErr(zh ? "内容不能为空" : "Content cannot be empty");
+      setEditErr(lc(locale, "内容不能为空", "Content cannot be empty"));
       return;
     }
     if (isPost && !editTitle.trim()) {
-      setEditErr(zh ? "标题不能为空" : "Title cannot be empty");
+      setEditErr(lc(locale, "标题不能为空", "Title cannot be empty"));
       return;
     }
 
@@ -129,13 +130,13 @@ export default function EditableFloor({
       });
       const data = await res.json();
       if (!res.ok) {
-        setEditErr(data.error ?? (zh ? "保存失败" : "Failed to save"));
+        setEditErr(data.error ?? (lc(locale, "保存失败", "Failed to save")));
         return;
       }
       setIsEditing(false);
       router.refresh();   // re-fetch server component — updates content + title everywhere
     } catch {
-      setEditErr(zh ? "网络错误" : "Network error");
+      setEditErr(lc(locale, "网络错误", "Network error"));
     } finally {
       setSubmitting(false);
     }
@@ -152,7 +153,7 @@ export default function EditableFloor({
           {isPost && (
             <div>
               <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest block mb-1.5">
-                {zh ? "标题" : "Title"}
+                {lc(locale, "标题", "Title")}
               </label>
               <input
                 type="text"
@@ -160,7 +161,7 @@ export default function EditableFloor({
                 onChange={(e) => setEditTitle(e.target.value)}
                 maxLength={200}
                 className="w-full bg-[#080F1F] border border-[#2A4A7F] rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-[#FFD700]/40 transition-colors"
-                placeholder={zh ? "帖子标题…" : "Post title…"}
+                placeholder={lc(locale, "帖子标题…", "Post title…")}
               />
             </div>
           )}
@@ -169,7 +170,7 @@ export default function EditableFloor({
           <div>
             {isPost && (
               <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest block mb-1.5">
-                {zh ? "正文" : "Content"}
+                {lc(locale, "正文", "Content")}
               </label>
             )}
             <RichTextEditor
@@ -177,7 +178,7 @@ export default function EditableFloor({
               onChange={setEditContent}
               injectHtml={injectHtml}
               zh={zh}
-              placeholder={zh ? "编辑内容…" : "Edit content…"}
+              placeholder={lc(locale, "编辑内容…", "Edit content…")}
             />
           </div>
 
@@ -194,14 +195,14 @@ export default function EditableFloor({
               onClick={cancelEdit}
               className="px-4 py-2 text-xs text-gray-400 hover:text-white border border-[#1E3A5F] rounded-xl transition-colors"
             >
-              {zh ? "取消" : "Cancel"}
+              {lc(locale, "取消", "Cancel")}
             </button>
             <button
               onClick={handleSave}
               disabled={submitting}
               className="px-5 py-2 text-xs font-black bg-[#FFD700] text-[#0A1628] rounded-xl hover:bg-[#FFC200] transition-colors disabled:opacity-50"
             >
-              {submitting ? "…" : (zh ? "💾 保存" : "💾 Save")}
+              {submitting ? "…" : (lc(locale, "💾 保存", "💾 Save"))}
             </button>
           </div>
         </div>
@@ -226,7 +227,7 @@ export default function EditableFloor({
         {editedAt && (
           <p className="mt-3 text-[10px] text-gray-600 flex items-center gap-1">
             <span>✏️</span>
-            <span>{zh ? `已编辑 · ${timeAgoShort(editedAt, zh)}` : `Edited · ${timeAgoShort(editedAt, zh)}`}</span>
+            <span>{zh ? `已编辑 · ${timeAgoShort(editedAt, zh, locale)}` : `Edited · ${timeAgoShort(editedAt, zh, locale)}`}</span>
           </p>
         )}
       </div>

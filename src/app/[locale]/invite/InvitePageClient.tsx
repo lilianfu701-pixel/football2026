@@ -9,6 +9,7 @@ import {
   nextMilestone,
   formatGcShort,
 } from "@/lib/inviteMilestones";
+import { lc } from "@/i18n/content";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -85,9 +86,9 @@ export default function InvitePageClient({
       {/* ── How it works ── */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { icon: "🔗", title: zh ? "分享链接" : "Share Link",     desc: zh ? "复制你的专属链接" : "Copy your unique link"      },
-          { icon: "👤", title: zh ? "好友注册" : "Friend Joins",   desc: zh ? "好友点击链接注册" : "Friend signs up via link"    },
-          { icon: "🪙", title: zh ? "双方得币" : "Both Earn GC",   desc: zh ? "各得 500,000 GC" : "Each gets 500,000 GC" },
+          { icon: "🔗", title: lc(locale, "分享链接", "Share Link"),     desc: lc(locale, "复制你的专属链接", "Copy your unique link")      },
+          { icon: "👤", title: lc(locale, "好友注册", "Friend Joins"),   desc: lc(locale, "好友点击链接注册", "Friend signs up via link")    },
+          { icon: "🪙", title: lc(locale, "双方得币", "Both Earn GC"),   desc: lc(locale, "各得 500,000 GC", "Each gets 500,000 GC") },
         ].map((s) => (
           <div key={s.title} className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-4 text-center">
             <div className="text-2xl mb-2">{s.icon}</div>
@@ -110,7 +111,7 @@ export default function InvitePageClient({
                   : "bg-[#0F2040] border border-[#1E3A5F] text-gray-400 hover:text-white"
               }`}
             >
-              {t === "my" ? `👤 ${zh ? "我的邀请" : "My Invites"}` : `🏆 ${zh ? "排行榜" : "Leaderboard"}`}
+              {t === "my" ? `👤 ${lc(locale, "我的邀请", "My Invites")}` : `🏆 ${lc(locale, "排行榜", "Leaderboard")}`}
             </button>
           ))}
         </div>
@@ -125,9 +126,9 @@ export default function InvitePageClient({
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: zh ? "已邀人数" : "Invited",    value: inviteCount.toString(),                 icon: "👥", color: "text-blue-400"   },
-              { label: zh ? "获得 GC" : "GC Earned",   value: formatGcShort(myProfile.invite_gc),     icon: "🪙", color: "text-[#FFD700]"  },
-              { label: zh ? "邀请排名" : "My Rank",     value: myRank > 0 ? `#${myRank}` : "—",        icon: "🏆", color: "text-purple-400" },
+              { label: lc(locale, "已邀人数", "Invited"),    value: inviteCount.toString(),                 icon: "👥", color: "text-blue-400"   },
+              { label: lc(locale, "获得 GC", "GC Earned"),   value: formatGcShort(myProfile.invite_gc),     icon: "🪙", color: "text-[#FFD700]"  },
+              { label: lc(locale, "邀请排名", "My Rank"),     value: myRank > 0 ? `#${myRank}` : "—",        icon: "🏆", color: "text-purple-400" },
             ].map((s) => (
               <div key={s.label} className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-4 text-center">
                 <div className="text-xl mb-1.5">{s.icon}</div>
@@ -141,7 +142,7 @@ export default function InvitePageClient({
           <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5 space-y-4">
             <div>
               <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">
-                {zh ? "你的专属邀请链接" : "Your Referral Link"}
+                {lc(locale, "你的专属邀请链接", "Your Referral Link")}
               </p>
               <div className="flex items-center gap-2 bg-[#0A1628] border border-[#1E3A5F] rounded-xl px-4 py-3 focus-within:border-[#FFD700] transition-colors">
                 <span className="text-[11px] text-gray-400 truncate flex-1 font-mono select-all">
@@ -155,7 +156,7 @@ export default function InvitePageClient({
                       : "bg-[#1E3A5F] text-white border border-[#1E3A5F] hover:border-[#FFD700]/40"
                   }`}
                 >
-                  {copied ? (zh ? "✓ 已复制" : "✓ Copied") : (zh ? "复制" : "Copy")}
+                  {copied ? (lc(locale, "✓ 已复制", "✓ Copied")) : (lc(locale, "复制", "Copy"))}
                 </button>
               </div>
             </div>
@@ -163,7 +164,7 @@ export default function InvitePageClient({
             {/* Share buttons */}
             <div>
               <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">
-                {zh ? "分享到" : "Share via"}
+                {lc(locale, "分享到", "Share via")}
               </p>
               <div className="grid grid-cols-4 gap-2">
                 {SHARE_PLATFORMS.map((p) => (
@@ -186,7 +187,7 @@ export default function InvitePageClient({
           <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5 space-y-5">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-black text-white">
-                🏅 {zh ? "邀请里程碑" : "Invite Milestones"}
+                🏅 {lc(locale, "邀请里程碑", "Invite Milestones")}
               </h3>
               {next && (
                 <span className="text-[10px] text-gray-500">
@@ -212,7 +213,7 @@ export default function InvitePageClient({
                 </div>
                 {next.gcBonus > 0 && (
                   <p className="text-[10px] text-[#FFD700]">
-                    🎁 {zh ? "达成奖励" : "Milestone bonus"}: +{formatGcShort(next.gcBonus)} GC
+                    🎁 {lc(locale, "达成奖励", "Milestone bonus")}: +{formatGcShort(next.gcBonus)} GC
                   </p>
                 )}
               </div>
@@ -256,19 +257,19 @@ export default function InvitePageClient({
                     <div className="shrink-0">
                       {claimed ? (
                         <span className="text-[10px] px-2.5 py-1 rounded-full bg-green-500/15 text-green-400 font-bold border border-green-500/20">
-                          {zh ? "✓ 已领取" : "✓ Claimed"}
+                          {lc(locale, "✓ 已领取", "✓ Claimed")}
                         </span>
                       ) : reached ? (
                         <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold ${m.bg} ${m.color}`}>
-                          {zh ? "✓ 达成" : "✓ Done"}
+                          {lc(locale, "✓ 达成", "✓ Done")}
                         </span>
                       ) : isNext ? (
                         <span className="text-[10px] px-2.5 py-1 rounded-full bg-[#FFD700]/10 text-[#FFD700] font-bold border border-[#FFD700]/20">
-                          {zh ? "进行中" : "In progress"}
+                          {lc(locale, "进行中", "In progress")}
                         </span>
                       ) : (
                         <span className="text-[10px] text-gray-600">
-                          -{m.count - inviteCount} {zh ? "人" : "more"}
+                          -{m.count - inviteCount} {lc(locale, "人", "more")}
                         </span>
                       )}
                     </div>
@@ -289,7 +290,7 @@ export default function InvitePageClient({
             <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl px-5 py-3.5 flex items-center gap-3">
               <span className="text-xl">🤝</span>
               <p className="text-sm text-gray-400">
-                {zh ? "邀请你的人：" : "Invited by "}
+                {lc(locale, "邀请你的人：", "Invited by ")}
                 <span className="text-white font-bold">@{myProfile.referred_by}</span>
               </p>
             </div>
@@ -308,20 +309,20 @@ export default function InvitePageClient({
             <div className="bg-gradient-to-r from-[#FFD700]/10 via-[#FF8C00]/5 to-transparent border border-[#FFD700]/20 rounded-2xl p-5 flex items-center justify-between gap-4">
               <div>
                 <p className="text-white font-black text-sm">
-                  {zh ? "登录后开始邀请" : "Login to Start Inviting"}
+                  {lc(locale, "登录后开始邀请", "Login to Start Inviting")}
                 </p>
                 <p className="text-gray-500 text-xs mt-0.5">
-                  {zh ? "每邀一人双方各得 50 万 GC" : "Both sides earn 500K GC per invite"}
+                  {lc(locale, "每邀一人双方各得 50 万 GC", "Both sides earn 500K GC per invite")}
                 </p>
               </div>
               <div className="flex gap-2 shrink-0">
                 <Link href={`/${locale}/auth/register`}
                   className="text-xs bg-[#FFD700] text-[#0A1628] font-black px-4 py-2 rounded-xl hover:bg-[#FFC200] transition-colors">
-                  {zh ? "注册" : "Register"}
+                  {lc(locale, "注册", "Register")}
                 </Link>
                 <Link href={`/${locale}/auth/login`}
                   className="text-xs border border-[#1E3A5F] text-gray-400 font-semibold px-4 py-2 rounded-xl hover:text-white transition-colors">
-                  {zh ? "登录" : "Login"}
+                  {lc(locale, "登录", "Login")}
                 </Link>
               </div>
             </div>
@@ -332,15 +333,15 @@ export default function InvitePageClient({
             {/* Header */}
             <div className="grid grid-cols-[2.5rem_1fr_auto] gap-3 px-5 py-3 border-b border-[#1E3A5F] bg-[#0A1628]/60">
               <span className="text-[10px] text-gray-600 uppercase tracking-widest">#</span>
-              <span className="text-[10px] text-gray-600 uppercase tracking-widest">{zh ? "玩家" : "Player"}</span>
-              <span className="text-[10px] text-gray-600 uppercase tracking-widest text-right">{zh ? "邀请数" : "Invites"}</span>
+              <span className="text-[10px] text-gray-600 uppercase tracking-widest">{lc(locale, "玩家", "Player")}</span>
+              <span className="text-[10px] text-gray-600 uppercase tracking-widest text-right">{lc(locale, "邀请数", "Invites")}</span>
             </div>
 
             {leaderboard.length === 0 ? (
               <div className="py-16 text-center">
                 <div className="text-4xl mb-3">📭</div>
                 <p className="text-gray-500 text-sm">
-                  {zh ? "还没有邀请记录，成为第一名！" : "No invites yet — be the first!"}
+                  {lc(locale, "还没有邀请记录，成为第一名！", "No invites yet — be the first!")}
                 </p>
               </div>
             ) : (
@@ -404,7 +405,7 @@ export default function InvitePageClient({
                             )}
                           </div>
                           <p className="text-[10px] text-gray-500 mt-0.5">
-                            🪙 {formatGcShort(entry.inviteGc)} GC {zh ? "已赚" : "earned"}
+                            🪙 {formatGcShort(entry.inviteGc)} GC {lc(locale, "已赚", "earned")}
                           </p>
                         </div>
                       </div>
@@ -414,7 +415,7 @@ export default function InvitePageClient({
                         <p className={`text-sm font-black tabular-nums ${rank <= 3 ? "text-[#FFD700]" : "text-white"}`}>
                           {entry.inviteCount.toLocaleString()}
                         </p>
-                        <p className="text-[10px] text-gray-500">{zh ? "人" : "friends"}</p>
+                        <p className="text-[10px] text-gray-500">{lc(locale, "人", "friends")}</p>
                       </div>
                     </div>
                   );

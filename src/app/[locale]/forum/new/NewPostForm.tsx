@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import TagSelector from "@/components/forum/TagSelector";
+import { lc } from "@/i18n/content";
 
 const RichTextEditor = dynamic(
   () => import("@/components/forum/RichTextEditor"),
@@ -81,14 +82,14 @@ export default function NewPostForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!catId)               { setError(zh ? "请选择板块"     : "Select a category"); return; }
-    if (isMatchCat && !stage) { setError(zh ? "请选择赛事阶段" : "Select a stage");    return; }
-    if (!title.trim())        { setError(zh ? "标题不能为空"   : "Title is required");  return; }
+    if (!catId)               { setError(lc(locale, "请选择板块", "Select a category")); return; }
+    if (isMatchCat && !stage) { setError(lc(locale, "请选择赛事阶段", "Select a stage"));    return; }
+    if (!title.trim())        { setError(lc(locale, "标题不能为空", "Title is required"));  return; }
     if (!content || textLength(content) === 0) {
-      setError(zh ? "内容不能为空" : "Content is required"); return;
+      setError(lc(locale, "内容不能为空", "Content is required")); return;
     }
-    if (title.length > 120)          { setError(zh ? "标题最多 120 字" : "Title max 120 chars"); return; }
-    if (textLength(content) > 10000) { setError(zh ? "内容过长"        : "Content too long");    return; }
+    if (title.length > 120)          { setError(lc(locale, "标题最多 120 字", "Title max 120 chars")); return; }
+    if (textLength(content) > 10000) { setError(lc(locale, "内容过长", "Content too long"));    return; }
 
     setLoading(true);
     setError(null);
@@ -107,10 +108,10 @@ export default function NewPostForm({
         body:    JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error ?? (zh ? "发帖失败" : "Failed")); return; }
+      if (!res.ok) { setError(data.error ?? (lc(locale, "发帖失败", "Failed"))); return; }
       router.push(`/${locale}/forum/thread/${data.id}`);
     } catch {
-      setError(zh ? "网络错误，请重试" : "Network error");
+      setError(lc(locale, "网络错误，请重试", "Network error"));
     } finally {
       setLoading(false);
     }
@@ -118,10 +119,10 @@ export default function NewPostForm({
 
   if (!isLoggedIn) return (
     <div className="text-center py-10">
-      <p className="text-gray-500 text-sm mb-4">{zh ? "请先登录" : "Please login first"}</p>
+      <p className="text-gray-500 text-sm mb-4">{lc(locale, "请先登录", "Please login first")}</p>
       <Link href={`/${locale}/auth/login`}
         className="inline-block bg-[#FFD700] text-[#0A1628] font-black px-5 py-2.5 rounded-xl text-sm">
-        {zh ? "登录" : "Login"}
+        {lc(locale, "登录", "Login")}
       </Link>
     </div>
   );
@@ -132,7 +133,7 @@ export default function NewPostForm({
       {/* ── Category selector ─────────────────────────────────────────────── */}
       <div>
         <label className="block text-xs text-gray-500 uppercase tracking-widest font-bold mb-2">
-          {zh ? "选择板块" : "Category"}
+          {lc(locale, "选择板块", "Category")}
           <span className="ml-1 text-red-400">*</span>
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -158,7 +159,7 @@ export default function NewPostForm({
       {isMatchCat && (
         <div>
           <label className="block text-xs text-gray-500 uppercase tracking-widest font-bold mb-2">
-            {zh ? "赛事阶段" : "Stage"}
+            {lc(locale, "赛事阶段", "Stage")}
             <span className="ml-1 text-red-400">*</span>
           </label>
           <div className="flex flex-wrap gap-2">
@@ -183,17 +184,17 @@ export default function NewPostForm({
       {/* ── Title ─────────────────────────────────────────────────────────── */}
       <div>
         <label className="block text-xs text-gray-500 uppercase tracking-widest font-bold mb-2">
-          {zh ? "标题" : "Title"}
+          {lc(locale, "标题", "Title")}
           <span className="ml-1 text-red-400">*</span>
           <span className="ml-2 text-gray-600 normal-case font-normal">
-            ({zh ? "最多 120 字" : "max 120 chars"})
+            ({lc(locale, "最多 120 字", "max 120 chars")})
           </span>
         </label>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder={zh ? "写一个吸引人的标题…" : "Write a compelling title…"}
+          placeholder={lc(locale, "写一个吸引人的标题…", "Write a compelling title…")}
           maxLength={120}
           className="w-full bg-[#0A1628] border border-[#1E3A5F] focus:border-[#FFD700] rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none transition-colors"
         />
@@ -203,19 +204,17 @@ export default function NewPostForm({
       {/* ── Rich Text Editor ──────────────────────────────────────────────── */}
       <div>
         <label className="block text-xs text-gray-500 uppercase tracking-widest font-bold mb-2">
-          {zh ? "正文" : "Content"}
+          {lc(locale, "正文", "Content")}
           <span className="ml-1 text-red-400">*</span>
           <span className="ml-2 text-gray-600 normal-case font-normal">
-            ({zh ? "支持图片、视频、富文本" : "supports images, video, rich text"})
+            ({lc(locale, "支持图片、视频、富文本", "supports images, video, rich text")})
           </span>
         </label>
         <RichTextEditor
           value={content}
           onChange={setContent}
           zh={zh}
-          placeholder={zh
-            ? "分享你的想法、分析、预测观点…支持图片上传和 YouTube 视频嵌入"
-            : "Share your thoughts, analysis, predictions… supports image uploads and YouTube embeds"}
+          placeholder={lc(locale, "分享你的想法、分析、预测观点…支持图片上传和 YouTube 视频嵌入", "Share your thoughts, analysis, predictions… supports image uploads and YouTube embeds")}
         />
       </div>
 
@@ -241,13 +240,13 @@ export default function NewPostForm({
           disabled={loading}
           className="flex-1 bg-[#FFD700] text-[#0A1628] font-black py-3.5 rounded-xl text-sm hover:bg-[#FFC200] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? (zh ? "发布中…" : "Publishing…") : `🚀 ${zh ? "发布帖子" : "Publish Post"}`}
+          {loading ? (lc(locale, "发布中…", "Publishing…")) : `🚀 ${lc(locale, "发布帖子", "Publish Post")}`}
         </button>
         <Link
           href={`/${locale}/forum`}
           className="px-5 py-3.5 border border-[#1E3A5F] text-gray-400 font-semibold rounded-xl text-sm hover:text-white transition-colors"
         >
-          {zh ? "取消" : "Cancel"}
+          {lc(locale, "取消", "Cancel")}
         </Link>
       </div>
 

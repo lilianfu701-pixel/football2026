@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { ComposableMap, Geographies, Geography, type GeoFeature } from "react-simple-maps";
 import { COUNTRY_CENTROIDS } from "@/lib/countryCentroids";
+import { lc } from "@/i18n/content";
+import { useLocale } from "next-intl";
 
 const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
@@ -52,6 +54,7 @@ interface TooltipState {
 }
 
 export default function MatchFanMap({ matchId, homeTeam, awayTeam, zh }: Props) {
+  const locale = useLocale();
   const [voteMap, setVoteMap] = useState<Map<string, CountryVote>>(new Map());
   const [totals, setTotals] = useState<Totals>({ home: 0, neutral: 0, away: 0 });
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
@@ -114,14 +117,14 @@ export default function MatchFanMap({ matchId, homeTeam, awayTeam, zh }: Props) 
     <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5 mb-4">
       {/* Header */}
       <h3 className="text-sm font-bold text-gray-200 mb-1">
-        🌍 {zh ? "全球球迷支持地图" : "Global Fan Support Map"}
+        🌍 {lc(locale, "全球球迷支持地图", "Global Fan Support Map")}
       </h3>
       <p className="text-xs text-gray-500 mb-3">
         {total > 0
           ? (zh
             ? `来自 ${countryCount} 个国家和地区的 ${total} 名球迷参与了投票`
             : `${total} fans across ${countryCount} countries have voted`)
-          : (zh ? "暂无投票数据，快来成为第一个！" : "No votes yet — be the first!")}
+          : (lc(locale, "暂无投票数据，快来成为第一个！", "No votes yet — be the first!"))}
       </p>
 
       {/* Legend */}
@@ -142,7 +145,7 @@ export default function MatchFanMap({ matchId, homeTeam, awayTeam, zh }: Props) 
         </div>
         <div className="flex items-center gap-1.5 ml-auto">
           <span className="w-4 h-4 rounded-sm bg-[#1a2d4a] border border-[#1E3A5F] inline-block shrink-0" />
-          <span className="text-xs text-gray-600">{zh ? "未投票" : "No votes"}</span>
+          <span className="text-xs text-gray-600">{lc(locale, "未投票", "No votes")}</span>
         </div>
       </div>
 
@@ -155,7 +158,7 @@ export default function MatchFanMap({ matchId, homeTeam, awayTeam, zh }: Props) 
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-gray-600 text-xs animate-pulse">
-              {zh ? "地图加载中…" : "Loading map…"}
+              {lc(locale, "地图加载中…", "Loading map…")}
             </div>
           </div>
         ) : (
@@ -224,7 +227,7 @@ export default function MatchFanMap({ matchId, homeTeam, awayTeam, zh }: Props) 
                     </p>
                   </div>
                 ) : (
-                  <p className="text-gray-500">{zh ? "暂未投票" : "No votes yet"}</p>
+                  <p className="text-gray-500">{lc(locale, "暂未投票", "No votes yet")}</p>
                 )}
               </div>
             )}

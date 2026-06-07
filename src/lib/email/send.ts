@@ -7,6 +7,7 @@ import {
   levelUpHtml,
   welcomeHtml,
 } from "./templates";
+import { lc } from "@/i18n/content";
 
 const FROM = "Football2026 <support@mail.football2026.net>";
 
@@ -24,7 +25,7 @@ export async function sendConfirmEmail(to: string, confirmUrl: string, locale = 
   return resend.emails.send({
     from: FROM,
     to,
-    subject: zh ? "✅ 激活你的 Football2026 账号" : "✅ Confirm your Football2026 account",
+    subject: lc(locale, "✅ 激活你的 Football2026 账号", "✅ Confirm your Football2026 account"),
     html: confirmEmailHtml(confirmUrl, locale),
   });
 }
@@ -35,7 +36,7 @@ export async function sendResetPasswordEmail(to: string, resetUrl: string, local
   return resend.emails.send({
     from: FROM,
     to,
-    subject: zh ? "🔑 Football2026 密码重置" : "🔑 Football2026 Password Reset",
+    subject: lc(locale, "🔑 Football2026 密码重置", "🔑 Football2026 Password Reset"),
     html: resetPasswordHtml(resetUrl, locale),
   });
 }
@@ -48,7 +49,7 @@ export async function sendWelcomeEmail(to: string, nickname: string, locale = "z
   return resend.emails.send({
     from: FROM,
     to,
-    subject: zh ? "👋 欢迎加入 Football2026！" : "👋 Welcome to Football2026!",
+    subject: lc(locale, "👋 欢迎加入 Football2026！", "👋 Welcome to Football2026!"),
     html: welcomeHtml({ nickname, locale }),
   });
 }
@@ -86,11 +87,12 @@ export async function sendPredictionWonEmail(opts: {
   locale?: string;
 }) {
   const resend = getResend();
-  const zh = (opts.locale ?? "zh") === "zh";
+  const locale = opts.locale ?? "zh";
+  const zh = locale === "zh";
   return resend.emails.send({
     from: FROM,
     to: opts.to,
-    subject: zh ? "🎉 预测命中，GC 到账！" : "🎉 Prediction Won — GC Awarded!",
+    subject: lc(locale, "🎉 预测命中，GC 到账！", "🎉 Prediction Won — GC Awarded!"),
     html: predictionWonHtml(opts),
   });
 }

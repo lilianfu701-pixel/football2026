@@ -6,6 +6,7 @@ import { notFound }       from "next/navigation";
 import ForumPagination    from "@/components/forum/Pagination";
 import PostList, { type PostItem } from "./PostList";
 import ForumSearchBar     from "@/components/forum/ForumSearchBar";
+import { lc } from "@/i18n/content";
 
 interface PageProps {
   params:       Promise<{ locale: string; category: string }>;
@@ -116,9 +117,9 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   }));
 
   const SORT_OPTIONS = [
-    { key: "latest",  label: zh ? "最新"    : "Latest"       },
-    { key: "hot",     label: zh ? "最热"    : "Hottest"      },
-    { key: "replies", label: zh ? "最多回复" : "Most Replies" },
+    { key: "latest",  label: lc(locale, "最新", "Latest")       },
+    { key: "hot",     label: lc(locale, "最热", "Hottest")      },
+    { key: "replies", label: lc(locale, "最多回复", "Most Replies") },
   ];
 
   return (
@@ -128,7 +129,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
           <Link href={`/${locale}/forum`} className="hover:text-white transition-colors">
-            {zh ? "论坛" : "Forum"}
+            {lc(locale, "论坛", "Forum")}
           </Link>
           <span>/</span>
           <span className="text-white font-semibold">{cat.icon} {zh ? cat.name_zh : cat.name}</span>
@@ -145,11 +146,11 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
               </p>
               <div className="flex items-center gap-2 mt-1">
                 <p className="text-[10px] text-gray-600">
-                  {(cat.post_count ?? 0).toLocaleString()} {zh ? "篇帖子" : "posts"}
+                  {(cat.post_count ?? 0).toLocaleString()} {lc(locale, "篇帖子", "posts")}
                 </p>
                 {cat.no_new_posts && (
                   <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-[#1E3A5F]/60 border border-[#1E3A5F] text-gray-500">
-                    📌 {zh ? "系统专属" : "Official Only"}
+                    📌 {lc(locale, "系统专属", "Official Only")}
                   </span>
                 )}
               </div>
@@ -162,14 +163,14 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
                 href={`/${locale}/forum/new?cat=${slug}`}
                 className="shrink-0 flex items-center gap-2 bg-[#FFD700] text-[#0A1628] font-black px-4 py-2.5 rounded-xl text-sm hover:bg-[#FFC200] transition-colors"
               >
-                ✏️ {zh ? "发帖" : "Post"}
+                ✏️ {lc(locale, "发帖", "Post")}
               </Link>
             ) : (
               <Link
                 href={`/${locale}/auth/login`}
                 className="shrink-0 text-xs border border-[#1E3A5F] text-gray-400 px-4 py-2.5 rounded-xl hover:text-white transition-colors"
               >
-                {zh ? "登录发帖" : "Login to post"}
+                {lc(locale, "登录发帖", "Login to post")}
               </Link>
             )
           )}
@@ -179,7 +180,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
         {otherCats.length > 0 && (
           <div className="flex items-center gap-1.5 flex-wrap mb-4">
             <span className="text-[10px] text-gray-600 font-bold shrink-0 mr-0.5">
-              {zh ? "其他板块：" : "Boards:"}
+              {lc(locale, "其他板块：", "Boards:")}
             </span>
             {otherCats.map((c) => {
               const href = c.slug === "match"
@@ -229,6 +230,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
           totalPages={totalPages}
           buildHref={(p) => `/${locale}/forum/${slug}?sort=${sort}&page=${p}`}
           zh={zh}
+          locale={locale}
         />
 
         {/* Post list */}
@@ -237,15 +239,15 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
             <div className="text-4xl mb-3">{cat.icon}</div>
             <p className="text-gray-500 text-sm mb-4">
               {cat.no_new_posts
-                ? (zh ? "赛事帖子将由系统自动生成" : "Match threads are generated automatically")
-                : (zh ? "这个板块还没有帖子" : "No posts in this category yet")}
+                ? (lc(locale, "赛事帖子将由系统自动生成", "Match threads are generated automatically"))
+                : (lc(locale, "这个板块还没有帖子", "No posts in this category yet"))}
             </p>
             {!cat.no_new_posts && user && (
               <Link
                 href={`/${locale}/forum/new?cat=${slug}`}
                 className="inline-block bg-[#FFD700] text-[#0A1628] font-black px-5 py-2.5 rounded-xl text-sm hover:bg-[#FFC200] transition-colors"
               >
-                ✏️ {zh ? "发第一帖" : "Be the first to post"}
+                ✏️ {lc(locale, "发第一帖", "Be the first to post")}
               </Link>
             )}
           </div>
@@ -266,6 +268,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
           totalPages={totalPages}
           buildHref={(p) => `/${locale}/forum/${slug}?sort=${sort}&page=${p}`}
           zh={zh}
+          locale={locale}
         />
 
       </div>

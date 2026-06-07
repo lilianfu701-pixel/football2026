@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AWARD_META, dbToAwardKey, type AwardKey } from "@/data/players";
 import type { AwardPhase } from "@/lib/awardPhase";
+import { lc } from "@/i18n/content";
 
 interface AwardBetSummary {
   award_type: string;
@@ -24,7 +25,7 @@ export default function AwardSidebarCard({ locale, bets, phase }: Props) {
     pre:      { text: zh ? `⭐ 开赛前 20×`  : "⭐ Pre-Tournament 20×", color: "#FFD700" },
     group:    { text: zh ? `🔥 小组赛 10×`  : "🔥 Group Stage 10×",    color: "#FB923C" },
     knockout: { text: zh ? `🏆 淘汰赛 3×`   : "🏆 Knockout 3×",        color: "#34D399" },
-    closed:   { text: zh ? "🔒 已截止"       : "🔒 Closed",              color: "#6B7280" },
+    closed:   { text: lc(locale, "🔒 已截止", "🔒 Closed"),              color: "#6B7280" },
   }[phase];
 
   const awards: AwardKey[] = ["goldenBoot", "goldenBall", "goldenGlove", "bestYoung"];
@@ -34,7 +35,7 @@ export default function AwardSidebarCard({ locale, bets, phase }: Props) {
       {/* Header */}
       <div className="px-5 pt-4 pb-3 border-b border-[#1E3A5F] flex items-center justify-between bg-gradient-to-r from-[#FFD700]/8 to-transparent">
         <div>
-          <p className="text-sm font-black text-white">🏅 {zh ? "大奖预测" : "Award Bets"}</p>
+          <p className="text-sm font-black text-white">🏅 {lc(locale, "大奖预测", "Award Bets")}</p>
           <p className="text-[10px] font-semibold mt-0.5" style={{ color: phaseLabel.color }}>
             {phaseLabel.text}
           </p>
@@ -43,7 +44,7 @@ export default function AwardSidebarCard({ locale, bets, phase }: Props) {
           href={`/${locale}/awards`}
           className="text-xs text-[#7C6FE0] hover:text-white font-semibold transition-colors whitespace-nowrap"
         >
-          {zh ? "全部 →" : "View →"}
+          {lc(locale, "全部 →", "View →")}
         </Link>
       </div>
 
@@ -86,8 +87,8 @@ export default function AwardSidebarCard({ locale, bets, phase }: Props) {
           }`}
         >
           {phase !== "closed"
-            ? `${meta_icon(bets)} ${zh ? "前往大奖预测" : "Place Award Bets"}`
-            : (zh ? "查看大奖预测" : "View Award Bets")}
+            ? `${meta_icon(bets)} ${lc(locale, "前往大奖预测", "Place Award Bets")}`
+            : (lc(locale, "查看大奖预测", "View Award Bets"))}
         </Link>
       </div>
     </div>

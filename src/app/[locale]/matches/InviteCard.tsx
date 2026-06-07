@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { MILESTONES, PER_INVITE_GC, nextMilestone, formatGcShort } from "@/lib/inviteMilestones";
+import { lc } from "@/i18n/content";
 
 interface Props {
   username: string;
@@ -120,10 +121,10 @@ export default function InviteCard({ username, locale, baseUrl, inviteCount = 0 
         {/* Header */}
         <div className="px-5 pt-4 pb-3 bg-gradient-to-r from-[#FFD700]/10 to-transparent border-b border-[#1E3A5F]">
           <p className="text-sm font-black text-white">
-            🎁 {zh ? "邀请朋友，赚取 Goal Coin" : "Invite Friends, Earn GC"}
+            🎁 {lc(locale, "邀请朋友，赚取 Goal Coin", "Invite Friends, Earn GC")}
           </p>
           <p className="text-xs text-gray-400 mt-0.5">
-            {zh ? "每成功邀请一位好友注册，双方均可获得 GC 奖励" : "Both you & your friend earn GC when they sign up"}
+            {lc(locale, "每成功邀请一位好友注册，双方均可获得 GC 奖励", "Both you & your friend earn GC when they sign up")}
           </p>
         </div>
 
@@ -139,14 +140,14 @@ export default function InviteCard({ username, locale, baseUrl, inviteCount = 0 
                   {inviteCount}
                 </span>
                 <span className="text-gray-500 text-xs">
-                  {zh ? "人已加入" : "invited"}
+                  {lc(locale, "人已加入", "invited")}
                 </span>
               </div>
               <Link
                 href={`/${locale}/invite`}
                 className="text-[10px] text-[#FFD700] hover:underline font-semibold"
               >
-                {zh ? "查看排行榜 →" : "Leaderboard →"}
+                {lc(locale, "查看排行榜 →", "Leaderboard →")}
               </Link>
             </div>
 
@@ -184,7 +185,7 @@ export default function InviteCard({ username, locale, baseUrl, inviteCount = 0 
               <div className="flex items-center gap-1.5">
                 <span className="text-purple-400 text-base">👑</span>
                 <span className="text-xs text-purple-300 font-bold">
-                  {zh ? "已达传奇等级！" : "Legend status achieved!"}
+                  {lc(locale, "已达传奇等级！", "Legend status achieved!")}
                 </span>
               </div>
             )}
@@ -212,7 +213,7 @@ export default function InviteCard({ username, locale, baseUrl, inviteCount = 0 
           {/* Referral link row */}
           <div>
             <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1.5">
-              {zh ? "你的专属邀请链接" : "Your referral link"}
+              {lc(locale, "你的专属邀请链接", "Your referral link")}
             </p>
             <div className="flex items-center gap-2 bg-[#0A1628] border border-[#1E3A5F] rounded-xl px-3 py-2">
               <span className="text-[11px] text-gray-400 truncate flex-1 font-mono">
@@ -226,7 +227,7 @@ export default function InviteCard({ username, locale, baseUrl, inviteCount = 0 
                     : "bg-[#1E3A5F] text-gray-300 hover:text-white hover:bg-[#7C6FE0]/30 border border-[#1E3A5F]"
                 }`}
               >
-                {copied ? (zh ? "✓ 已复制" : "✓ Copied") : (zh ? "复制" : "Copy")}
+                {copied ? (lc(locale, "✓ 已复制", "✓ Copied")) : (lc(locale, "复制", "Copy"))}
               </button>
             </div>
           </div>
@@ -238,21 +239,21 @@ export default function InviteCard({ username, locale, baseUrl, inviteCount = 0 
               className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#1E3A5F] hover:bg-[#7C6FE0]/30 border border-[#1E3A5F] hover:border-[#7C6FE0]/50 text-gray-300 hover:text-white text-xs font-semibold transition-all"
             >
               <span>📋</span>
-              {zh ? "复制文本" : "Copy Text"}
+              {lc(locale, "复制文本", "Copy Text")}
             </button>
             <a
-              href={`mailto:?subject=${encodeURIComponent(zh ? "邀请你加入 Football2026！" : "Join Football2026 & Win GC!")}&body=${encodeURIComponent(shareText + "\n\n" + referralUrl)}`}
+              href={`mailto:?subject=${encodeURIComponent(lc(locale, "邀请你加入 Football2026！", "Join Football2026 & Win GC!"))}&body=${encodeURIComponent(shareText + "\n\n" + referralUrl)}`}
               className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#1E3A5F] hover:bg-red-500/20 border border-[#1E3A5F] hover:border-red-500/30 text-gray-300 hover:text-red-400 text-xs font-semibold transition-all"
             >
               <span>📧</span>
-              {zh ? "发送邮件" : "Email"}
+              {lc(locale, "发送邮件", "Email")}
             </a>
           </div>
 
           {/* QR code */}
           <div className="flex flex-col items-center gap-3">
             <p className="text-[10px] text-gray-500 uppercase tracking-widest self-start">
-              {zh ? "专属邀请二维码" : "Your Exclusive QR Code"}
+              {lc(locale, "专属邀请二维码", "Your Exclusive QR Code")}
             </p>
             <div className="p-2 bg-[#0A1628] rounded-2xl border border-[#FFD700]/20">
               <Image
@@ -271,14 +272,14 @@ export default function InviteCard({ username, locale, baseUrl, inviteCount = 0 
                 onClick={() => setShowShare(true)}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#FFD700] hover:bg-[#FFC200] text-[#0A1628] text-xs font-black transition-colors"
               >
-                📤 {zh ? "分享二维码" : "Share QR"}
+                📤 {lc(locale, "分享二维码", "Share QR")}
               </button>
               {/* 保存二维码：仅移动端显示（lg 及以上隐藏） */}
               <button
                 onClick={saveQr}
                 className="lg:hidden flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#1E3A5F] hover:bg-[#1E3A5F]/80 border border-[#1E3A5F] hover:border-[#7C6FE0]/40 text-gray-300 hover:text-white text-xs font-semibold transition-all"
               >
-                💾 {zh ? "保存二维码" : "Save QR"}
+                💾 {lc(locale, "保存二维码", "Save QR")}
               </button>
             </div>
           </div>
@@ -299,10 +300,10 @@ export default function InviteCard({ username, locale, baseUrl, inviteCount = 0 
             {/* Modal header */}
             <div className="px-5 pt-5 pb-3 border-b border-[#1E3A5F]">
               <h3 className="text-white font-black text-lg">
-                📤 {zh ? "分享给朋友" : "Share with Friends"}
+                📤 {lc(locale, "分享给朋友", "Share with Friends")}
               </h3>
               <p className="text-gray-400 text-xs mt-0.5">
-                {zh ? "选择分享方式" : "Choose how to share"}
+                {lc(locale, "选择分享方式", "Choose how to share")}
               </p>
             </div>
 
@@ -344,9 +345,7 @@ export default function InviteCard({ username, locale, baseUrl, inviteCount = 0 
               <button
                 className="flex flex-col items-center gap-1.5 group"
                 onClick={() => {
-                  alert(zh
-                    ? "请截图保存二维码，然后在微信中扫描"
-                    : "Please screenshot the QR code and scan it in WeChat");
+                  alert(lc(locale, "请截图保存二维码，然后在微信中扫描", "Please screenshot the QR code and scan it in WeChat"));
                 }}
               >
                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white text-xl font-black shadow-lg group-hover:scale-105 transition-transform bg-[#07C160]">
@@ -364,7 +363,7 @@ export default function InviteCard({ username, locale, baseUrl, inviteCount = 0 
                 onClick={() => { copyText(); setShowShare(false); }}
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#1E3A5F] hover:bg-[#7C6FE0]/30 border border-[#1E3A5F] hover:border-[#7C6FE0]/50 text-gray-300 hover:text-white text-sm font-semibold transition-all"
               >
-                🔗 {zh ? "复制链接" : "Copy Link"}
+                🔗 {lc(locale, "复制链接", "Copy Link")}
               </button>
             </div>
           </div>

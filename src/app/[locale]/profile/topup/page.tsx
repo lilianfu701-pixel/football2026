@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Script from "next/script";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+import { lc } from "@/i18n/content";
 
 // ── Paddle.js global typing ──────────────────────────────────────────────────
 interface PaddleEvent {
@@ -126,7 +127,7 @@ function TopupContent() {
   // Toast if user cancelled out of Stripe
   const cancelled = searchParams.get("cancelled") === "1";
   useEffect(() => {
-    if (cancelled) setPayErr(zh ? "支付已取消" : "Payment cancelled");
+    if (cancelled) setPayErr(lc(locale, "支付已取消", "Payment cancelled"));
   }, [cancelled, zh]);
 
   // Reset error + USDT state when package or method changes
@@ -155,7 +156,7 @@ function TopupContent() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setPayErr(data.error ?? (zh ? "创建订单失败，请重试" : "Failed to create order"));
+        setPayErr(data.error ?? (lc(locale, "创建订单失败，请重试", "Failed to create order")));
         setPaying(false);
         return;
       }
@@ -165,7 +166,7 @@ function TopupContent() {
       setUsdtStatus("pending");
       startPolling(data.paymentId, data.gcAmount);
     } catch {
-      setPayErr(zh ? "网络错误，请重试" : "Network error, please retry");
+      setPayErr(lc(locale, "网络错误，请重试", "Network error, please retry"));
     }
     setPaying(false);
   }
@@ -195,10 +196,10 @@ function TopupContent() {
         setUsdtStatus("completed");
         router.replace(`/${locale}/profile/topup/success?type=usdt&gc=${data.gcAmount}`);
       } else {
-        setPayErr(zh ? "⏳ 暂未检测到到账，通常需 1-5 分钟，请稍候" : "⏳ Not detected yet, usually 1-5 min");
+        setPayErr(lc(locale, "⏳ 暂未检测到到账，通常需 1-5 分钟，请稍候", "⏳ Not detected yet, usually 1-5 min"));
       }
     } catch {
-      setPayErr(zh ? "查询失败，请重试" : "Query failed, please retry");
+      setPayErr(lc(locale, "查询失败，请重试", "Query failed, please retry"));
     }
   }
 
@@ -220,7 +221,7 @@ function TopupContent() {
     // Token must be baked into the build. If empty, configuration is the problem,
     // not a transient state — tell the user clearly and stop.
     if (!PADDLE_TOKEN) {
-      setPayErr(zh ? "银行卡支付暂未开放，请选择其他方式" : "Card payment is unavailable, please use another method");
+      setPayErr(lc(locale, "银行卡支付暂未开放，请选择其他方式", "Card payment is unavailable, please use another method"));
       return;
     }
 
@@ -230,7 +231,7 @@ function TopupContent() {
     const ready = await waitForPaddle();
     initPaddle();
     if (!ready || !paddleReady.current || !window.Paddle) {
-      setPayErr(zh ? "支付组件加载中，请稍后重试" : "Checkout is loading, please retry in a moment");
+      setPayErr(lc(locale, "支付组件加载中，请稍后重试", "Checkout is loading, please retry in a moment"));
       setPaying(false);
       return;
     }
@@ -243,7 +244,7 @@ function TopupContent() {
       });
       const data = await res.json();
       if (!res.ok || !data.transactionId) {
-        setPayErr(data.error ?? (zh ? "创建订单失败，请重试" : "Failed to create order"));
+        setPayErr(data.error ?? (lc(locale, "创建订单失败，请重试", "Failed to create order")));
         setPaying(false);
         return;
       }
@@ -256,7 +257,7 @@ function TopupContent() {
       } as { transactionId: string });
       setPaying(false); // overlay is now open; release the button
     } catch {
-      setPayErr(zh ? "网络错误，请重试" : "Network error, please retry");
+      setPayErr(lc(locale, "网络错误，请重试", "Network error, please retry"));
       setPaying(false);
     }
   }
@@ -298,14 +299,14 @@ function TopupContent() {
       });
       const result = await res.json();
       if (!res.ok) {
-        setPayErr(result.error ?? (zh ? "支付捕获失败，请联系客服" : "Capture failed, please contact support"));
+        setPayErr(result.error ?? (lc(locale, "支付捕获失败，请联系客服", "Capture failed, please contact support")));
         setPaying(false);
         return;
       }
       // Redirect to success page with GC amount
       router.replace(`/${locale}/profile/topup/success?type=paypal&gc=${result.gcAmount}`);
     } catch {
-      setPayErr(zh ? "网络错误，请重试" : "Network error, please retry");
+      setPayErr(lc(locale, "网络错误，请重试", "Network error, please retry"));
       setPaying(false);
     }
   }
@@ -332,10 +333,10 @@ function TopupContent() {
           </button>
           <div>
             <h1 className="text-xl font-black text-white">
-              🪙 {zh ? "GoalCoin 充值" : "Top Up GoalCoin"}
+              🪙 {lc(locale, "GoalCoin 充值", "Top Up GoalCoin")}
             </h1>
             <p className="text-xs text-gray-500 mt-0.5">
-              {zh ? "GoalCoin 为虚拟娱乐积分，不具备实际货币价值" : "GoalCoin is virtual entertainment points with no monetary value"}
+              {lc(locale, "GoalCoin 为虚拟娱乐积分，不具备实际货币价值", "GoalCoin is virtual entertainment points with no monetary value")}
             </p>
           </div>
         </div>
@@ -352,7 +353,7 @@ function TopupContent() {
                   : "bg-[#0F2040] border-[#1E3A5F] text-gray-400 hover:text-gray-200"
               }`}
             >
-              {t === "buy" ? `💳 ${zh ? "购买充值" : "Buy GC"}` : `🎁 ${zh ? "免费获取" : "Earn Free"}`}
+              {t === "buy" ? `💳 ${lc(locale, "购买充值", "Buy GC")}` : `🎁 ${lc(locale, "免费获取", "Earn Free")}`}
             </button>
           ))}
         </div>
@@ -377,24 +378,24 @@ function TopupContent() {
                   >
                     {p.popular && (
                       <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap">
-                        {zh ? "热门" : "Popular"}
+                        {lc(locale, "热门", "Popular")}
                       </span>
                     )}
                     {p.best && (
                       <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-[#FFD700] text-[#0A1628] text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap">
-                        {zh ? "超值" : "Best Value"}
+                        {lc(locale, "超值", "Best Value")}
                       </span>
                     )}
                     <span className="text-2xl">🪙</span>
                     <span className="text-base font-black text-white">{p.label}</span>
                     {p.bonus > 0 && (
                       <span className="text-[10px] font-bold text-green-400 bg-green-500/10 border border-green-500/20 px-1.5 py-0.5 rounded-full">
-                        +{p.bonus}% {zh ? "赠送" : "Bonus"}
+                        +{p.bonus}% {lc(locale, "赠送", "Bonus")}
                       </span>
                     )}
                     {p.bonus > 0 && (
                       <span className="text-[9px] text-gray-500">
-                        {zh ? "实得" : "Total"} {formatGcBig(tgc)}
+                        {lc(locale, "实得", "Total")} {formatGcBig(tgc)}
                       </span>
                     )}
                     <span className={`text-lg font-black mt-1 ${isSelected ? "text-[#FFD700]" : "text-gray-200"}`}>
@@ -410,7 +411,7 @@ function TopupContent() {
             {selected && (
               <div className="mb-4">
                 <p className="text-xs text-gray-500 mb-2 font-medium">
-                  {zh ? "选择支付方式" : "Payment method"}
+                  {lc(locale, "选择支付方式", "Payment method")}
                 </p>
                 <div className="grid grid-cols-3 gap-2">
                   {/* Paddle (Card) */}
@@ -428,7 +429,7 @@ function TopupContent() {
                       <path strokeLinecap="round" d="M6 15h4"/>
                       <path strokeLinecap="round" d="M14 15h4"/>
                     </svg>
-                    <span>{zh ? "银行卡" : "Card"}</span>
+                    <span>{lc(locale, "银行卡", "Card")}</span>
                   </button>
 
                   {/* PayPal */}
@@ -484,17 +485,17 @@ function TopupContent() {
                 {paying ? (
                   <span className="flex items-center justify-center gap-2">
                     <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    {zh ? "跳转中…" : "Redirecting…"}
+                    {lc(locale, "跳转中…", "Redirecting…")}
                   </span>
                 ) : (
-                  zh ? "💳 前往银行卡支付" : "💳 Pay with Card"
+                  lc(locale, "💳 前往银行卡支付", "💳 Pay with Card")
                 )}
               </button>
             )}
 
             {payMethod === "paddle" && !selected && (
               <div className="w-full py-3.5 rounded-2xl font-black text-base text-center opacity-40 cursor-not-allowed bg-[#0052CC]/20 border border-[#0052CC]/30 text-[#4D8FD6]">
-                {zh ? "请先选择充值套餐" : "Select a package first"}
+                {lc(locale, "请先选择充值套餐", "Select a package first")}
               </div>
             )}
 
@@ -517,9 +518,9 @@ function TopupContent() {
                     onError={(err) => {
                       console.error("[PayPal onError]", err);
                       // Only show generic message if createOrder didn't already set a specific one
-                      setPayErr((prev) => prev ?? (zh ? "PayPal 支付出错，请重试" : "PayPal error, please try again"));
+                      setPayErr((prev) => prev ?? (lc(locale, "PayPal 支付出错，请重试", "PayPal error, please try again")));
                     }}
-                    onCancel={() => setPayErr(zh ? "PayPal 支付已取消" : "PayPal payment cancelled")}
+                    onCancel={() => setPayErr(lc(locale, "PayPal 支付已取消", "PayPal payment cancelled"))}
                   />
                 </div>
               </PayPalScriptProvider>
@@ -528,14 +529,14 @@ function TopupContent() {
             {/* Placeholder when no package selected and paypal chosen */}
             {payMethod === "paypal" && !selected && (
               <div className="w-full py-3.5 rounded-2xl font-black text-base text-center opacity-40 cursor-not-allowed bg-[#003087]/30 border border-[#009CDE]/30 text-[#009CDE]">
-                {zh ? "请先选择充值套餐" : "Select a package first"}
+                {lc(locale, "请先选择充值套餐", "Select a package first")}
               </div>
             )}
 
             {/* ── USDT TRC-20 panel ── */}
             {payMethod === "usdt" && !selected && (
               <div className="w-full py-3.5 rounded-2xl font-black text-base text-center opacity-40 cursor-not-allowed bg-[#26A17B]/10 border border-[#26A17B]/30 text-[#26A17B]">
-                {zh ? "请先选择充值套餐" : "Select a package first"}
+                {lc(locale, "请先选择充值套餐", "Select a package first")}
               </div>
             )}
 
@@ -547,33 +548,31 @@ function TopupContent() {
                   <>
                     <div className="bg-[#0B1E10] border border-[#26A17B]/40 rounded-2xl p-4">
                       <p className="text-[11px] font-black text-[#26A17B] uppercase tracking-wider mb-3">
-                        {zh ? "USDT TRC-20 自动到账" : "USDT TRC-20 Auto-Detection"}
+                        {lc(locale, "USDT TRC-20 自动到账", "USDT TRC-20 Auto-Detection")}
                       </p>
                       <div className="flex items-center gap-2 mb-3">
                         <span className="text-[10px] bg-[#26A17B]/20 border border-[#26A17B]/40 text-[#26A17B] font-black px-2.5 py-1 rounded-full">
                           TRC-20 · TRON
                         </span>
                         <span className="text-[10px] text-gray-500">
-                          {zh ? "请勿使用其他网络" : "Do NOT use other networks"}
+                          {lc(locale, "请勿使用其他网络", "Do NOT use other networks")}
                         </span>
                       </div>
                       <div className="flex items-center justify-between bg-[#0A1628] rounded-xl px-3.5 py-2.5 mb-3 border border-[#1E3A5F]">
                         <div>
-                          <p className="text-[10px] text-gray-500 mb-0.5">{zh ? "应付金额" : "Amount to pay"}</p>
+                          <p className="text-[10px] text-gray-500 mb-0.5">{lc(locale, "应付金额", "Amount to pay")}</p>
                           <p className="text-lg font-black text-white">
                             {pkg.priceUsdt.toFixed(2)}
                             <span className="text-[#26A17B] ml-1">USDT</span>
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-[10px] text-gray-500 mb-0.5">{zh ? "获得" : "You get"}</p>
+                          <p className="text-[10px] text-gray-500 mb-0.5">{lc(locale, "获得", "You get")}</p>
                           <p className="text-sm font-black text-[#FFD700]">{formatGcBig(totalGc)}</p>
                         </div>
                       </div>
                       <p className="text-[10px] text-gray-500 leading-relaxed">
-                        {zh
-                          ? "点击下方按钮，系统将为本次订单生成一个专属 TRC-20 收款地址，转账后自动识别到账，无需提交 TxID。"
-                          : "Click below to generate a unique TRC-20 address for this order. Payment is detected automatically — no TxID needed."}
+                        {lc(locale, "点击下方按钮，系统将为本次订单生成一个专属 TRC-20 收款地址，转账后自动识别到账，无需提交 TxID。", "Click below to generate a unique TRC-20 address for this order. Payment is detected automatically — no TxID needed.")}
                       </p>
                     </div>
 
@@ -585,10 +584,10 @@ function TopupContent() {
                       {paying ? (
                         <span className="flex items-center justify-center gap-2">
                           <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          {zh ? "生成中…" : "Generating…"}
+                          {lc(locale, "生成中…", "Generating…")}
                         </span>
                       ) : (
-                        zh ? "⬡ 生成专属付款地址" : "⬡ Generate Payment Address"
+                        lc(locale, "⬡ 生成专属付款地址", "⬡ Generate Payment Address")
                       )}
                     </button>
                   </>
@@ -600,11 +599,11 @@ function TopupContent() {
                     <div className="bg-[#0B1E10] border border-[#26A17B]/40 rounded-2xl p-4">
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-[11px] font-black text-[#26A17B] uppercase tracking-wider">
-                          {zh ? "专属收款地址" : "Your Payment Address"}
+                          {lc(locale, "专属收款地址", "Your Payment Address")}
                         </p>
                         <span className="flex items-center gap-1.5 text-[10px] text-amber-400">
                           <span className="inline-block w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
-                          {zh ? "等待收款…" : "Awaiting payment…"}
+                          {lc(locale, "等待收款…", "Awaiting payment…")}
                         </span>
                       </div>
 
@@ -614,14 +613,14 @@ function TopupContent() {
                           TRC-20 · TRON
                         </span>
                         <span className="text-[10px] text-gray-500">
-                          {zh ? "请勿使用其他网络" : "Do NOT use other networks"}
+                          {lc(locale, "请勿使用其他网络", "Do NOT use other networks")}
                         </span>
                       </div>
 
                       {/* Exact amount */}
                       <div className="flex items-center justify-between bg-[#0A1628] rounded-xl px-3.5 py-2.5 mb-2 border border-[#1E3A5F]">
                         <div>
-                          <p className="text-[10px] text-gray-500 mb-0.5">{zh ? "转账金额（精确）" : "Exact amount to send"}</p>
+                          <p className="text-[10px] text-gray-500 mb-0.5">{lc(locale, "转账金额（精确）", "Exact amount to send")}</p>
                           <p className="text-lg font-black text-white">
                             {usdtPayAmount?.toFixed(6)}
                             <span className="text-[#26A17B] ml-1">USDT</span>
@@ -631,7 +630,7 @@ function TopupContent() {
                           onClick={() => copyText(usdtPayAmount?.toFixed(6) ?? "", "amount")}
                           className="flex items-center gap-1 text-[10px] font-bold text-[#26A17B] bg-[#26A17B]/10 hover:bg-[#26A17B]/20 border border-[#26A17B]/30 px-2.5 py-1.5 rounded-lg transition-colors"
                         >
-                          {copied === "amount" ? (zh ? "已复制 ✓" : "Copied ✓") : (zh ? "复制金额" : "Copy")}
+                          {copied === "amount" ? (lc(locale, "已复制 ✓", "Copied ✓")) : (lc(locale, "复制金额", "Copy"))}
                         </button>
                       </div>
 
@@ -646,7 +645,7 @@ function TopupContent() {
                           className="rounded-lg shrink-0 border border-[#26A17B]/30"
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="text-[10px] text-gray-500 mb-1">{zh ? "收款地址 (TRC-20)" : "Wallet address (TRC-20)"}</p>
+                          <p className="text-[10px] text-gray-500 mb-1">{lc(locale, "收款地址 (TRC-20)", "Wallet address (TRC-20)")}</p>
                           <p className="text-[11px] text-gray-300 font-mono break-all leading-relaxed">
                             {usdtAddress}
                           </p>
@@ -654,15 +653,13 @@ function TopupContent() {
                             onClick={() => copyText(usdtAddress, "addr")}
                             className="mt-1.5 flex items-center gap-1 text-[10px] font-bold text-[#26A17B] bg-[#26A17B]/10 hover:bg-[#26A17B]/20 border border-[#26A17B]/30 px-2.5 py-1 rounded-lg transition-colors"
                           >
-                            {copied === "addr" ? (zh ? "已复制 ✓" : "Copied ✓") : (zh ? "复制地址" : "Copy address")}
+                            {copied === "addr" ? (lc(locale, "已复制 ✓", "Copied ✓")) : (lc(locale, "复制地址", "Copy address"))}
                           </button>
                         </div>
                       </div>
 
                       <p className="text-[10px] text-amber-500/80 mt-2.5 leading-relaxed">
-                        ⚠ {zh
-                          ? "请转账精确金额，多转或少转可能无法自动识别。TRX 钱包需保留少量 TRX 作为手续费。转账后通常 1-5 分钟自动到账。"
-                          : "Send the exact amount shown. Your wallet needs a small TRX balance for gas fees. Usually confirmed within 1-5 minutes."}
+                        ⚠ {lc(locale, "请转账精确金额，多转或少转可能无法自动识别。TRX 钱包需保留少量 TRX 作为手续费。转账后通常 1-5 分钟自动到账。", "Send the exact amount shown. Your wallet needs a small TRX balance for gas fees. Usually confirmed within 1-5 minutes.")}
                       </p>
                     </div>
 
@@ -671,7 +668,7 @@ function TopupContent() {
                       onClick={checkUsdtManually}
                       className="w-full py-3 rounded-2xl font-bold text-sm transition-all border border-[#26A17B]/40 text-[#26A17B] bg-[#26A17B]/5 hover:bg-[#26A17B]/10"
                     >
-                      🔍 {zh ? "手动查询到账状态" : "Check Payment Status"}
+                      🔍 {lc(locale, "手动查询到账状态", "Check Payment Status")}
                     </button>
                   </>
                 )}
@@ -681,16 +678,14 @@ function TopupContent() {
 
             {/* Payment info */}
             <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
-              <span className="text-[10px] text-gray-600">{zh ? "支持：" : "Accepted:"}</span>
-              <span className="text-[10px] text-gray-500 bg-[#0F2040] border border-[#1E3A5F] px-2.5 py-1 rounded-md font-medium">💳 {zh ? "银行卡" : "Card"}</span>
+              <span className="text-[10px] text-gray-600">{lc(locale, "支持：", "Accepted:")}</span>
+              <span className="text-[10px] text-gray-500 bg-[#0F2040] border border-[#1E3A5F] px-2.5 py-1 rounded-md font-medium">💳 {lc(locale, "银行卡", "Card")}</span>
               <span className="text-[10px] text-gray-500 bg-[#0F2040] border border-[#1E3A5F] px-2.5 py-1 rounded-md font-medium">🅿 PayPal</span>
               <span className="text-[10px] text-gray-500 bg-[#0F2040] border border-[#1E3A5F] px-2.5 py-1 rounded-md font-medium">⬡ USDT TRC-20</span>
             </div>
 
             <p className="text-[10px] text-gray-600 text-center mt-3 leading-relaxed">
-              {zh
-                ? "GoalCoin 为虚拟游戏积分，仅用于 Football2026 平台内娱乐互动，购买后不可退款，不可兑换现金。"
-                : "GoalCoin is virtual entertainment points for use within the Football2026 fantasy sports platform only. All purchases are non-refundable and have no cash value."}
+              {lc(locale, "GoalCoin 为虚拟游戏积分，仅用于 Football2026 平台内娱乐互动，购买后不可退款，不可兑换现金。", "GoalCoin is virtual entertainment points for use within the Football2026 fantasy sports platform only. All purchases are non-refundable and have no cash value.")}
             </p>
           </>
         )}
@@ -699,7 +694,7 @@ function TopupContent() {
         {tab === "free" && (
           <div className="space-y-3">
             <p className="text-sm text-gray-400 mb-4">
-              {zh ? "通过以下方式免费赚取 GoalCoin，完全不需要花钱！" : "Earn GoalCoin for free — no purchase required!"}
+              {lc(locale, "通过以下方式免费赚取 GoalCoin，完全不需要花钱！", "Earn GoalCoin for free — no purchase required!")}
             </p>
             {FREE_WAYS.map((w) => (
               <div key={w.title} className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl px-4 py-3.5 flex items-center gap-4">

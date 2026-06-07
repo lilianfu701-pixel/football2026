@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useRef } from "react";
 import { LANGUAGES, needsTranslation } from "@/lib/languages";
+import { lc } from "@/i18n/content";
+import { useLocale } from "next-intl";
 
 interface Props {
   postId:             number;
@@ -15,6 +17,7 @@ interface Props {
 export default function TranslatedTitle({
   postId, originalTitle, cachedTranslations, defaultLang, zh, className = "",
 }: Props) {
+  const locale = useLocale();
   const [cache,        setCache]        = useState<Record<string, string>>(cachedTranslations);
   const [loadingLangs, setLoadingLangs] = useState<Record<string, boolean>>({});
   const [errors,       setErrors]       = useState<Record<string, string>>({});
@@ -138,7 +141,7 @@ export default function TranslatedTitle({
             {/* No provider */}
             {noProvider && (
               <span className="text-sm text-gray-600 italic">
-                {zh ? "翻译服务暂未配置" : "Translation service not configured"}
+                {lc(locale, "翻译服务暂未配置", "Translation service not configured")}
               </span>
             )}
 
@@ -147,7 +150,7 @@ export default function TranslatedTitle({
               <div className="flex items-center gap-2 py-1">
                 <div className="w-3 h-3 rounded-full border-2 border-[#1E3A5F] border-t-[#FFD700] animate-spin" />
                 <span className="text-sm text-gray-600 italic">
-                  {zh ? "翻译中…" : "Translating…"}
+                  {lc(locale, "翻译中…", "Translating…")}
                 </span>
               </div>
             )}
@@ -155,7 +158,7 @@ export default function TranslatedTitle({
             {/* Same language */}
             {!noProvider && activeError === "__same__" && (
               <span className="text-sm text-gray-600 italic">
-                {zh ? "原文已是此语言" : "Original is already in this language"}
+                {lc(locale, "原文已是此语言", "Original is already in this language")}
               </span>
             )}
 
@@ -172,7 +175,7 @@ export default function TranslatedTitle({
                   }}
                   className="text-xs text-[#FFD700] font-semibold hover:text-[#FFC200]"
                 >
-                  {zh ? "重试" : "Retry"}
+                  {lc(locale, "重试", "Retry")}
                 </button>
               </div>
             )}
@@ -184,7 +187,7 @@ export default function TranslatedTitle({
                   {activeTranslation}
                 </p>
                 <p className="text-[10px] text-gray-600 mt-0.5">
-                  🤖 {zh ? "AI 翻译标题" : "AI translated title"}
+                  🤖 {lc(locale, "AI 翻译标题", "AI translated title")}
                 </p>
               </>
             )}

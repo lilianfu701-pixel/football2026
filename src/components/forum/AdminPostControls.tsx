@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { lc } from "@/i18n/content";
 
 interface Props {
   postId:      number;
@@ -43,7 +44,7 @@ export default function AdminPostControls({ postId, isPinned, isLocked, isFeatur
 
       router.refresh();   // sync server-rendered badges
     } catch {
-      setErr(zh ? "网络错误" : "Network error");
+      setErr(lc(locale, "网络错误", "Network error"));
     } finally {
       setBusy(null);
     }
@@ -57,7 +58,7 @@ export default function AdminPostControls({ postId, isPinned, isLocked, isFeatur
     <div className="flex items-center gap-1.5 px-4 py-2.5 bg-[#050D1A] border-b border-[#FFD700]/10 flex-wrap">
       {/* Admin label */}
       <span className="text-[10px] font-black text-[#FFD700]/50 uppercase tracking-widest mr-1 shrink-0">
-        🛡 {zh ? "管理" : "Admin"}
+        🛡 {lc(locale, "管理", "Admin")}
       </span>
 
       {/* Pin / Unpin */}
@@ -67,7 +68,7 @@ export default function AdminPostControls({ postId, isPinned, isLocked, isFeatur
           disabled={!!busy}
           className={`${btnBase} bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20`}
         >
-          {busy === "unpin" ? "…" : "📌"} {zh ? "取消置顶" : "Unpin"}
+          {busy === "unpin" ? "…" : "📌"} {lc(locale, "取消置顶", "Unpin")}
         </button>
       ) : (
         <button
@@ -75,7 +76,7 @@ export default function AdminPostControls({ postId, isPinned, isLocked, isFeatur
           disabled={!!busy}
           className={`${btnBase} bg-[#1E3A5F]/60 border-[#1E3A5F] text-gray-400 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400`}
         >
-          {busy === "pin" ? "…" : "📌"} {zh ? "置顶" : "Pin"}
+          {busy === "pin" ? "…" : "📌"} {lc(locale, "置顶", "Pin")}
         </button>
       )}
 
@@ -86,7 +87,7 @@ export default function AdminPostControls({ postId, isPinned, isLocked, isFeatur
           disabled={!!busy}
           className={`${btnBase} bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20`}
         >
-          {busy === "unlock" ? "…" : "🔓"} {zh ? "解锁" : "Unlock"}
+          {busy === "unlock" ? "…" : "🔓"} {lc(locale, "解锁", "Unlock")}
         </button>
       ) : (
         <button
@@ -94,7 +95,7 @@ export default function AdminPostControls({ postId, isPinned, isLocked, isFeatur
           disabled={!!busy}
           className={`${btnBase} bg-[#1E3A5F]/60 border-[#1E3A5F] text-gray-400 hover:bg-orange-500/10 hover:border-orange-500/30 hover:text-orange-400`}
         >
-          {busy === "lock" ? "…" : "🔒"} {zh ? "锁定" : "Lock"}
+          {busy === "lock" ? "…" : "🔒"} {lc(locale, "锁定", "Lock")}
         </button>
       )}
 
@@ -102,12 +103,12 @@ export default function AdminPostControls({ postId, isPinned, isLocked, isFeatur
       {featured ? (
         <button onClick={() => doAction("unfeature")} disabled={!!busy}
           className={`${btnBase} bg-yellow-500/10 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/20`}>
-          {busy === "unfeature" ? "…" : "⭐"} {zh ? "取消精华" : "Unfeature"}
+          {busy === "unfeature" ? "…" : "⭐"} {lc(locale, "取消精华", "Unfeature")}
         </button>
       ) : (
         <button onClick={() => doAction("feature")} disabled={!!busy}
           className={`${btnBase} bg-[#1E3A5F]/60 border-[#1E3A5F] text-gray-400 hover:bg-yellow-500/10 hover:border-yellow-500/30 hover:text-yellow-400`}>
-          {busy === "feature" ? "…" : "⭐"} {zh ? "加精" : "Feature"}
+          {busy === "feature" ? "…" : "⭐"} {lc(locale, "加精", "Feature")}
         </button>
       )}
 

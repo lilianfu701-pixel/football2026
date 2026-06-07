@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getWealthLevel, getHonorLevel, formatGc } from "@/lib/levels";
 import LeaderboardClient from "./LeaderboardClient";
+import { lc } from "@/i18n/content";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -210,10 +211,10 @@ export default async function LeaderboardPage({ params }: PageProps) {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-black text-white">
-            🏆 {zh ? "排行榜" : "Leaderboard"}
+            🏆 {lc(locale, "排行榜", "Leaderboard")}
           </h1>
           <p className="text-gray-500 text-sm mt-1">
-            {zh ? "顶尖玩家实时排名" : "Live rankings of top players"}
+            {lc(locale, "顶尖玩家实时排名", "Live rankings of top players")}
           </p>
         </div>
 

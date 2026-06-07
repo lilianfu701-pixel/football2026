@@ -6,6 +6,7 @@ import Image from "next/image";
 import { getFlagUrl } from "@/lib/flags";
 import ShareBetModal, { type BetPick } from "../ShareBetModal";
 import { useGcBalance } from "@/context/GcBalance";
+import { lc } from "@/i18n/content";
 
 interface TeamColors { primary: string; secondary: string; }
 
@@ -149,9 +150,9 @@ export default function PredictionPanel({
   }
 
   async function handleSubmit() {
-    if (!selected) { setError(zh ? "请先选择预测结果" : "Please select a prediction"); return; }
+    if (!selected) { setError(lc(locale, "请先选择预测结果", "Please select a prediction")); return; }
     if (amount < MIN_BET) { setError(zh ? `最低消耗 ${formatGc(MIN_BET)} GC` : `Minimum bet is ${formatGc(MIN_BET)} GC`); return; }
-    if (amount > gcBalance) { setError(zh ? "GC余额不足" : "Insufficient GoalCoins"); return; }
+    if (amount > gcBalance) { setError(lc(locale, "GC余额不足", "Insufficient GoalCoins")); return; }
 
     setLoading(true);
     setError(null);
@@ -165,7 +166,7 @@ export default function PredictionPanel({
 
       const data = await res.json();
       if (!res.ok) {
-        setError((data.detail ?? data.error) ?? (zh ? "下注失败，请重试" : "Failed to place prediction"));
+        setError((data.detail ?? data.error) ?? (lc(locale, "下注失败，请重试", "Failed to place prediction")));
       } else {
         setSuccess(true);
         setNewBetId(data.bet_id ?? null);
@@ -180,7 +181,7 @@ export default function PredictionPanel({
         router.refresh();
       }
     } catch {
-      setError(zh ? "网络异常，请重试" : "Network error. Please try again.");
+      setError(lc(locale, "网络异常，请重试", "Network error. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -200,10 +201,10 @@ export default function PredictionPanel({
       const data = await res.json();
       if (!res.ok) {
         const errMap: Record<string, string> = {
-          "Bet not found":              zh ? "注单不存在"       : "Bet not found",
-          "Cannot cancel a settled bet": zh ? "已结算，无法取消" : "Already settled",
-          "Cancel window closed":        zh ? "已过取消截止时间" : "Cancel window closed",
-          "Cancel window closed (within 1 hour of kickoff)": zh ? "已过取消截止时间" : "Cancel window closed",
+          "Bet not found":              lc(locale, "注单不存在", "Bet not found"),
+          "Cannot cancel a settled bet": lc(locale, "已结算，无法取消", "Already settled"),
+          "Cancel window closed":        lc(locale, "已过取消截止时间", "Cancel window closed"),
+          "Cancel window closed (within 1 hour of kickoff)": lc(locale, "已过取消截止时间", "Cancel window closed"),
         };
         setError(errMap[data.error ?? ""] ?? data.error);
       } else {
@@ -216,7 +217,7 @@ export default function PredictionPanel({
         router.refresh();
       }
     } catch {
-      setError(zh ? "网络异常，请重试" : "Network error");
+      setError(lc(locale, "网络异常，请重试", "Network error"));
     } finally {
       setCancelling(false);
     }
@@ -232,7 +233,7 @@ export default function PredictionPanel({
 
   const options = [
     { key: "home" as const, label: zh ? (homeTeamZh ?? homeTeam) : homeTeam, pool: poolHome },
-    { key: "draw" as const, label: zh ? "平局" : "Draw",                      pool: poolDraw },
+    { key: "draw" as const, label: lc(locale, "平局", "Draw"),                      pool: poolDraw },
     { key: "away" as const, label: zh ? (awayTeamZh ?? awayTeam) : awayTeam, pool: poolAway },
   ];
 
@@ -243,20 +244,20 @@ export default function PredictionPanel({
         <div className="bg-[#0F2040] border border-[#FFD700]/40 rounded-2xl p-6 text-center">
           <div className="text-4xl mb-3">🎉</div>
           <p className="text-white font-bold text-lg mb-1">
-            {zh ? "预测成功！" : "Prediction Placed!"}
+            {lc(locale, "预测成功！", "Prediction Placed!")}
           </p>
           <p className="text-gray-400 text-sm mb-2">
-            {zh ? "你的预测：" : "You predicted "}
+            {lc(locale, "你的预测：", "You predicted ")}
             <span className="text-[#FFD700] font-bold">
               {selected === "home"
-                ? (zh ? homeTeamZh ?? homeTeam : homeTeam) + (zh ? " 胜" : " Win")
+                ? (zh ? homeTeamZh ?? homeTeam : homeTeam) + (lc(locale, " 胜", " Win"))
                 : selected === "away"
-                ? (zh ? awayTeamZh ?? awayTeam : awayTeam) + (zh ? " 胜" : " Win")
-                : zh ? "平局" : "Draw"}
+                ? (zh ? awayTeamZh ?? awayTeam : awayTeam) + (lc(locale, " 胜", " Win"))
+                : lc(locale, "平局", "Draw")}
             </span>
           </p>
           <p className="text-gray-400 text-sm mb-5">
-            {zh ? "潜在获得：" : "Potential win: "}
+            {lc(locale, "潜在获得：", "Potential win: ")}
             <span className="text-green-400 font-bold">🪙 {formatGc(estPayout)} GC</span>
             <span className="text-gray-600 text-xs ml-1">(×{estMult.toFixed(2)})</span>
           </p>
@@ -265,7 +266,7 @@ export default function PredictionPanel({
             onClick={() => setShowShare(true)}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#FFD700] text-[#0A1628] font-black text-sm hover:bg-[#FFC200] transition-colors"
           >
-            📤 {zh ? "分享我的预测" : "Share My Prediction"}
+            📤 {lc(locale, "分享我的预测", "Share My Prediction")}
           </button>
 
           {/* 取消按钮 — 仅在取消窗口内且有 bet_id 时显示 */}
@@ -275,7 +276,7 @@ export default function PredictionPanel({
               disabled={cancelling}
               className="mt-2 w-full py-2 rounded-xl border border-red-500/25 text-red-400/70 hover:text-red-400 hover:border-red-400/50 text-xs font-bold transition-colors disabled:opacity-40"
             >
-              {cancelling ? (zh ? "取消中…" : "Cancelling…") : (zh ? "🗑 取消这次预测" : "🗑 Cancel this bet")}
+              {cancelling ? (lc(locale, "取消中…", "Cancelling…")) : (lc(locale, "🗑 取消这次预测", "🗑 Cancel this bet"))}
             </button>
           )}
         </div>
@@ -303,7 +304,7 @@ export default function PredictionPanel({
   return (
     <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-4">
       <h3 className="text-sm font-bold text-white mb-3">
-        {zh ? "🎯 输赢预测" : "🎯 Match Prediction"}
+        {lc(locale, "🎯 输赢预测", "🎯 Match Prediction")}
       </h3>
 
       {/* ── Outcome options — compact ────────────────────────────────────── */}
@@ -363,14 +364,14 @@ export default function PredictionPanel({
           {/* 预测 / 预计获得 / 状态 — 横排一行 */}
           <div className="grid grid-cols-3 gap-1 bg-[#0A1628] rounded-xl px-3 py-2.5">
             <div className="flex flex-col items-center">
-              <span className="text-[10px] text-gray-500 mb-0.5">{zh ? "消耗" : "Bet"}</span>
+              <span className="text-[10px] text-gray-500 mb-0.5">{lc(locale, "消耗", "Bet")}</span>
               <span className="text-xs font-black text-white">🪙 {formatGc(existingBet!.gc_amount)}</span>
             </div>
             <div className="flex flex-col items-center border-x border-[#1E3A5F]">
               <span className="text-[10px] text-gray-500 mb-0.5">
-                {existingBet!.status === "won" ? (zh ? "实际获得" : "Won")
-                : existingBet!.status === "lost" ? (zh ? "未中" : "Lost")
-                : (zh ? "预计获得" : "Est. win")}
+                {existingBet!.status === "won" ? (lc(locale, "实际获得", "Won"))
+                : existingBet!.status === "lost" ? (lc(locale, "未中", "Lost"))
+                : (lc(locale, "预计获得", "Est. win"))}
               </span>
               <span className={`text-xs font-black ${
                 existingBet!.status === "won"  ? "text-green-400" :
@@ -386,14 +387,14 @@ export default function PredictionPanel({
               </span>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-[10px] text-gray-500 mb-0.5">{zh ? "状态" : "Status"}</span>
+              <span className="text-[10px] text-gray-500 mb-0.5">{lc(locale, "状态", "Status")}</span>
               <span className={`text-xs font-black ${
                 existingBet!.status === "won"  ? "text-green-400" :
                 existingBet!.status === "lost" ? "text-red-400"   : "text-blue-400"
               }`}>
-                {existingBet!.status === "won"  ? (zh ? "✅ 中了" : "✅ Won")  :
-                 existingBet!.status === "lost" ? (zh ? "❌ 未中" : "❌ Lost") :
-                                                  (zh ? "⏳ 待开" : "⏳ Pending")}
+                {existingBet!.status === "won"  ? (lc(locale, "✅ 中了", "✅ Won"))  :
+                 existingBet!.status === "lost" ? (lc(locale, "❌ 未中", "❌ Lost")) :
+                                                  (lc(locale, "⏳ 待开", "⏳ Pending"))}
               </span>
             </div>
           </div>
@@ -404,7 +405,7 @@ export default function PredictionPanel({
               onClick={() => setShowShare(true)}
               className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#FFD700] hover:bg-[#FFC200] text-[#0A1628] text-sm font-black transition-colors"
             >
-              📤 {zh ? "分享预测" : "Share"}
+              📤 {lc(locale, "分享预测", "Share")}
             </button>
 
             {existingBet?.status === "pending" && existingBet?.id && (
@@ -417,7 +418,7 @@ export default function PredictionPanel({
                     : "border-[#1E3A5F] text-gray-600 cursor-not-allowed opacity-50"
                 }`}
               >
-                {cancelling ? "…" : (zh ? "🗑 取消" : "🗑 Cancel")}
+                {cancelling ? "…" : (lc(locale, "🗑 取消", "🗑 Cancel"))}
               </button>
             )}
           </div>
@@ -451,7 +452,7 @@ export default function PredictionPanel({
         <div className="space-y-4">
           {/* Balance display */}
           <div className="flex items-center justify-between bg-[#0A1628] rounded-xl px-4 py-2.5">
-            <span className="text-xs text-gray-500">{zh ? "可用GC余额" : "Available Balance"}</span>
+            <span className="text-xs text-gray-500">{lc(locale, "可用GC余额", "Available Balance")}</span>
             <span className="text-sm font-black text-[#FFD700]">
               🪙 {formatGc(gcBalance)} GC
             </span>
@@ -459,7 +460,7 @@ export default function PredictionPanel({
 
           {/* Percentage quick-bet */}
           <div>
-            <p className="text-xs text-gray-500 mb-2">{zh ? "快速下注" : "Quick Bet"}</p>
+            <p className="text-xs text-gray-500 mb-2">{lc(locale, "快速下注", "Quick Bet")}</p>
             <div className="grid grid-cols-5 gap-1">
               {PCT_PRESETS.map((pct) => {
                 const q = Math.max(Math.floor(gcBalance * pct), 1);
@@ -487,7 +488,7 @@ export default function PredictionPanel({
                     : "bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20"
                 }`}
               >
-                <span>{zh ? "全押" : "All in"}</span>
+                <span>{lc(locale, "全押", "All in")}</span>
                 <span className="text-[9px] opacity-70">{formatGc(gcBalance)}</span>
               </button>
             </div>
@@ -495,7 +496,7 @@ export default function PredictionPanel({
 
           {/* Custom amount input */}
           <div>
-            <p className="text-xs text-gray-500 mb-1.5">{zh ? "自定义金额" : "Custom amount"}</p>
+            <p className="text-xs text-gray-500 mb-1.5">{lc(locale, "自定义金额", "Custom amount")}</p>
             <div className="flex items-center gap-2 bg-[#0A1628] border border-[#1E3A5F] rounded-xl px-4 py-3 focus-within:border-[#FFD700]/60 transition-colors">
               <span className="text-gray-500 text-sm">🪙</span>
               <input
@@ -517,11 +518,11 @@ export default function PredictionPanel({
           {selected && amount > 0 && (
             <div className="bg-[#0A1628] rounded-xl p-3.5 flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500">{zh ? "预计获得" : "Potential win"}</p>
+                <p className="text-xs text-gray-500">{lc(locale, "预计获得", "Potential win")}</p>
                 <p className="text-green-400 font-black text-lg">🪙 {formatGc(estPayout)} GC</p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-gray-500">{zh ? "倍率" : "Odds"}</p>
+                <p className="text-xs text-gray-500">{lc(locale, "倍率", "Odds")}</p>
                 <p className="text-[#FFD700] font-bold text-lg">×{estMult.toFixed(2)}</p>
               </div>
             </div>
@@ -539,18 +540,16 @@ export default function PredictionPanel({
             className="w-full bg-[#FFD700] text-[#0A1628] font-black py-3.5 rounded-xl text-sm hover:bg-[#FFC200] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading
-              ? (zh ? "提交中…" : "Placing…")
+              ? (lc(locale, "提交中…", "Placing…"))
               : !selected
-              ? (zh ? "请先选择预测结果" : "Select an outcome first")
+              ? (lc(locale, "请先选择预测结果", "Select an outcome first"))
               : zh
               ? `确认预测 · ${selected === "home" ? (homeTeamZh ?? homeTeam) : selected === "away" ? (awayTeamZh ?? awayTeam) : "平局"} →`
               : `Predict · ${selected === "home" ? homeTeam : selected === "away" ? awayTeam : "Draw"} →`}
           </button>
 
           <p className="text-xs text-gray-600 text-center">
-            {zh
-              ? "GoalCoin (GC) 为虚拟娱乐积分，不具备任何实际价值。"
-              : "GoalCoin (GC) is a virtual entertainment currency with no real-world value."}
+            {lc(locale, "GoalCoin (GC) 为虚拟娱乐积分，不具备任何实际价值。", "GoalCoin (GC) is a virtual entertainment currency with no real-world value.")}
           </p>
         </div>
       )}

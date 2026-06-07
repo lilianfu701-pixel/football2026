@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import ScheduleClient from "./ScheduleClient";
+import { lc } from "@/i18n/content";
 
 interface Props {
   params: Promise<{ locale: string }>;
@@ -10,12 +11,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const zh = locale === "zh";
   return {
-    title: zh
-      ? "赛程 & 小组积分榜 | Football2026"
-      : "Schedule & Group Standings | Football2026",
-    description: zh
-      ? "2026 FIFA 世界杯全部赛程和实时小组积分榜。"
-      : "Full 2026 FIFA World Cup schedule and live group standings.",
+    title: lc(locale, "赛程 & 小组积分榜 | Football2026", "Schedule & Group Standings | Football2026"),
+    description: lc(locale, "2026 FIFA 世界杯全部赛程和实时小组积分榜。", "Full 2026 FIFA World Cup schedule and live group standings."),
   };
 }
 

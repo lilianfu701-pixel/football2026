@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { lc } from "@/i18n/content";
+import { useLocale } from "next-intl";
 
 interface Props {
   postId?:  number;
@@ -25,6 +27,7 @@ const REASONS_EN = [
 ];
 
 export default function ReportModal({ postId, replyId, zh, onClose }: Props) {
+  const locale = useLocale();
   const [reason,     setReason]     = useState("spam");
   const [detail,     setDetail]     = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -45,15 +48,15 @@ export default function ReportModal({ postId, replyId, zh, onClose }: Props) {
       const data = await res.json();
       if (!res.ok) {
         if (data.error === "already_reported") {
-          setErr(zh ? "你已经举报过了" : "Already reported");
+          setErr(lc(locale, "你已经举报过了", "Already reported"));
         } else {
-          setErr(data.error ?? (zh ? "提交失败" : "Failed"));
+          setErr(data.error ?? (lc(locale, "提交失败", "Failed")));
         }
         return;
       }
       setDone(true);
     } catch {
-      setErr(zh ? "网络错误" : "Network error");
+      setErr(lc(locale, "网络错误", "Network error"));
     } finally {
       setSubmitting(false);
     }
@@ -67,7 +70,7 @@ export default function ReportModal({ postId, replyId, zh, onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#1E3A5F]">
           <h3 className="text-sm font-black text-white">
-            🚩 {zh ? "举报内容" : "Report Content"}
+            🚩 {lc(locale, "举报内容", "Report Content")}
           </h3>
           <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors text-lg">✕</button>
         </div>
@@ -75,11 +78,11 @@ export default function ReportModal({ postId, replyId, zh, onClose }: Props) {
         {done ? (
           <div className="px-5 py-8 text-center">
             <div className="text-4xl mb-3">✅</div>
-            <p className="text-white font-bold">{zh ? "举报已提交" : "Report submitted"}</p>
-            <p className="text-xs text-gray-500 mt-1">{zh ? "我们会尽快审核" : "We'll review it shortly"}</p>
+            <p className="text-white font-bold">{lc(locale, "举报已提交", "Report submitted")}</p>
+            <p className="text-xs text-gray-500 mt-1">{lc(locale, "我们会尽快审核", "We'll review it shortly")}</p>
             <button onClick={onClose}
               className="mt-4 px-5 py-2 bg-[#FFD700] text-[#0A1628] font-black rounded-xl text-sm hover:bg-[#FFC200]">
-              {zh ? "关闭" : "Close"}
+              {lc(locale, "关闭", "Close")}
             </button>
           </div>
         ) : (
@@ -87,7 +90,7 @@ export default function ReportModal({ postId, replyId, zh, onClose }: Props) {
             {/* Reason selector */}
             <div>
               <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">
-                {zh ? "举报原因" : "Reason"}
+                {lc(locale, "举报原因", "Reason")}
               </label>
               <div className="space-y-1.5">
                 {reasons.map((r) => (
@@ -110,7 +113,7 @@ export default function ReportModal({ postId, replyId, zh, onClose }: Props) {
             {/* Optional detail */}
             <div>
               <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1.5">
-                {zh ? "补充说明（可选）" : "Additional detail (optional)"}
+                {lc(locale, "补充说明（可选）", "Additional detail (optional)")}
               </label>
               <textarea
                 value={detail}
@@ -118,7 +121,7 @@ export default function ReportModal({ postId, replyId, zh, onClose }: Props) {
                 maxLength={500}
                 rows={3}
                 className="w-full bg-[#080F1F] border border-[#2A4A7F] rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 outline-none focus:border-[#FFD700]/40 resize-none"
-                placeholder={zh ? "描述问题…" : "Describe the issue…"}
+                placeholder={lc(locale, "描述问题…", "Describe the issue…")}
               />
             </div>
 
@@ -127,11 +130,11 @@ export default function ReportModal({ postId, replyId, zh, onClose }: Props) {
             <div className="flex gap-2 pt-1">
               <button onClick={onClose}
                 className="flex-1 py-2.5 text-sm text-gray-400 border border-[#1E3A5F] rounded-xl hover:text-white transition-colors">
-                {zh ? "取消" : "Cancel"}
+                {lc(locale, "取消", "Cancel")}
               </button>
               <button onClick={handleSubmit} disabled={submitting}
                 className="flex-1 py-2.5 text-sm font-black bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors disabled:opacity-50">
-                {submitting ? "…" : (zh ? "提交举报" : "Submit")}
+                {submitting ? "…" : (lc(locale, "提交举报", "Submit"))}
               </button>
             </div>
           </div>

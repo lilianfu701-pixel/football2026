@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { getFlagUrl, getTeamDisplayName, isTBD } from "@/lib/flags";
+import { lc } from "@/i18n/content";
 
 // ── Squad component (async server component) ───────────────────────────────────
 
@@ -52,7 +53,7 @@ async function TeamSquad({ locale, teamName }: { locale: string; teamName: strin
   return (
     <section>
       <h2 className="text-sm font-black text-white mb-3">
-        👥 {zh ? "球队名单" : "Squad"} ({players.length})
+        👥 {lc(locale, "球队名单", "Squad")} ({players.length})
       </h2>
       <div className="space-y-4">
         {POS_ORDER.filter((pos) => (grouped[pos]?.length ?? 0) > 0).map((pos) => {
@@ -231,7 +232,7 @@ export default async function TeamPage({ params }: Props) {
       {/* Breadcrumb */}
       <nav className="text-xs text-gray-500 flex items-center gap-1">
         <Link href={`/${locale}/schedule`} className="hover:text-[#FFD700] transition-colors">
-          {zh ? "赛程" : "Schedule"}
+          {lc(locale, "赛程", "Schedule")}
         </Link>
         <span>/</span>
         <span className="text-gray-400">{displayName}</span>
@@ -254,7 +255,7 @@ export default async function TeamPage({ params }: Props) {
                   <span className={`ml-2 font-bold ${teamRank <= 2 ? "text-green-400" : "text-gray-500"}`}>
                     {"· "}
                     {zh ? `第${teamRank}名` : ordinal(teamRank)}
-                    {teamRank <= 2 ? (zh ? " 出线" : " Q") : ""}
+                    {teamRank <= 2 ? (lc(locale, " 出线", " Q")) : ""}
                   </span>
                 )}
               </p>
@@ -266,14 +267,14 @@ export default async function TeamPage({ params }: Props) {
         {teamStats && teamStats.P > 0 && (
           <div className="flex flex-wrap gap-5 pt-4 border-t border-[#1E3A5F]">
             {[
-              { label: zh ? "场次" : "P",    val: String(teamStats.P),  color: "text-white" },
-              { label: zh ? "胜" : "W",      val: String(teamStats.W),  color: "text-green-400" },
-              { label: zh ? "平" : "D",      val: String(teamStats.D),  color: "text-gray-400" },
-              { label: zh ? "负" : "L",      val: String(teamStats.L),  color: "text-red-400" },
-              { label: zh ? "进球" : "GF",   val: String(teamStats.GF), color: "text-[#FFD700]" },
-              { label: zh ? "失球" : "GA",   val: String(teamStats.GA), color: "text-gray-500" },
-              { label: zh ? "净胜球" : "GD", val: (teamStats.GD >= 0 ? "+" : "") + teamStats.GD, color: teamStats.GD >= 0 ? "text-blue-400" : "text-red-400" },
-              { label: zh ? "积分" : "Pts",  val: String(teamStats.Pts), color: "text-[#FFD700]" },
+              { label: lc(locale, "场次", "P"),    val: String(teamStats.P),  color: "text-white" },
+              { label: lc(locale, "胜", "W"),      val: String(teamStats.W),  color: "text-green-400" },
+              { label: lc(locale, "平", "D"),      val: String(teamStats.D),  color: "text-gray-400" },
+              { label: lc(locale, "负", "L"),      val: String(teamStats.L),  color: "text-red-400" },
+              { label: lc(locale, "进球", "GF"),   val: String(teamStats.GF), color: "text-[#FFD700]" },
+              { label: lc(locale, "失球", "GA"),   val: String(teamStats.GA), color: "text-gray-500" },
+              { label: lc(locale, "净胜球", "GD"), val: (teamStats.GD >= 0 ? "+" : "") + teamStats.GD, color: teamStats.GD >= 0 ? "text-blue-400" : "text-red-400" },
+              { label: lc(locale, "积分", "Pts"),  val: String(teamStats.Pts), color: "text-[#FFD700]" },
             ].map(({ label, val, color }) => (
               <div key={label} className="text-center">
                 <p className={`text-xl font-black ${color}`}>{val}</p>
@@ -294,7 +295,7 @@ export default async function TeamPage({ params }: Props) {
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-[#1E3A5F]">
-                  {["#", zh ? "球队" : "Team", "P", "W", "D", "L", "GD", "Pts"].map((h, i) => (
+                  {["#", lc(locale, "球队", "Team"), "P", "W", "D", "L", "GD", "Pts"].map((h, i) => (
                     <th key={i} className={`px-3 py-2.5 text-gray-500 font-medium ${i <= 1 ? "text-left" : "text-center"}`}>
                       {h}
                     </th>
@@ -330,7 +331,7 @@ export default async function TeamPage({ params }: Props) {
                           </span>
                           {isThis && (
                             <span className="text-[9px] bg-[#FFD700] text-[#0A1628] font-black px-1 rounded">
-                              {zh ? "本队" : "You"}
+                              {lc(locale, "本队", "You")}
                             </span>
                           )}
                         </Link>
@@ -348,7 +349,7 @@ export default async function TeamPage({ params }: Props) {
               </tbody>
             </table>
             <p className="px-3 py-2 text-[10px] text-gray-700">
-              {zh ? "* 前两名自动出线" : "* Top 2 advance to knockout rounds"}
+              {lc(locale, "* 前两名自动出线", "* Top 2 advance to knockout rounds")}
             </p>
           </div>
         </section>
@@ -360,7 +361,7 @@ export default async function TeamPage({ params }: Props) {
       {/* ── All matches ── */}
       <section>
         <h2 className="text-sm font-black text-white mb-3">
-          📅 {zh ? "全部赛事" : "All Matches"} ({matches.length})
+          📅 {lc(locale, "全部赛事", "All Matches")} ({matches.length})
         </h2>
         <div className="space-y-2">
           {matches.map((m) => {
@@ -379,9 +380,9 @@ export default async function TeamPage({ params }: Props) {
             let result: string | null = null;
             let resultClass = "text-gray-500";
             if (isFinished && myScore !== null && oppScore !== null) {
-              if (myScore > oppScore)       { result = zh ? "胜" : "W"; resultClass = "text-green-400"; }
-              else if (myScore < oppScore)  { result = zh ? "负" : "L"; resultClass = "text-red-400"; }
-              else                          { result = zh ? "平" : "D"; resultClass = "text-gray-400"; }
+              if (myScore > oppScore)       { result = lc(locale, "胜", "W"); resultClass = "text-green-400"; }
+              else if (myScore < oppScore)  { result = lc(locale, "负", "L"); resultClass = "text-red-400"; }
+              else                          { result = lc(locale, "平", "D"); resultClass = "text-gray-400"; }
             }
 
             return (
@@ -397,7 +398,7 @@ export default async function TeamPage({ params }: Props) {
 
                 {/* H/A badge */}
                 <span className="text-[10px] font-bold text-gray-600 shrink-0 w-3">
-                  {isHome ? (zh ? "主" : "H") : (zh ? "客" : "A")}
+                  {isHome ? (lc(locale, "主", "H")) : (lc(locale, "客", "A"))}
                 </span>
 
                 {/* Opponent flag */}
@@ -414,7 +415,7 @@ export default async function TeamPage({ params }: Props) {
                 {/* Opponent name + date */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-white truncate">
-                    {isTBD(opponent) ? (zh ? "待定" : "TBD") : getTeamDisplayName(opponent, locale)}
+                    {isTBD(opponent) ? (lc(locale, "待定", "TBD")) : getTeamDisplayName(opponent, locale)}
                   </p>
                   <p className="text-[10px] text-gray-600">
                     {formatKickoff(m.kickoff_time, locale)}

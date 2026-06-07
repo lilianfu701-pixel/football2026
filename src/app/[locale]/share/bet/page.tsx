@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { lc } from "@/i18n/content";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // /[locale]/share/bet?home=Brazil&away=France&hc=br&ac=fr
@@ -40,7 +41,7 @@ export async function generateMetadata({
 
   const pickLabel: Record<string, string> = {
     home: zh ? `${home} 胜` : `${home} Win`,
-    draw: zh ? "平局"        : "Draw",
+    draw: lc(locale, "平局", "Draw"),
     away: zh ? `${away} 胜` : `${away} Win`,
   };
   const gcFmt = Number(gc) >= 1_000_000
@@ -105,7 +106,7 @@ export default async function ShareBetPage({
 
   const pickLabel: Record<string, string> = {
     home: zh ? `${home} 胜` : `${home} Win`,
-    draw: zh ? "平局"        : "Draw",
+    draw: lc(locale, "平局", "Draw"),
     away: zh ? `${away} 胜` : `${away} Win`,
   };
   const gcFmt = Number(gc) >= 1_000_000
@@ -148,7 +149,7 @@ export default async function ShareBetPage({
             {pickLabel[pick] ?? pick} · {gcFmt} GC · {odds}×
           </p>
           <p className="text-gray-500 text-sm mt-2">
-            {zh ? "正在跳转到比赛页面…" : "Redirecting to the match…"}
+            {lc(locale, "正在跳转到比赛页面…", "Redirecting to the match…")}
           </p>
         </div>
 
@@ -156,7 +157,7 @@ export default async function ShareBetPage({
           href={matchHref}
           className="mt-6 px-8 py-3 bg-[#FFD700] text-[#0A1628] font-black rounded-xl hover:bg-[#FFC200] transition-colors"
         >
-          {zh ? "立即查看比赛 →" : "View Match →"}
+          {lc(locale, "立即查看比赛 →", "View Match →")}
         </Link>
 
         <p className="mt-4 text-[10px] text-gray-600">

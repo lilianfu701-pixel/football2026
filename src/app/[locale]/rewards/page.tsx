@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { lc } from "@/i18n/content";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -13,10 +14,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const zh = locale === "zh";
   return {
-    title: zh ? "GC 奖励说明 | Football2026" : "GC Rewards Guide | Football2026",
-    description: zh
-      ? "了解如何在 Football2026 平台赚取和使用 GoalCoin (GC)。"
-      : "Learn how to earn and use GoalCoin (GC) on Football2026.",
+    title: lc(locale, "GC 奖励说明 | Football2026", "GC Rewards Guide | Football2026"),
+    description: lc(locale, "了解如何在 Football2026 平台赚取和使用 GoalCoin (GC)。", "Learn how to earn and use GoalCoin (GC) on Football2026."),
   };
 }
 
@@ -113,25 +112,23 @@ export default async function RewardsPage({ params }: Props) {
 
       {/* ── Header ── */}
       <div>
-        <h1 className="text-2xl font-black text-white">🪙 {zh ? "GC 奖励说明" : "GC Rewards Guide"}</h1>
+        <h1 className="text-2xl font-black text-white">🪙 {lc(locale, "GC 奖励说明", "GC Rewards Guide")}</h1>
         <p className="text-gray-500 text-sm mt-1">
-          {zh ? "了解如何赚取 GoalCoin，提升你的排名" : "Learn how to earn GoalCoin and climb the leaderboard"}
+          {lc(locale, "了解如何赚取 GoalCoin，提升你的排名", "Learn how to earn GoalCoin and climb the leaderboard")}
         </p>
       </div>
 
       {/* ── Compliance banner ── */}
       <div className="bg-[#FFD700]/8 border border-[#FFD700]/25 rounded-2xl p-4">
         <p className="text-xs text-[#FFD700]/80 font-medium leading-relaxed">
-          {zh
-            ? "⚠️ GoalCoin (GC) 是虚拟娱乐道具，仅限 Football2026 平台内使用，无任何现金价值，不可兑换现金或实物。"
-            : "⚠️ GoalCoin (GC) is a virtual entertainment token for use within Football2026 only. It has no cash value and cannot be redeemed for cash or physical goods."}
+          {lc(locale, "⚠️ GoalCoin (GC) 是虚拟娱乐道具，仅限 Football2026 平台内使用，无任何现金价值，不可兑换现金或实物。", "⚠️ GoalCoin (GC) is a virtual entertainment token for use within Football2026 only. It has no cash value and cannot be redeemed for cash or physical goods.")}
         </p>
       </div>
 
       {/* ── How to earn ── */}
       <section>
         <h2 className="text-sm font-black text-white mb-3">
-          💰 {zh ? "如何赚取 GC" : "How to Earn GC"}
+          💰 {lc(locale, "如何赚取 GC", "How to Earn GC")}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {earningMethods.map((item, i) => (
@@ -153,15 +150,15 @@ export default async function RewardsPage({ params }: Props) {
       {/* ── Wealth levels table ── */}
       <section>
         <h2 className="text-sm font-black text-white mb-3">
-          🏅 {zh ? "账户等级与每日签到 GC" : "Account Levels & Daily Check-In GC"}
+          🏅 {lc(locale, "账户等级与每日签到 GC", "Account Levels & Daily Check-In GC")}
         </h2>
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-[#1E3A5F]">
-                <th className="px-4 py-3 text-left text-gray-500 font-medium">{zh ? "等级" : "Level"}</th>
-                <th className="px-4 py-3 text-left text-gray-500 font-medium">{zh ? "GC 余额" : "GC Balance"}</th>
-                <th className="px-4 py-3 text-right text-gray-500 font-medium">{zh ? "每日签到（基础）" : "Daily Base GC"}</th>
+                <th className="px-4 py-3 text-left text-gray-500 font-medium">{lc(locale, "等级", "Level")}</th>
+                <th className="px-4 py-3 text-left text-gray-500 font-medium">{lc(locale, "GC 余额", "GC Balance")}</th>
+                <th className="px-4 py-3 text-right text-gray-500 font-medium">{lc(locale, "每日签到（基础）", "Daily Base GC")}</th>
               </tr>
             </thead>
             <tbody>
@@ -178,9 +175,7 @@ export default async function RewardsPage({ params }: Props) {
             </tbody>
           </table>
           <p className="px-4 py-2.5 text-[10px] text-gray-600 border-t border-[#1E3A5F]/40">
-            {zh
-              ? "* 连续签到加成：每天 +1%，最高 +30%（中断后归零）"
-              : "* Streak bonus: +1% per consecutive day, capped at +30% (resets on break)"}
+            {lc(locale, "* 连续签到加成：每天 +1%，最高 +30%（中断后归零）", "* Streak bonus: +1% per consecutive day, capped at +30% (resets on break)")}
           </p>
         </div>
       </section>
@@ -188,7 +183,7 @@ export default async function RewardsPage({ params }: Props) {
       {/* ── FAQ ── */}
       <section>
         <h2 className="text-sm font-black text-white mb-3">
-          ❓ {zh ? "常见问题" : "Frequently Asked Questions"}
+          ❓ {lc(locale, "常见问题", "Frequently Asked Questions")}
         </h2>
         <div className="space-y-2">
           {faqItems.map((item, i) => (
@@ -203,16 +198,16 @@ export default async function RewardsPage({ params }: Props) {
       {/* ── Bottom links ── */}
       <div className="pt-4 border-t border-[#1E3A5F] flex flex-wrap gap-4 text-sm text-gray-500">
         <Link href={`/${locale}/profile/checkin`} className="hover:text-[#FFD700] transition-colors">
-          {zh ? "每日签到 →" : "Daily Check-In →"}
+          {lc(locale, "每日签到 →", "Daily Check-In →")}
         </Link>
         <Link href={`/${locale}/missions`} className="hover:text-[#FFD700] transition-colors">
-          {zh ? "任务中心 →" : "Missions →"}
+          {lc(locale, "任务中心 →", "Missions →")}
         </Link>
         <Link href={`/${locale}/leaderboard`} className="hover:text-[#FFD700] transition-colors">
-          {zh ? "排行榜 →" : "Leaderboard →"}
+          {lc(locale, "排行榜 →", "Leaderboard →")}
         </Link>
         <Link href={`/${locale}/terms`} className="hover:text-[#FFD700] transition-colors">
-          {zh ? "服务条款" : "Terms of Service"}
+          {lc(locale, "服务条款", "Terms of Service")}
         </Link>
       </div>
 

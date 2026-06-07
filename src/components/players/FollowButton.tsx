@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { lc } from "@/i18n/content";
 
 interface FollowButtonProps {
   playerId: number;
@@ -70,8 +71,8 @@ export default function FollowButton({ playerId, locale }: FollowButtonProps) {
   const label = loading
     ? "···"
     : following
-      ? (zh ? "已关注" : "Following")
-      : (zh ? "+ 关注" : "+ Follow");
+      ? (lc(locale, "已关注", "Following"))
+      : (lc(locale, "+ 关注", "+ Follow"));
 
   return (
     <button

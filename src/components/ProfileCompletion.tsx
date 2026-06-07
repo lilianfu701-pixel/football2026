@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { PROFILE_REWARDS, ALL_COMPLETE_BONUS, MAX_TOTAL_REWARD } from "@/lib/profileRewards";
+import { lc } from "@/i18n/content";
 
 interface Props {
   /** Which fields are currently filled (key → true). */
@@ -31,7 +32,7 @@ export default function ProfileCompletion({ filledFields, rewardedFields, locale
       <div className="flex items-center justify-between mb-3">
         <div>
           <h3 className="text-white font-bold text-base">
-            {zh ? "资料完善度" : "Profile Completion"}
+            {lc(locale, "资料完善度", "Profile Completion")}
           </h3>
           <p className="text-gray-500 text-[11px] mt-0.5">
             {zh
@@ -43,7 +44,7 @@ export default function ProfileCompletion({ filledFields, rewardedFields, locale
           href={`/${locale}/profile/settings`}
           className="shrink-0 text-xs font-bold text-[#FFD700] hover:underline"
         >
-          {zh ? "去完善 →" : "Edit →"}
+          {lc(locale, "去完善 →", "Edit →")}
         </Link>
       </div>
 
@@ -61,10 +62,10 @@ export default function ProfileCompletion({ filledFields, rewardedFields, locale
       </div>
       <div className="flex items-center justify-between text-[11px] mb-4">
         <span className={allDone ? "text-[#FFD700] font-bold" : "text-gray-500"}>
-          {filledCount}/{total} {zh ? "项" : "fields"} · {pct}%
+          {filledCount}/{total} {lc(locale, "项", "fields")} · {pct}%
         </span>
         <span className="text-gray-600">
-          {zh ? "已获" : "Earned"}: <span className="text-[#FFD700] font-bold">{earned.toLocaleString()} GC</span>
+          {lc(locale, "已获", "Earned")}: <span className="text-[#FFD700] font-bold">{earned.toLocaleString()} GC</span>
         </span>
       </div>
 
@@ -91,7 +92,7 @@ export default function ProfileCompletion({ filledFields, rewardedFields, locale
                 </span>
               </div>
               <span className={`font-bold ${rewarded ? "text-green-400" : filled ? "text-[#FFD700]" : "text-gray-600"}`}>
-                {rewarded ? (zh ? "已领" : "Claimed") : `+${field.gc} GC`}
+                {rewarded ? (lc(locale, "已领", "Claimed")) : `+${field.gc} GC`}
               </span>
             </div>
           );
@@ -110,7 +111,7 @@ export default function ProfileCompletion({ filledFields, rewardedFields, locale
               {allDone ? "🎉" : "🏆"}
             </span>
             <span className={allDone ? "text-[#FFD700] font-bold" : "text-gray-500"}>
-              {zh ? "全部完成奖励" : "All Complete Bonus"}
+              {lc(locale, "全部完成奖励", "All Complete Bonus")}
             </span>
           </div>
           <span className={`font-bold ${
@@ -121,7 +122,7 @@ export default function ProfileCompletion({ filledFields, rewardedFields, locale
                 : "text-gray-600"
           }`}>
             {rewardedFields["__all_complete"]
-              ? (zh ? "已领" : "Claimed")
+              ? (lc(locale, "已领", "Claimed"))
               : `+${ALL_COMPLETE_BONUS.toLocaleString()} GC`}
           </span>
         </div>

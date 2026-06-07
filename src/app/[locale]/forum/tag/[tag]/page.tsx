@@ -4,6 +4,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import ForumPagination from "@/components/forum/Pagination";
 import { getWealthLevel } from "@/lib/levels";
+import { lc } from "@/i18n/content";
 
 interface PageProps {
   params:       Promise<{ locale: string; tag: string }>;
@@ -12,12 +13,12 @@ interface PageProps {
 
 const PAGE_SIZE = 15;
 
-function timeAgo(dateStr: string, zh: boolean): string {
+function timeAgo(dateStr: string, zh: boolean, locale: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60000);
   const h = Math.floor(diff / 3600000);
   const d = Math.floor(diff / 86400000);
-  if (m < 1)  return zh ? "刚刚"       : "just now";
+  if (m < 1)  return lc(locale, "刚刚", "just now");
   if (m < 60) return zh ? `${m}分钟前`  : `${m}m ago`;
   if (h < 24) return zh ? `${h}小时前`  : `${h}h ago`;
   if (d < 30) return zh ? `${d}天前`    : `${d}d ago`;
@@ -90,7 +91,7 @@ export default async function TagPage({ params, searchParams }: PageProps) {
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-xs text-gray-500">
           <Link href={`/${locale}/forum`} className="hover:text-[#FFD700] transition-colors">
-            {zh ? "论坛" : "Forum"}
+            {lc(locale, "论坛", "Forum")}
           </Link>
           <span className="text-gray-700">›</span>
           <span className="text-gray-400">#{tagLabel}</span>
@@ -110,7 +111,7 @@ export default async function TagPage({ params, searchParams }: PageProps) {
                 #{tagLabel}
               </h1>
               <p className="text-sm text-gray-500 mt-0.5">
-                {(count ?? 0).toLocaleString()} {zh ? "篇帖子" : "posts"}
+                {(count ?? 0).toLocaleString()} {lc(locale, "篇帖子", "posts")}
               </p>
             </div>
           </div>
@@ -123,20 +124,21 @@ export default async function TagPage({ params, searchParams }: PageProps) {
             totalPages={totalPages}
             buildHref={(p) => `/${locale}/forum/tag/${tagName}?page=${p}`}
             zh={zh}
+            locale={locale}
           />
         )}
 
         {/* Post list */}
         {posts.length === 0 ? (
           <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl py-20 text-center">
-            <p className="text-gray-500 text-sm">{zh ? "此标签下暂无帖子" : "No posts with this tag yet"}</p>
+            <p className="text-gray-500 text-sm">{lc(locale, "此标签下暂无帖子", "No posts with this tag yet")}</p>
           </div>
         ) : (
           <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden divide-y divide-[#1E3A5F]/60">
             {posts.map((p) => {
               const author = p.user_id ? authorsById.get(p.user_id) : undefined;
               const wl     = getWealthLevel(author?.gc_balance ?? 0);
-              const name   = author?.nickname ?? (zh ? "系统" : "System");
+              const name   = author?.nickname ?? (lc(locale, "系统", "System"));
               const cat    = Array.isArray(p.forum_categories) ? p.forum_categories[0] : p.forum_categories;
 
               return (
@@ -165,7 +167,7 @@ export default async function TagPage({ params, searchParams }: PageProps) {
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {p.is_pinned && (
                         <span className="text-[9px] font-black bg-red-500/15 text-red-400 px-1.5 py-0.5 rounded border border-red-500/20">
-                          {zh ? "置顶" : "PIN"}
+                          {lc(locale, "置顶", "PIN")}
                         </span>
                       )}
                       {p.is_featured && (
@@ -183,7 +185,7 @@ export default async function TagPage({ params, searchParams }: PageProps) {
                         <span className="text-gray-600">·</span>
                         <span>@{name}</span>
                         <span className="text-gray-600">·</span>
-                        <span>{timeAgo(p.last_reply_at ?? p.created_at, zh)}</span>
+                        <span>{timeAgo(p.last_reply_at ?? p.created_at, zh, locale)}</span>
                       </div>
                     )}
                   </div>
@@ -206,13 +208,14 @@ export default async function TagPage({ params, searchParams }: PageProps) {
             totalPages={totalPages}
             buildHref={(p) => `/${locale}/forum/tag/${tagName}?page=${p}`}
             zh={zh}
+            locale={locale}
           />
         )}
 
         {/* Browse all tags */}
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-4">
           <p className="text-xs font-black text-gray-600 uppercase tracking-widest mb-3">
-            {zh ? "其他标签" : "Other Tags"}
+            {lc(locale, "其他标签", "Other Tags")}
           </p>
           <AllTagsList locale={locale} zh={zh} currentTag={tag.name} />
         </div>

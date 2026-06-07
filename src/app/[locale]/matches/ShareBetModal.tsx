@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { formatGc } from "@/lib/levels";
 import { getFlagCode } from "@/lib/flags";
+import { lc } from "@/i18n/content";
 
 export type BetPick = "home" | "draw" | "away";
 
@@ -108,7 +109,7 @@ export default function ShareBetModal({
   // Share text
   const pickDisplay = {
     home: zh ? `${homeTeamZh ?? homeTeam} 胜` : `${homeTeam} Win`,
-    draw: zh ? "平局" : "Draw",
+    draw: lc(locale, "平局", "Draw"),
     away: zh ? `${awayTeamZh ?? awayTeam} 胜` : `${awayTeam} Win`,
   }[pick];
 
@@ -190,10 +191,10 @@ export default function ShareBetModal({
         <div className="px-5 pt-5 pb-3 border-b border-[#1E3A5F] flex items-center justify-between">
           <div>
             <h3 className="text-white font-black text-lg">
-              📤 {zh ? "分享我的预测" : "Share My Prediction"}
+              📤 {lc(locale, "分享我的预测", "Share My Prediction")}
             </h3>
             <p className="text-gray-500 text-xs mt-0.5">
-              {zh ? "卡片内已含二维码，一张图分享全部！" : "QR code is embedded in the card — one image, everything included!"}
+              {lc(locale, "卡片内已含二维码，一张图分享全部！", "QR code is embedded in the card — one image, everything included!")}
             </p>
           </div>
           <button onClick={onClose} className="text-gray-600 hover:text-white transition-colors text-xl leading-none">✕</button>
@@ -218,7 +219,7 @@ export default function ShareBetModal({
             />
           </div>
           <p className="text-[10px] text-gray-600 mt-1.5 text-center">
-            {zh ? "右下角二维码可扫码直达比赛页面" : "QR code in the bottom-right links directly to the match"}
+            {lc(locale, "右下角二维码可扫码直达比赛页面", "QR code in the bottom-right links directly to the match")}
           </p>
         </div>
 
@@ -236,8 +237,8 @@ export default function ShareBetModal({
                 ? <span className="inline-block w-4 h-4 border-2 border-[#0A1628]/30 border-t-[#0A1628] rounded-full animate-spin" />
                 : "📲"}
               {sharing
-                ? (zh ? "分享中…" : "Sharing…")
-                : (zh ? "一键分享图片（含二维码）" : "Share Image with QR Code")}
+                ? (lc(locale, "分享中…", "Sharing…"))
+                : (lc(locale, "一键分享图片（含二维码）", "Share Image with QR Code"))}
             </button>
           )}
 
@@ -248,7 +249,7 @@ export default function ShareBetModal({
               disabled={!imgLoaded}
               className="flex-[2] flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#1E3A5F] hover:bg-[#7C6FE0]/30 border border-[#1E3A5F] hover:border-[#7C6FE0]/50 text-gray-300 hover:text-white text-sm font-bold transition-all disabled:opacity-40"
             >
-              💾 {zh ? "保存图片" : "Save Image"}
+              💾 {lc(locale, "保存图片", "Save Image")}
             </button>
             <button
               onClick={copyText}
@@ -258,7 +259,7 @@ export default function ShareBetModal({
                   : "bg-[#1E3A5F] border-[#1E3A5F] hover:border-[#7C6FE0]/50 text-gray-300 hover:text-white"
               }`}
             >
-              {copied ? `✓ ${zh ? "已复制" : "Copied"}` : `🔗 ${zh ? "复制链接" : "Copy Link"}`}
+              {copied ? `✓ ${lc(locale, "已复制", "Copied")}` : `🔗 ${lc(locale, "复制链接", "Copy Link")}`}
             </button>
           </div>
 
@@ -287,9 +288,7 @@ export default function ShareBetModal({
             {/* WeChat: screenshot hint */}
             <button
               className="flex flex-col items-center gap-1 group"
-              onClick={() => alert(zh
-                ? "请长按图片保存，然后在微信中发送"
-                : "Long press the image to save, then share in WeChat")}
+              onClick={() => alert(lc(locale, "请长按图片保存，然后在微信中发送", "Long press the image to save, then share in WeChat"))}
             >
               <div className="w-11 h-11 rounded-2xl bg-[#07C160] flex items-center justify-center text-white text-base font-black shadow-lg group-hover:scale-105 transition-transform">
                 微
@@ -303,9 +302,7 @@ export default function ShareBetModal({
         <div className="mx-5 mb-5 bg-[#FFD700]/8 border border-[#FFD700]/20 rounded-xl px-4 py-2.5 flex items-center gap-2.5">
           <span className="text-base shrink-0">🎁</span>
           <p className="text-xs text-gray-400 leading-snug">
-            {zh
-              ? "邀请朋友注册，双方各得 500,000 GC 奖励！"
-              : "Invite friends to sign up — both get 500,000 GC!"}
+            {lc(locale, "邀请朋友注册，双方各得 500,000 GC 奖励！", "Invite friends to sign up — both get 500,000 GC!")}
           </p>
         </div>
       </div>

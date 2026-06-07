@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { lc } from "@/i18n/content";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -241,20 +242,20 @@ export default function MissionsClient({ locale, userId, stats }: Props) {
     return (
       <div className="min-h-screen bg-[#0A1628] text-white pb-20 pt-8">
         <div className="mb-5">
-          <h1 className="text-2xl font-black text-white">🎖️ {zh ? "任务中心" : "Missions"}</h1>
+          <h1 className="text-2xl font-black text-white">🎖️ {lc(locale, "任务中心", "Missions")}</h1>
           <p className="text-gray-500 text-sm mt-0.5">
-            {zh ? "完成任务解锁成就，提升 GC 等级" : "Complete tasks and unlock achievements"}
+            {lc(locale, "完成任务解锁成就，提升 GC 等级", "Complete tasks and unlock achievements")}
           </p>
         </div>
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-8 text-center">
           <p className="text-gray-400 text-sm mb-4">
-            {zh ? "登录后查看你的任务进度和成就" : "Log in to view your missions and achievements"}
+            {lc(locale, "登录后查看你的任务进度和成就", "Log in to view your missions and achievements")}
           </p>
           <Link
             href={`/${locale}/auth/login`}
             className="inline-block bg-[#FFD700] text-[#0A1628] font-black px-6 py-2.5 rounded-xl text-sm"
           >
-            {zh ? "立即登录" : "Log In"}
+            {lc(locale, "立即登录", "Log In")}
           </Link>
         </div>
       </div>
@@ -272,15 +273,15 @@ export default function MissionsClient({ locale, userId, stats }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-white">🎖️ {zh ? "任务中心" : "Missions"}</h1>
+          <h1 className="text-2xl font-black text-white">🎖️ {lc(locale, "任务中心", "Missions")}</h1>
           <p className="text-gray-500 text-sm mt-0.5">
-            {zh ? "完成任务解锁成就，提升 GC 等级" : "Complete tasks and unlock achievements"}
+            {lc(locale, "完成任务解锁成就，提升 GC 等级", "Complete tasks and unlock achievements")}
           </p>
         </div>
         <div className="text-right">
           <p className="text-2xl font-black text-[#FFD700]">{unlockedCount}/{achievements.length}</p>
           <p className="text-[10px] text-gray-500 uppercase tracking-widest">
-            {zh ? "成就解锁" : "Achievements"}
+            {lc(locale, "成就解锁", "Achievements")}
           </p>
         </div>
       </div>
@@ -289,10 +290,10 @@ export default function MissionsClient({ locale, userId, stats }: Props) {
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-black text-white">
-            📋 {zh ? "今日任务" : "Daily Tasks"}
+            📋 {lc(locale, "今日任务", "Daily Tasks")}
           </h2>
           <span className="text-xs text-gray-500">
-            {todayDone}/{dailyTasks.length} {zh ? "完成" : "done"}
+            {todayDone}/{dailyTasks.length} {lc(locale, "完成", "done")}
           </span>
         </div>
         <div className="space-y-2">
@@ -319,11 +320,11 @@ export default function MissionsClient({ locale, userId, stats }: Props) {
               </div>
               {task.done ? (
                 <span className="text-xs text-green-400 font-bold shrink-0">
-                  {zh ? "完成" : "Done"}
+                  {lc(locale, "完成", "Done")}
                 </span>
               ) : (
                 <span className="text-xs text-[#FFD700] font-bold shrink-0">
-                  {zh ? "去完成 →" : "Go →"}
+                  {lc(locale, "去完成 →", "Go →")}
                 </span>
               )}
             </Link>
@@ -335,10 +336,10 @@ export default function MissionsClient({ locale, userId, stats }: Props) {
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-black text-white">
-            🏅 {zh ? "成就徽章" : "Achievements"}
+            🏅 {lc(locale, "成就徽章", "Achievements")}
           </h2>
           <span className="text-xs text-gray-500">
-            {unlockedCount}/{achievements.length} {zh ? "已解锁" : "unlocked"}
+            {unlockedCount}/{achievements.length} {lc(locale, "已解锁", "unlocked")}
           </span>
         </div>
 

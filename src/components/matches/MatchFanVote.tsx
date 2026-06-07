@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { getFlagUrl, isTBD } from "@/lib/flags";
+import { lc } from "@/i18n/content";
+import { useLocale } from "next-intl";
 
 interface Props {
   matchId: number;
@@ -23,6 +25,7 @@ export default function MatchFanVote({
   loggedIn,
   zh,
 }: Props) {
+  const locale = useLocale();
   // Treat neutral initial vote as null for the 2-option UI
   const [myVote, setMyVote] = useState<"home" | "away" | null>(
     initialVote === "neutral" ? null : initialVote
@@ -80,12 +83,12 @@ export default function MatchFanVote({
       {/* Title row */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-bold text-gray-200">
-          ⚽ {zh ? "你支持哪队？" : "Who Do You Support?"}
+          ⚽ {lc(locale, "你支持哪队？", "Who Do You Support?")}
         </h3>
         <span className="text-xs text-gray-500">
           {total > 0
             ? (zh ? `${total} 人已投票` : `${total} votes`)
-            : (zh ? "第一个投票" : "Be first to vote")}
+            : (lc(locale, "第一个投票", "Be first to vote"))}
         </span>
       </div>
 
@@ -127,7 +130,7 @@ export default function MatchFanVote({
           </span>
           {myVote === "home" && (
             <span className="text-[11px] text-[#FFD700] font-bold bg-[#FFD700]/15 px-2 py-0.5 rounded-full">
-              ✓ {zh ? "已投票" : "Voted"}
+              ✓ {lc(locale, "已投票", "Voted")}
             </span>
           )}
         </button>
@@ -166,7 +169,7 @@ export default function MatchFanVote({
           </span>
           {myVote === "away" && (
             <span className="text-[11px] text-purple-400 font-bold bg-purple-500/15 px-2 py-0.5 rounded-full">
-              ✓ {zh ? "已投票" : "Voted"}
+              ✓ {lc(locale, "已投票", "Voted")}
             </span>
           )}
         </button>
@@ -189,7 +192,7 @@ export default function MatchFanVote({
 
       {!loggedIn && (
         <p className="text-xs text-gray-600 text-center mt-3">
-          {zh ? "登录后即可投票" : "Login to cast your vote"}
+          {lc(locale, "登录后即可投票", "Login to cast your vote")}
         </p>
       )}
     </div>

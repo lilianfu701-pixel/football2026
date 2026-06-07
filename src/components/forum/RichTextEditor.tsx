@@ -11,6 +11,8 @@ import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import { useRef, useState, useCallback, useEffect } from "react";
 import MentionDropdown, { type MentionUser } from "@/components/forum/MentionDropdown";
+import { lc } from "@/i18n/content";
+import { useLocale } from "next-intl";
 
 // ── Custom FontSize extension ──────────────────────────────────────────────
 const FontSize = Extension.create({
@@ -126,6 +128,7 @@ function Divider() {
 
 // ── Main component ─────────────────────────────────────────────────────────
 export default function RichTextEditor({ value, onChange, placeholder, zh, injectHtml }: Props) {
+  const locale = useLocale();
   const [uploading,    setUploading]    = useState(false);
   const [uploadError,  setUploadError]  = useState<string | null>(null);
   const [showColors,   setShowColors]   = useState(false);
@@ -172,7 +175,7 @@ export default function RichTextEditor({ value, onChange, placeholder, zh, injec
         HTMLAttributes: { class: "text-[#60A5FA] underline hover:text-[#93C5FD]", target: "_blank", rel: "noopener noreferrer" },
       }),
       Placeholder.configure({
-        placeholder: placeholder ?? (zh ? "分享你的想法…" : "Share your thoughts…"),
+        placeholder: placeholder ?? (lc(locale, "分享你的想法…", "Share your thoughts…")),
       }),
     ],
     content: value || "",
@@ -244,7 +247,7 @@ export default function RichTextEditor({ value, onChange, placeholder, zh, injec
   const handleImageUpload = useCallback(async (file: File) => {
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      setUploadError(zh ? "图片大小不能超过 5MB" : "Image must be under 5 MB");
+      setUploadError(lc(locale, "图片大小不能超过 5MB", "Image must be under 5 MB"));
       return;
     }
     setUploading(true);
@@ -257,7 +260,7 @@ export default function RichTextEditor({ value, onChange, placeholder, zh, injec
       if (!res.ok) { setUploadError(data.error ?? "Upload failed"); return; }
       editor?.chain().focus().setImage({ src: data.url }).run();
     } catch {
-      setUploadError(zh ? "上传失败，请重试" : "Upload failed, please retry");
+      setUploadError(lc(locale, "上传失败，请重试", "Upload failed, please retry"));
     } finally {
       setUploading(false);
     }
@@ -372,7 +375,7 @@ export default function RichTextEditor({ value, onChange, placeholder, zh, injec
                 }}
                 className="flex items-center w-full px-4 py-2 text-gray-500 text-xs hover:bg-[#1E3A5F]/60 border-t border-[#1E3A5F] transition-colors"
               >
-                {zh ? "清除大小" : "Clear size"}
+                {lc(locale, "清除大小", "Clear size")}
               </button>
             </div>
           )}
@@ -416,7 +419,7 @@ export default function RichTextEditor({ value, onChange, placeholder, zh, injec
                 }}
                 className="text-[10px] text-gray-500 hover:text-white transition-colors w-full text-center"
               >
-                {zh ? "清除颜色" : "Clear color"}
+                {lc(locale, "清除颜色", "Clear color")}
               </button>
             </div>
           )}
@@ -436,7 +439,7 @@ export default function RichTextEditor({ value, onChange, placeholder, zh, injec
           {showLinkBox && (
             <div className="absolute top-full left-0 mt-1 bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-3 z-50 shadow-xl w-64">
               <p className="text-[10px] text-gray-500 mb-2 font-semibold uppercase tracking-wide">
-                {zh ? "插入链接" : "Insert link"}
+                {lc(locale, "插入链接", "Insert link")}
               </p>
               <div className="flex gap-2">
                 <input
@@ -461,7 +464,7 @@ export default function RichTextEditor({ value, onChange, placeholder, zh, injec
                   onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().unsetLink().run(); setShowLinkBox(false); }}
                   className="mt-2 text-[10px] text-red-400 hover:text-red-300 transition-colors"
                 >
-                  {zh ? "删除链接" : "Remove link"}
+                  {lc(locale, "删除链接", "Remove link")}
                 </button>
               )}
             </div>
@@ -472,7 +475,7 @@ export default function RichTextEditor({ value, onChange, placeholder, zh, injec
         <Btn
           active={false}
           onClick={triggerFileSelect}
-          title={zh ? "上传图片" : "Upload image"}
+          title={lc(locale, "上传图片", "Upload image")}
         >
           {uploading ? (
             <div className="w-3 h-3 rounded-full border-2 border-[#FFD700] border-t-transparent animate-spin" />
@@ -502,7 +505,7 @@ export default function RichTextEditor({ value, onChange, placeholder, zh, injec
           {showYtBox && (
             <div className="absolute top-full right-0 mt-1 bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-3 z-50 shadow-xl w-72">
               <p className="text-[10px] text-gray-500 mb-2 font-semibold uppercase tracking-wide">
-                {zh ? "嵌入 YouTube 视频" : "Embed YouTube video"}
+                {lc(locale, "嵌入 YouTube 视频", "Embed YouTube video")}
               </p>
               <div className="flex gap-2">
                 <input
@@ -522,7 +525,7 @@ export default function RichTextEditor({ value, onChange, placeholder, zh, injec
                 </button>
               </div>
               <p className="text-[9px] text-gray-600 mt-1.5">
-                {zh ? "支持 youtube.com 和 youtu.be 链接" : "Supports youtube.com and youtu.be links"}
+                {lc(locale, "支持 youtube.com 和 youtu.be 链接", "Supports youtube.com and youtu.be links")}
               </p>
             </div>
           )}
@@ -533,7 +536,7 @@ export default function RichTextEditor({ value, onChange, placeholder, zh, injec
           <Btn
             active={showEmoji}
             onClick={() => { setShowEmoji(v => !v); setShowColors(false); setShowSizes(false); setShowLinkBox(false); setShowYtBox(false); }}
-            title={zh ? "插入表情" : "Insert emoji"}
+            title={lc(locale, "插入表情", "Insert emoji")}
           >
             😊
           </Btn>
@@ -625,7 +628,7 @@ export default function RichTextEditor({ value, onChange, placeholder, zh, injec
       {/* Char counter */}
       <div className="px-4 py-1.5 bg-[#0A1628] border-t border-[#1E3A5F]/40 flex items-center justify-between">
         <span className="text-[10px] text-gray-600">
-          {zh ? "支持图片、YouTube视频" : "Supports images & YouTube embeds"}
+          {lc(locale, "支持图片、YouTube视频", "Supports images & YouTube embeds")}
         </span>
         <span className="text-[10px] text-gray-600">
           {editor.storage.characterCount?.characters?.() ?? editor.getText().length} / 10,000
