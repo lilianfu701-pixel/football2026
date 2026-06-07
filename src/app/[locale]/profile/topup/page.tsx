@@ -252,7 +252,7 @@ function TopupContent() {
       // is valid at runtime; cast keeps it compatible with the shared global type.
       window.Paddle.Checkout.open({
         transactionId: data.transactionId,
-        settings: { locale: zh ? "zh" : "en" },
+        settings: { locale: zh ? "zh-Hans" : "en" },
       } as { transactionId: string });
       setPaying(false); // overlay is now open; release the button
     } catch {
