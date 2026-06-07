@@ -14,6 +14,9 @@ interface PaddleEvent {
 interface PaddleGlobal {
   Environment?: { set: (env: "sandbox" | "production") => void };
   Initialize: (opts: { token: string; eventCallback?: (e: PaddleEvent) => void }) => void;
+  // NOTE: `Window.Paddle` is also declared in a mobile file; keep this shape in
+  // sync. The optional `settings` is passed via a cast at the call site so the
+  // two global declarations stay structurally identical (avoids TS2717).
   Checkout: { open: (opts: { transactionId: string }) => void };
 }
 declare global {
@@ -244,7 +247,13 @@ function TopupContent() {
         setPaying(false);
         return;
       }
-      window.Paddle.Checkout.open({ transactionId: data.transactionId });
+      // Force the Paddle checkout overlay language to match the site locale,
+      // instead of Paddle auto-detecting from the browser language. `settings`
+      // is valid at runtime; cast keeps it compatible with the shared global type.
+      window.Paddle.Checkout.open({
+        transactionId: data.transactionId,
+        settings: { locale: zh ? "zh" : "en" },
+      } as { transactionId: string });
       setPaying(false); // overlay is now open; release the button
     } catch {
       setPayErr(zh ? "网络错误，请重试" : "Network error, please retry");
