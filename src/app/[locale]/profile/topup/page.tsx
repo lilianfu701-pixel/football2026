@@ -505,6 +505,7 @@ function TopupContent() {
                   clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? "",
                   currency: "USD",
                   intent:   "capture",
+                  locale:   zh ? "zh_CN" : "en_US",
                 }}
               >
                 <div className="rounded-2xl overflow-hidden">
