@@ -91,7 +91,7 @@ export default async function GlobalSidebar({ locale }: Props) {
     const honor = profile?.honor_points ?? 0;
     const cc    = ((profile?.country_code ?? (user.user_metadata?.country_code as string | undefined) ?? "UN") as string).toUpperCase();
     let countryName = lc(locale, "未知", "Unknown");
-    try { if (cc !== "UN") countryName = new Intl.DisplayNames([zh ? "zh-CN" : "en"], { type: "region" }).of(cc) ?? cc; }
+    try { if (cc !== "UN") countryName = new Intl.DisplayNames([locale === "zh" ? "zh-CN" : locale === "es" ? "es" : "en"], { type: "region" }).of(cc) ?? cc; }
     catch { /* keep default */ }
     const username  = profile?.nickname
       ?? (user.user_metadata?.name as string | undefined)
@@ -187,14 +187,14 @@ export default async function GlobalSidebar({ locale }: Props) {
               <span className="text-xs text-gray-500">{lc(locale, "财富值", "Wealth")}</span>
               <span className="text-xs font-black px-2 py-0.5 rounded-full"
                 style={{ color: sp.wl.color, backgroundColor: sp.wl.bgColor + "80" }}>
-                {sp.wl.icon} {zh ? sp.wl.nameZh : sp.wl.name}
+                {sp.wl.icon} {lc(locale, sp.wl.nameZh, sp.wl.name)}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-500">{lc(locale, "荣誉值", "Honor")}</span>
               <span className="text-xs font-black px-2 py-0.5 rounded-full"
                 style={{ color: sp.hl.color, backgroundColor: sp.hl.color + "22" }}>
-                {sp.hl.icon} {zh ? sp.hl.nameZh : sp.hl.name}
+                {sp.hl.icon} {lc(locale, sp.hl.nameZh, sp.hl.name)}
               </span>
             </div>
             <div className="bg-[#0A1628] rounded-xl px-4 py-3 flex items-center justify-between">
@@ -297,19 +297,28 @@ export default async function GlobalSidebar({ locale }: Props) {
 
       {/* ── Slot 3: Forum ── */}
       {(() => {
-        const hotTopics = zh ? [
+        const hotTopicsZh = [
           { title: "阿根廷能否成功卫冕世界杯？",     href: "breaking", views: "2.4K" },
           { title: "梅西 C 罗最后一届世界杯？",       href: "stars",    views: "1.8K" },
           { title: "2026 金靴奖预测热门人选",         href: "predict",  views: "1.3K" },
           { title: "4-3-3 vs 5-3-2 谁更适合本届杯赛", href: "tactical", views: "980"  },
           { title: "你最期待哪场比赛？",              href: "match",    views: "762"  },
-        ] : [
+        ];
+        const hotTopicsEn = [
           { title: "Can Argentina defend the title?",   href: "breaking", views: "2.4K" },
           { title: "Messi & Ronaldo's last World Cup?",  href: "stars",    views: "1.8K" },
           { title: "Golden Boot 2026 — who's your pick?",href: "predict",  views: "1.3K" },
           { title: "4-3-3 vs 5-3-2: best system in 2026",href: "tactical", views: "980"  },
           { title: "Most anticipated match of the group stage?", href: "match", views: "762" },
         ];
+        const hotTopicsEs = [
+          { title: "¿Puede Argentina defender el título?",  href: "breaking", views: "2.4K" },
+          { title: "¿Último Mundial de Messi y Ronaldo?",   href: "stars",    views: "1.8K" },
+          { title: "Bota de Oro 2026 — ¿quién es tu favorito?", href: "predict", views: "1.3K" },
+          { title: "4-3-3 vs 5-3-2: ¿cuál sistema es mejor?", href: "tactical", views: "980"  },
+          { title: "¿Qué partido esperas más de la fase de grupos?", href: "match", views: "762" },
+        ];
+        const hotTopics = zh ? hotTopicsZh : locale === "es" ? hotTopicsEs : hotTopicsEn;
         const myLinks = [
           { icon: "📝", label: lc(locale, "我的话题", "My Topics"),  href: `/${locale}/forum/my-topics`  },
           { icon: "💬", label: lc(locale, "我的跟帖", "My Replies"), href: `/${locale}/forum/my-replies` },

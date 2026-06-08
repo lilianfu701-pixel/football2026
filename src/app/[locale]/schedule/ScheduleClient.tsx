@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { getFlagCode } from "@/lib/flags";
+import { getFlagCode, getTeamDisplayName } from "@/lib/flags";
 import { lc } from "@/i18n/content";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -49,14 +49,16 @@ interface Props {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function fmtDate(dateStr: string, zh: boolean): string {
+function fmtDate(dateStr: string, locale: string): string {
   const d = new Date(dateStr);
   const hh = String(d.getHours()).padStart(2, "0");
   const mm = String(d.getMinutes()).padStart(2, "0");
-  if (zh) {
+  if (locale === "zh") {
     return `${d.getMonth() + 1}月${d.getDate()}日 ${hh}:${mm}`;
   }
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const months = locale === "es"
+    ? ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]
+    : ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   return `${months[d.getMonth()]} ${d.getDate()} ${hh}:${mm}`;
 }
 
@@ -150,7 +152,7 @@ export default function ScheduleClient({ locale, groups, knockoutMatches }: Prop
                       : "text-gray-500 hover:text-white"
                   }`}
                 >
-                  {zh ? `${g}组` : `Group ${g}`}
+                  {zh ? `${g}组` : locale === "es" ? `Grupo ${g}` : `Group ${g}`}
                 </button>
               ))}
             </div>
@@ -161,7 +163,7 @@ export default function ScheduleClient({ locale, groups, knockoutMatches }: Prop
                 <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
                   <div className="px-4 py-3 border-b border-[#1E3A5F] flex items-center justify-between">
                     <h2 className="text-sm font-black text-white">
-                      {zh ? `${activeGroup}组积分榜` : `Group ${activeGroup} Standings`}
+                      {zh ? `${activeGroup}组积分榜` : locale === "es" ? `Clasificación Grupo ${activeGroup}` : `Group ${activeGroup} Standings`}
                     </h2>
                     <span className="text-[10px] text-gray-500 uppercase tracking-widest">
                       P · W · D · L · GD · Pts
@@ -198,7 +200,7 @@ export default function ScheduleClient({ locale, groups, knockoutMatches }: Prop
                             ) : (
                               <span className="text-sm shrink-0">🏳️</span>
                             )}
-                            <span className="text-sm font-bold text-white truncate">{s.team}</span>
+                            <span className="text-sm font-bold text-white truncate">{getTeamDisplayName(s.team, locale)}</span>
                             {qualified && (
                               <span className="text-[9px] text-green-400 bg-green-500/15 px-1.5 py-0.5 rounded-full shrink-0 font-bold">
                                 {lc(locale, "出线", "Q")}
@@ -235,7 +237,7 @@ export default function ScheduleClient({ locale, groups, knockoutMatches }: Prop
                 <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
                   <div className="px-4 py-3 border-b border-[#1E3A5F]">
                     <h2 className="text-sm font-black text-white">
-                      {zh ? `${activeGroup}组比赛` : `Group ${activeGroup} Matches`}
+                      {zh ? `${activeGroup}组比赛` : locale === "es" ? `Partidos Grupo ${activeGroup}` : `Group ${activeGroup} Matches`}
                     </h2>
                   </div>
                   <div className="divide-y divide-[#1E3A5F]/50">
@@ -251,11 +253,11 @@ export default function ScheduleClient({ locale, groups, knockoutMatches }: Prop
                         >
                           {/* Date */}
                           <span className="text-[10px] text-gray-500 w-20 shrink-0">
-                            {fmtDate(m.kickoff_time, zh)}
+                            {fmtDate(m.kickoff_time, locale)}
                           </span>
                           {/* Home */}
                           <div className="flex items-center gap-1.5 flex-1 justify-end min-w-0">
-                            <span className="text-xs font-bold text-white truncate text-right">{m.home_team}</span>
+                            <span className="text-xs font-bold text-white truncate text-right">{getTeamDisplayName(m.home_team, locale)}</span>
                             {hfc ? (
                               <Image src={`https://flagcdn.com/w40/${hfc}.png`} alt="" width={20} height={14} className="rounded-sm shrink-0" unoptimized />
                             ) : <span className="text-sm shrink-0">🏳️</span>}
@@ -279,7 +281,7 @@ export default function ScheduleClient({ locale, groups, knockoutMatches }: Prop
                             {afc ? (
                               <Image src={`https://flagcdn.com/w40/${afc}.png`} alt="" width={20} height={14} className="rounded-sm shrink-0" unoptimized />
                             ) : <span className="text-sm shrink-0">🏳️</span>}
-                            <span className="text-xs font-bold text-white truncate">{m.away_team}</span>
+                            <span className="text-xs font-bold text-white truncate">{getTeamDisplayName(m.away_team, locale)}</span>
                           </div>
                           {/* Status */}
                           <StatusPill status={m.status} zh={zh} locale={locale} />
@@ -315,11 +317,11 @@ export default function ScheduleClient({ locale, groups, knockoutMatches }: Prop
                   >
                     {/* Date */}
                     <span className="text-[10px] text-gray-500 w-20 shrink-0">
-                      {fmtDate(m.kickoff_time, zh)}
+                      {fmtDate(m.kickoff_time, locale)}
                     </span>
                     {/* Home */}
                     <div className="flex items-center gap-2 flex-1 justify-end min-w-0">
-                      <span className="text-sm font-black text-white truncate text-right">{m.home_team}</span>
+                      <span className="text-sm font-black text-white truncate text-right">{getTeamDisplayName(m.home_team, locale)}</span>
                       {hfc ? (
                         <Image src={`https://flagcdn.com/w40/${hfc}.png`} alt="" width={28} height={19} className="rounded-sm shrink-0" unoptimized />
                       ) : <span className="text-xl shrink-0">🏳️</span>}
@@ -343,7 +345,7 @@ export default function ScheduleClient({ locale, groups, knockoutMatches }: Prop
                       {afc ? (
                         <Image src={`https://flagcdn.com/w40/${afc}.png`} alt="" width={28} height={19} className="rounded-sm shrink-0" unoptimized />
                       ) : <span className="text-xl shrink-0">🏳️</span>}
-                      <span className="text-sm font-black text-white truncate">{m.away_team}</span>
+                      <span className="text-sm font-black text-white truncate">{getTeamDisplayName(m.away_team, locale)}</span>
                     </div>
                     {/* Status */}
                     <StatusPill status={m.status} zh={zh} locale={locale} />
