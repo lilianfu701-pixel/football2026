@@ -145,21 +145,29 @@ function getMobileOAuthCodeResponse(request: NextRequest) {
   const code = nextUrl.searchParams.get("code");
   if (!code || nextUrl.pathname === "/auth/callback") return null;
 
+  // Only hijack the OAuth code into the mobile flow when there is a genuine
+  // mobile signal: the request arrived on the mobile host, or the mobile login
+  // page left its intent cookie. Without this gate, a *desktop* OAuth login
+  // whose code lands on www.football2026.net/<locale>?code=... (Supabase
+  // Site-URL fallback) was being forcibly rewritten to m.football2026.net,
+  // sending PC users to the mobile site after sign-in. Desktop codes now fall
+  // through to getDesktopOAuthCodeResponse instead.
+  const host = (request.headers.get("host") ?? "").split(":")[0].toLowerCase();
+  const cookieNext = request.cookies.get(MOBILE_OAUTH_NEXT_COOKIE)?.value;
+  const hasMobileIntent = host === "m.football2026.net" || Boolean(cookieNext);
+  if (!hasMobileIntent) return null;
+
   const { hasLocale, locale, rest } = splitLocalePath(nextUrl.pathname);
   const isLocaleHome = hasLocale && rest.length === 0;
   const isMobilePath = hasLocale && rest[0] === "m";
   if (!isLocaleHome && !isMobilePath) return null;
-
-  const cookieNext = request.cookies.get(MOBILE_OAUTH_NEXT_COOKIE)?.value;
   const nextFromPath = isMobilePath
     ? normalizeMobileOAuthNext(`/${rest.join("/")}${nextUrl.search}`)
     : null;
   const next = normalizeMobileOAuthNext(cookieNext ? decodeURIComponent(cookieNext) : nextFromPath);
 
-  const host = request.headers.get("host") ?? "";
-  const requestHostname = host.split(":")[0].toLowerCase();
   const callbackUrl = nextUrl.clone();
-  if (isProductionHost(requestHostname)) {
+  if (isProductionHost(host)) {
     callbackUrl.protocol = "https:";
     callbackUrl.hostname = "m.football2026.net";
     callbackUrl.port = "";
