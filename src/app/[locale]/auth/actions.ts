@@ -51,7 +51,6 @@ export async function signUp(formData: FormData) {
 
 export async function signIn(formData: FormData) {
   const supabase = await createClient();
-  const locale = (formData.get("locale") as string) || "en";
 
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
@@ -65,7 +64,12 @@ export async function signIn(formData: FormData) {
     return { error: error.message };
   }
 
-  redirect(`/${locale}`);
+  // Do NOT redirect from the server action. A server `redirect()` is a soft
+  // client navigation, and the persistent Navbar (a client component that
+  // hydrates auth from /api/navbar only on mount) would keep showing the
+  // logged-out header. The login page does a full-page navigation on success
+  // so the header re-syncs from the now-valid session cookie.
+  return { success: true };
 }
 
 export async function signInWithGoogle(locale: string) {

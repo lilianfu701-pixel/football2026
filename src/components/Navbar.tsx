@@ -96,7 +96,15 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
   const supabase = createClient();
 
   async function handleSignOut() {
-    await supabase.auth.signOut();
+    // Guard the signOut call: when the refresh token is already stale it can
+    // throw, which previously left the user on the page still showing a
+    // logged-in header. Always fall through to a full-page reload so the server
+    // re-renders and /api/navbar reports the logged-out state.
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // ignore — cookies are best-effort cleared; the reload re-syncs state
+    }
     window.location.href = `/${locale}`;
   }
 

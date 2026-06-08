@@ -29,6 +29,10 @@ export default function LoginPage() {
       const result = await signIn(formData);
       if (result?.error) {
         setError(result.error);
+      } else {
+        // Full-page navigation (not router.push) so the persistent Navbar
+        // re-mounts and re-reads the session from /api/navbar.
+        window.location.href = `/${locale}`;
       }
     });
   }
