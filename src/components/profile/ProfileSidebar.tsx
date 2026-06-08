@@ -3,6 +3,7 @@
 import Link      from "next/link";
 import { usePathname } from "next/navigation";
 import { formatGc }    from "@/lib/levels";
+import { lc }          from "@/i18n/content";
 
 interface Props {
   locale:    string;
@@ -13,7 +14,6 @@ interface Props {
 
 export default function ProfileSidebar({ locale, nickname, avatarUrl, gcBalance }: Props) {
   const pathname = usePathname();
-  const zh       = locale === "zh";
   const base     = `/${locale}/profile`;
 
   const NAV = [
@@ -62,7 +62,7 @@ export default function ProfileSidebar({ locale, nickname, avatarUrl, gcBalance 
                 }`}
               >
                 <span className="text-base w-5 text-center">{icon}</span>
-                <span>{zh ? labelZh : label}</span>
+                <span>{lc(locale, labelZh, label)}</span>
               </Link>
             );
           })}
@@ -78,7 +78,7 @@ export default function ProfileSidebar({ locale, nickname, avatarUrl, gcBalance 
             <Link key={l.href} href={l.href}
               className="flex items-center gap-3 px-4 py-2.5 text-xs text-gray-500 hover:text-white hover:bg-white/5 transition-all border-b border-[#1E3A5F]/50 last:border-0">
               <span>{l.icon}</span>
-              <span>{zh ? l.labelZh : l.label}</span>
+              <span>{lc(locale, l.labelZh, l.label)}</span>
             </Link>
           ))}
         </div>
@@ -100,7 +100,7 @@ export default function ProfileSidebar({ locale, nickname, avatarUrl, gcBalance 
               }`}
             >
               <span>{icon}</span>
-              <span>{zh ? labelZh : label}</span>
+              <span>{lc(locale, labelZh, label)}</span>
             </Link>
           );
         })}

@@ -19,6 +19,7 @@ import { AWARD_META, dbToAwardKey } from "@/data/players";
 import Link from "next/link";
 import Image from "next/image";
 import { lc } from "@/i18n/content";
+import { getTeamDisplayName } from "@/lib/flags";
 
 interface ProfilePageProps {
   params:       Promise<{ locale: string }>;
@@ -301,7 +302,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
     if (m < 60) return zh ? `${m}分钟前` : `${m}m ago`;
     if (h < 24) return zh ? `${h}小时前` : `${h}h ago`;
     if (d < 30) return zh ? `${d}天前`   : `${d}d ago`;
-    return new Date(dateStr).toLocaleDateString(zh ? "zh-CN" : "en-US", { month: "short", day: "numeric" });
+    return new Date(dateStr).toLocaleDateString(locale === "zh" ? "zh-CN" : locale === "es" ? "es-ES" : "en-US", { month: "short", day: "numeric" });
   }
 
   function snippet(html: string, max = 120): string {
@@ -413,7 +414,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                 className="flex items-center gap-1 px-2.5 py-1 bg-[#FFD700]/15 hover:bg-[#FFD700]/25 border border-[#FFD700]/40 hover:border-[#FFD700]/70 text-[#FFD700] text-[11px] font-black rounded-lg transition-all"
               >
                 <span>＋</span>
-                <span>{locale === "zh" ? "充值" : "Top Up"}</span>
+                <span>{lc(locale, "充值", "Top Up")}</span>
               </Link>
             </div>
             <p className="text-3xl font-black text-[#FFD700]">
@@ -427,6 +428,8 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                   <span>
                     {zh
                       ? `距离 ${nextWealthLevel.name} 还差 ${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC`
+                      : locale === "es"
+                      ? `Faltan ${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC para ${nextWealthLevel.name}`
                       : `${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC to ${nextWealthLevel.name}`}
                   </span>
                 </div>
@@ -473,11 +476,12 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
             hasClaimed={!!todayCheckin}
             streak={todayCheckin?.streak ?? 0}
             dailyAmount={dailyWithBonus}
+            locale={locale}
           />
 
           {/* Bet Stats */}
           <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5">
-            <h3 className="text-white font-bold text-base mb-4">预测统计</h3>
+            <h3 className="text-white font-bold text-base mb-4">{lc(locale, "预测统计", "Prediction Stats")}</h3>
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: lc(locale, "总预测", "Total Bets"),  value: totalBets,              icon: "🎯" },
@@ -499,7 +503,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5 mb-6">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-white font-bold">荣誉等级</h3>
+              <h3 className="text-white font-bold">{lc(locale, "荣誉等级", "Honor Level")}</h3>
               <p className="text-gray-500 text-xs">Honor Level</p>
             </div>
             <div
@@ -516,7 +520,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
           <div className="flex justify-between text-xs text-gray-500 mb-1.5">
             <span>{profile.honor_points ?? 0} pts</span>
             {honorLevel.maxPoints && (
-              <span>{zh ? `下一级：${honorLevel.maxPoints + 1} 积分` : `Next: ${honorLevel.maxPoints + 1} pts`}</span>
+              <span>{zh ? `下一级：${honorLevel.maxPoints + 1} 积分` : locale === "es" ? `Siguiente: ${honorLevel.maxPoints + 1} pts` : `Next: ${honorLevel.maxPoints + 1} pts`}</span>
             )}
           </div>
           <div className="h-2 bg-[#1E3A5F] rounded-full overflow-hidden">
@@ -536,7 +540,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
         {/* Recent Transactions */}
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5 mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-white font-bold">GC 流水</h3>
+            <h3 className="text-white font-bold">{lc(locale, "GC 流水", "GC History")}</h3>
             <Link
               href={`/${locale}/profile/transactions`}
               className="text-[#FFD700] text-xs hover:underline"
@@ -556,7 +560,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                   >
                     <div>
                       <p className="text-sm text-white">
-                        {gcTransactionLabel(tx.type, zh)}
+                        {gcTransactionLabel(tx.type, locale)}
                       </p>
                       {tx.note && <p className="text-xs text-gray-500">{tx.note}</p>}
                     </div>
@@ -582,7 +586,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
         {/* Recent Bets */}
         <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-white font-bold">预测历史</h3>
+            <h3 className="text-white font-bold">{lc(locale, "预测历史", "Bet History")}</h3>
             <Link
               href={`/${locale}/profile?tab=bets`}
               className="text-[#FFD700] text-xs hover:underline"
@@ -602,7 +606,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                   >
                     <div>
                       <p className="text-sm text-white">
-                        {match ? `${match.home_team} vs ${match.away_team}` : (lc(locale, "比赛", "Match"))}
+                        {match ? `${getTeamDisplayName(match.home_team, locale)} vs ${getTeamDisplayName(match.away_team, locale)}` : (lc(locale, "比赛", "Match"))}
                       </p>
                       <p className="text-xs text-gray-500">
                         {lc(locale, "投注：", "Wagered: ")}{formatGc(bet.gc_amount)} GC
@@ -784,15 +788,15 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                       const isWon = bet.status === "won";
                       const isLost = bet.status === "lost";
                       const pickLbl = bet.prediction === "home"
-                        ? (zh ? `${m?.home_team ?? ""} 胜` : `${m?.home_team ?? ""} Win`)
+                        ? `${getTeamDisplayName(m?.home_team ?? "", locale)} ${lc(locale, "胜", "Win")}`
                         : bet.prediction === "away"
-                        ? (zh ? `${m?.away_team ?? ""} 胜` : `${m?.away_team ?? ""} Win`)
+                        ? `${getTeamDisplayName(m?.away_team ?? "", locale)} ${lc(locale, "胜", "Win")}`
                         : (lc(locale, "平局", "Draw"));
                       return (
                         <div key={bet.id} className={`bg-[#0F2040] border rounded-xl p-3.5 ${isWon ? "border-green-500/20" : isLost ? "border-red-500/20" : "border-[#1E3A5F]"}`}>
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-bold text-white truncate">{m ? `${m.home_team} vs ${m.away_team}` : "—"}</p>
+                              <p className="text-sm font-bold text-white truncate">{m ? `${getTeamDisplayName(m.home_team, locale)} vs ${getTeamDisplayName(m.away_team, locale)}` : "—"}</p>
                               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                 <span className="text-xs text-gray-400">{pickLbl}</span>
                                 <span className="text-[10px] text-gray-600">{formatGc(bet.gc_amount)} GC · ×{bet.odds?.toFixed(2)}</span>
@@ -832,7 +836,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                         <div key={bet.id} className="bg-[#0F2040] border border-[#1E3A5F] rounded-xl p-3.5">
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-bold text-white truncate">{m ? `${m.home_team} vs ${m.away_team}` : "—"}</p>
+                              <p className="text-sm font-bold text-white truncate">{m ? `${getTeamDisplayName(m.home_team, locale)} vs ${getTeamDisplayName(m.away_team, locale)}` : "—"}</p>
                               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                 <span className="text-xs font-bold text-[#FFD700]">{lc(locale, "比分：", "Score: ")}{bet.score_home} – {bet.score_away}</span>
                                 <span className="text-[10px] text-gray-600">{formatGc(Number(bet.gc_amount))} GC · ×{bet.odds_multiplier}</span>

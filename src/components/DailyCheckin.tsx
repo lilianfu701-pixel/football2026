@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { formatGc } from "@/lib/levels";
+import { lc } from "@/i18n/content";
 
 interface DailyCheckinProps {
   hasClaimed: boolean;
   streak: number;
   dailyAmount: number;
+  locale: string;
   onClaim?: (newBalance: number) => void;
 }
 
@@ -14,6 +16,7 @@ export default function DailyCheckin({
   hasClaimed: initialClaimed,
   streak: initialStreak,
   dailyAmount,
+  locale,
   onClaim,
 }: DailyCheckinProps) {
   const [claimed, setClaimed] = useState(initialClaimed);
@@ -75,14 +78,14 @@ export default function DailyCheckin({
       <div className={showAnimation ? "opacity-20" : ""}>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-white font-bold text-base">每日签到</h3>
+            <h3 className="text-white font-bold text-base">{lc(locale, "每日签到", "Daily Check-in")}</h3>
             <p className="text-gray-400 text-xs mt-0.5">Daily Check-in</p>
           </div>
           {streak > 1 && (
             <div className="flex items-center gap-1 bg-orange-500/20 border border-orange-500/30 px-2.5 py-1 rounded-full">
               <span className="text-sm">🔥</span>
               <span className="text-orange-400 text-xs font-bold">
-                {streak} Day Streak
+                {streak} {lc(locale, "天连续", "Day Streak")}
               </span>
             </div>
           )}
@@ -104,7 +107,7 @@ export default function DailyCheckin({
 
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-gray-500 mb-0.5">Today's reward</p>
+            <p className="text-xs text-gray-500 mb-0.5">{lc(locale, "今日奖励", "Today's reward")}</p>
             <p className="text-lg font-black text-[#FFD700]">
               {formatGc(dailyAmount)} GC
               {bonusPct > 0 && (
@@ -126,7 +129,7 @@ export default function DailyCheckin({
                 : "bg-[#FFD700] text-[#0A1628] hover:bg-[#FFC200] hover:scale-105 shadow-lg shadow-[#FFD700]/20"
             }`}
           >
-            {claimed ? "✓ Claimed" : loading ? "..." : "Claim"}
+            {claimed ? `✓ ${lc(locale, "已领取", "Claimed")}` : loading ? "..." : lc(locale, "领取", "Claim")}
           </button>
         </div>
 

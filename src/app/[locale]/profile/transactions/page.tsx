@@ -76,7 +76,7 @@ export default async function TransactionsPage({ params, searchParams }: Transac
   const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
 
   function formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleString(zh ? "zh-CN" : "en-US", {
+    return new Date(dateStr).toLocaleString(locale === "zh" ? "zh-CN" : locale === "es" ? "es-ES" : "en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -98,7 +98,7 @@ export default async function TransactionsPage({ params, searchParams }: Transac
             {lc(locale, "GC 全部流水", "All GC Transactions")}
           </h1>
           <p className="text-gray-500 text-sm mt-0.5">
-            {zh ? `共 ${totalCount} 条记录` : `${totalCount} records`}
+            {zh ? `共 ${totalCount} 条记录` : locale === "es" ? `${totalCount} registros` : `${totalCount} records`}
           </p>
         </div>
         <Link
@@ -123,7 +123,7 @@ export default async function TransactionsPage({ params, searchParams }: Transac
                   : "bg-[#0F2040] border border-[#1E3A5F] text-gray-400 hover:text-white"
               }`}
             >
-              {zh ? f.labelZh : f.labelEn}
+              {lc(locale, f.labelZh, f.labelEn)}
             </Link>
           );
         })}
@@ -142,7 +142,7 @@ export default async function TransactionsPage({ params, searchParams }: Transac
                 >
                   <div className="min-w-0">
                     <p className="text-sm text-white font-semibold">
-                      {gcTransactionLabel(tx.type, zh)}
+                      {gcTransactionLabel(tx.type, locale)}
                     </p>
                     {tx.note && (
                       <p className="text-xs text-gray-500 truncate">{tx.note}</p>

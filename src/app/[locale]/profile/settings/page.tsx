@@ -347,7 +347,7 @@ export default function SettingsPage() {
               {bio.trim().length}/500 {lc(locale, "字", "chars")}
               {bio.trim().length > 0 && bio.trim().length < 20 && (
                 <span className="text-[#FFD700] ml-2">
-                  {zh ? `还需 ${20 - bio.trim().length} 字` : `${20 - bio.trim().length} more needed`}
+                  {zh ? `还需 ${20 - bio.trim().length} 字` : locale === "es" ? `Faltan ${20 - bio.trim().length}` : `${20 - bio.trim().length} more needed`}
                 </span>
               )}
             </p>
@@ -373,7 +373,7 @@ export default function SettingsPage() {
               {slogan.trim().length}/100
               {slogan.trim().length > 0 && slogan.trim().length < 10 && (
                 <span className="text-[#FFD700] ml-2">
-                  {zh ? `还需 ${10 - slogan.trim().length} 字` : `${10 - slogan.trim().length} more needed`}
+                  {zh ? `还需 ${10 - slogan.trim().length} 字` : locale === "es" ? `Faltan ${10 - slogan.trim().length}` : `${10 - slogan.trim().length} more needed`}
                 </span>
               )}
             </p>
@@ -403,7 +403,7 @@ export default function SettingsPage() {
                       : "bg-[#0A1628] border-[#1E3A5F] text-gray-500 hover:text-white hover:border-[#2A4A7F]"
                   }`}
                 >
-                  {opt.icon} {zh ? opt.labelZh : opt.labelEn}
+                  {opt.icon} {lc(locale, opt.labelZh, opt.labelEn)}
                 </button>
               ))}
             </div>

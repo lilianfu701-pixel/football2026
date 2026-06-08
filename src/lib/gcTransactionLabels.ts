@@ -54,11 +54,28 @@ const LABELS_EN: Record<string, string> = {
   profile_reward:    "Profile Reward",
 };
 
+const LABELS_ES: Record<string, string> = {
+  topup:             "Recarga",
+  daily_checkin:     "Registro diario",
+  welcome_bonus:     "Bono de bienvenida",
+  bet_placed:        "Predicción",
+  bet_won:           "Recompensa de predicción",
+  bet_refunded:      "Reembolso de predicción",
+  share_reward:      "Recompensa por compartir",
+  forum_post:        "Publicación del foro",
+  forum_like:        "Me gusta del foro",
+  admin_award:       "Bonificación de administrador",
+  admin_deduct:      "Deducción de administrador",
+  transfer_sent:     "GC enviados",
+  transfer_received: "GC recibidos",
+  profile_reward:    "Recompensa de perfil",
+};
+
 /**
  * Returns the localized label for a transaction type, falling back to the raw
  * type string for any unmapped value.
  */
-export function gcTransactionLabel(type: string, zh: boolean): string {
-  const labels = zh ? LABELS_ZH : LABELS_EN;
+export function gcTransactionLabel(type: string, locale: string): string {
+  const labels = locale === "zh" ? LABELS_ZH : locale === "es" ? LABELS_ES : LABELS_EN;
   return labels[type] ?? type;
 }
