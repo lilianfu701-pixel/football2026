@@ -1,6 +1,24 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { MOBILE_OAUTH_NEXT_COOKIE, normalizeMobileNext } from "@/components/mobile/mobileAuth";
+// Mirrors the constant in src/proxy.ts and src/components/mobile/mobileAuth.ts.
+const MOBILE_OAUTH_NEXT_COOKIE = "football2026_mobile_oauth_next";
+
+function normalizeMobileNext(value?: string | null): string {
+  if (!value) return "/m?view=home";
+  try {
+    const url = new URL(value, "https://mobile.local");
+    if (
+      url.origin !== "https://mobile.local" ||
+      (url.pathname !== "/m" && !url.pathname.startsWith("/m/")) ||
+      url.pathname === "/m/login"
+    ) return "/m?view=home";
+    url.searchParams.delete("code");
+    url.searchParams.delete("state");
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return "/m?view=home";
+  }
+}
 import { getSharedAuthCookieOptions, isFootball2026Host } from "@/lib/supabase/cookieOptions";
 import { sendWelcomeEmail } from "@/lib/email/send";
 
