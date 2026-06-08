@@ -6,6 +6,7 @@ import { useParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { localeNames } from "@/i18n/routing";
+import { lc } from "@/i18n/content";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import NotificationBell from "@/components/NotificationBell";
@@ -126,16 +127,16 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
   // Section 1: personal hub (always useful)
   type UserMenuLink = { href: string; label: string; icon: string; badge?: number };
   const userHubLinks: UserMenuLink[] = isLoggedIn ? [
-    { href: `/${locale}/profile`,   label: locale === "zh" ? "个人主页" : "Profile",   icon: "👤" },
-    { href: `/${locale}/profile?tab=topup`, label: locale === "zh" ? "充值 GC" : "Top Up GC", icon: "🪙" },
-    { href: `/${locale}/missions`,  label: locale === "zh" ? "任务中心" : "Missions",  icon: "🎯" },
-    { href: `/${locale}/rewards`,   label: locale === "zh" ? "奖励兑换" : "Rewards",   icon: "🎁" },
+    { href: `/${locale}/profile`,   label: lc(locale, "个人主页", "Profile"),   icon: "👤" },
+    { href: `/${locale}/profile?tab=topup`, label: lc(locale, "充值 GC", "Top Up GC"), icon: "🪙" },
+    { href: `/${locale}/missions`,  label: lc(locale, "任务中心", "Missions"),  icon: "🎯" },
+    { href: `/${locale}/rewards`,   label: lc(locale, "奖励兑换", "Rewards"),   icon: "🎁" },
   ] : [];
   // Section 2: social
   const userSocialLinks: UserMenuLink[] = isLoggedIn ? [
-    { href: `/${locale}/feed`,      label: locale === "zh" ? "动态"     : "Feed",           icon: "📰" },
-    { href: `/${locale}/messages`,  label: locale === "zh" ? "消息"     : "Messages",       icon: "💬", badge: displayUnread },
-    { href: `/${locale}/invite`,    label: locale === "zh" ? "邀请好友" : "Invite Friends",  icon: "🤝" },
+    { href: `/${locale}/feed`,      label: lc(locale, "动态",     "Feed"),           icon: "📰" },
+    { href: `/${locale}/messages`,  label: lc(locale, "消息",     "Messages"),       icon: "💬", badge: displayUnread },
+    { href: `/${locale}/invite`,    label: lc(locale, "邀请好友", "Invite Friends"),  icon: "🤝" },
   ] : [];
   const userMenuLinks = [...userHubLinks, ...userSocialLinks];
 
@@ -241,7 +242,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                   className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-300 hover:text-white hover:bg-[#1E3A5F] rounded-lg transition-colors border border-[#1E3A5F] hover:border-[#1E3A5F]"
                 >
                   <span>👤</span>
-                  <span className="hidden lg:block">{locale === "zh" ? "个人主页" : "Profile"}</span>
+                  <span className="hidden lg:block">{lc(locale, "个人主页", "Profile")}</span>
                 </Link>
 
                 {/* Admin shortcut — only shown if is_admin */}
@@ -251,7 +252,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                     className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#FFD700] hover:bg-[#FFD700]/10 rounded-lg transition-colors border border-[#FFD700]/30 hover:border-[#FFD700]/60"
                   >
                     <span>🛡️</span>
-                    <span className="hidden lg:block">{locale === "zh" ? "管理后台" : "Admin"}</span>
+                    <span className="hidden lg:block">{lc(locale, "管理后台", "Admin")}</span>
                   </Link>
                 )}
 
@@ -272,9 +273,9 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                       )}
                     </div>
                     <span className="max-w-[72px] truncate text-xs font-semibold text-white hidden lg:block">
-                      {displayNickname ?? (locale === "zh" ? "我的" : "Me")}
+                      {displayNickname ?? lc(locale, "我的", "Me")}
                     </span>
-                    <span className="text-xs text-white lg:hidden">{locale === "zh" ? "我的" : "Me"}</span>
+                    <span className="text-xs text-white lg:hidden">{lc(locale, "我的", "Me")}</span>
                     <svg className={`w-3 h-3 transition-transform ${userMenuOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
@@ -292,7 +293,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                       {/* Section 1: Personal hub */}
                       <div className="py-1">
                         <p className="px-4 pt-1.5 pb-0.5 text-[9px] font-black text-gray-600 uppercase tracking-wider">
-                          {locale === "zh" ? "个人中心" : "My Account"}
+                          {lc(locale, "个人中心", "My Account")}
                         </p>
                         {userHubLinks.map((link) => (
                           <Link
@@ -310,7 +311,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                       {/* Section 2: Social */}
                       <div className="border-t border-[#1E3A5F]/60 py-1">
                         <p className="px-4 pt-1.5 pb-0.5 text-[9px] font-black text-gray-600 uppercase tracking-wider">
-                          {locale === "zh" ? "社交" : "Social"}
+                          {lc(locale, "社交", "Social")}
                         </p>
                         {userSocialLinks.map((link) => (
                           <Link
@@ -367,7 +368,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                 href={`/${locale}/auth/login`}
                 className="md:hidden flex items-center gap-1.5 bg-[#FFD700] text-[#0A1628] font-bold text-sm px-3 py-1.5 rounded-xl hover:bg-[#FFC200] transition-colors"
               >
-                {locale === "zh" ? "登录" : "Login"}
+                {lc(locale, "登录", "Login")}
               </Link>
             )}
 
@@ -409,7 +410,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                 className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-200 hover:text-white hover:bg-[#1E3A5F] rounded-lg transition-colors border border-[#1E3A5F]/50 mx-1"
               >
                 <span>👤</span>
-                <span className="font-semibold">{locale === "zh" ? "个人主页" : "My Profile"}</span>
+                <span className="font-semibold">{lc(locale, "个人主页", "My Profile")}</span>
               </Link>
             )}
 
@@ -418,7 +419,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                 <>
                   {/* Mobile: Personal hub section */}
                   <p className="px-4 pt-1 pb-0.5 text-[9px] font-black text-gray-600 uppercase tracking-wider">
-                    {locale === "zh" ? "个人中心" : "My Account"}
+                    {lc(locale, "个人中心", "My Account")}
                   </p>
                   {userHubLinks.map((link) => (
                     <Link
@@ -433,7 +434,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                   ))}
                   {/* Mobile: Social section */}
                   <p className="px-4 pt-2 pb-0.5 text-[9px] font-black text-gray-600 uppercase tracking-wider">
-                    {locale === "zh" ? "社交" : "Social"}
+                    {lc(locale, "社交", "Social")}
                   </p>
                   {userSocialLinks.map((link) => (
                     <Link
@@ -458,7 +459,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                       className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#FFD700] hover:bg-[#FFD700]/10 rounded-lg transition-colors"
                     >
                       <span>🛡️</span>
-                      <span>{locale === "zh" ? "管理后台" : "Admin Panel"}</span>
+                      <span>{lc(locale, "管理后台", "Admin Panel")}</span>
                     </Link>
                   )}
                   <button
