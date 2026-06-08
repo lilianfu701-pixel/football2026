@@ -6,6 +6,7 @@ export const routing = defineRouting({
   localePrefix: {
     mode: "as-needed",
   },
+  localeDetection: false,
 });
 
 export const localeNames: Record<string, string> = {
