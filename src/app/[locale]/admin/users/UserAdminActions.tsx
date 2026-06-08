@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useGcBalance } from "@/context/GcBalance";
 
 interface Props {
   userId:    string;
@@ -15,6 +16,7 @@ interface Props {
 
 export default function UserAdminActions({ userId, userName, gcBalance, isAdmin, isBanned, zh, myId }: Props) {
   const router = useRouter();
+  const { setBalance: setHeaderBalance, refresh: refreshHeaderBalance } = useGcBalance();
 
   // Ban / admin busy state
   const [busy, setBusy] = useState<string | null>(null);
@@ -69,6 +71,16 @@ export default function UserAdminActions({ userId, userName, gcBalance, isAdmin,
         });
         setGcAmount("");
         setGcNote("");
+        // If the admin adjusted their own balance, sync the header GC widget
+        // immediately — router.refresh() re-renders server components but does
+        // not reset the GcBalance context's client useState.
+        if (isSelf) {
+          if (typeof json.new_balance === "number") {
+            setHeaderBalance(json.new_balance);
+          } else {
+            await refreshHeaderBalance();
+          }
+        }
         router.refresh();
       }
     } catch {
