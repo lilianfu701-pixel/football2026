@@ -79,7 +79,6 @@ export default function DailyCheckin({
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-white font-bold text-base">{lc(locale, "每日签到", "Daily Check-in")}</h3>
-            <p className="text-gray-400 text-xs mt-0.5">Daily Check-in</p>
           </div>
           {streak > 1 && (
             <div className="flex items-center gap-1 bg-orange-500/20 border border-orange-500/30 px-2.5 py-1 rounded-full">

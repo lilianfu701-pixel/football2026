@@ -372,7 +372,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                     backgroundColor: wealthLevel.bgColor + "40",
                   }}
                 >
-                  {wealthLevel.icon} {wealthLevel.name}
+                  {wealthLevel.icon} {lc(locale, wealthLevel.nameZh, wealthLevel.name)}
                 </span>
                 {/* Honor Level */}
                 <span
@@ -383,7 +383,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                     backgroundColor: honorLevel.color + "15",
                   }}
                 >
-                  {honorLevel.icon} {honorLevel.name}
+                  {honorLevel.icon} {lc(locale, honorLevel.nameZh, honorLevel.name)}
                 </span>
                 {/* Favorite Team */}
                 {profile.favorite_team && (
@@ -424,16 +424,16 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
             {nextWealthLevel && (
               <div className="mt-3">
                 <div className="flex justify-between text-xs text-gray-500 mb-1.5">
-                  <span>{wealthLevel.name}</span>
+                  <span>{lc(locale, wealthLevel.nameZh, wealthLevel.name)}</span>
                   <span>
                     {zh
-                      ? `距离 ${nextWealthLevel.name} 还差 ${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC`
+                      ? `距离 ${nextWealthLevel.nameZh} 还差 ${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC`
                       : locale === "es"
-                      ? `Faltan ${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC para ${nextWealthLevel.name}`
+                      ? `Faltan ${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC para ${lc(locale, nextWealthLevel.nameZh, nextWealthLevel.name)}`
                       : locale === "fr"
-                      ? `${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC avant ${nextWealthLevel.name}`
+                      ? `${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC avant ${lc(locale, nextWealthLevel.nameZh, nextWealthLevel.name)}`
                       : locale === "de"
-                      ? `${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC bis ${nextWealthLevel.name}`
+                      ? `${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC bis ${lc(locale, nextWealthLevel.nameZh, nextWealthLevel.name)}`
                       : `${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC to ${nextWealthLevel.name}`}
                   </span>
                 </div>
@@ -508,7 +508,6 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="text-white font-bold">{lc(locale, "荣誉等级", "Honor Level")}</h3>
-              <p className="text-gray-500 text-xs">Honor Level</p>
             </div>
             <div
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold border"
@@ -518,7 +517,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                 backgroundColor: honorLevel.color + "15",
               }}
             >
-              {honorLevel.icon} {honorLevel.name}
+              {honorLevel.icon} {lc(locale, honorLevel.nameZh, honorLevel.name)}
             </div>
           </div>
           <div className="flex justify-between text-xs text-gray-500 mb-1.5">
