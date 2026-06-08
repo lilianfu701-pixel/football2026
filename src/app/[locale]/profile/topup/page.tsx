@@ -253,7 +253,7 @@ function TopupContent() {
       // is valid at runtime; cast keeps it compatible with the shared global type.
       window.Paddle.Checkout.open({
         transactionId: data.transactionId,
-        settings: { locale: locale === "zh" ? "zh-Hans" : locale === "es" ? "es" : "en" },
+        settings: { locale: locale === "zh" ? "zh-Hans" : locale === "es" ? "es" : locale === "fr" ? "fr" : "en" },
       } as { transactionId: string });
       setPaying(false); // overlay is now open; release the button
     } catch {
@@ -274,7 +274,7 @@ function TopupContent() {
       const data = await res.json();
       if (!res.ok || !data.orderID) {
         const msg = data.error ?? "Create order failed";
-        setPayErr(zh ? `创建订单失败：${msg}` : locale === "es" ? `Error al crear el pedido: ${msg}` : `Create order failed: ${msg}`);
+        setPayErr(zh ? `创建订单失败：${msg}` : locale === "es" ? `Error al crear el pedido: ${msg}` : locale === "fr" ? `Échec de la création : ${msg}` : `Create order failed: ${msg}`);
         throw new Error(msg);
       }
       return data.orderID as string;
@@ -282,7 +282,7 @@ function TopupContent() {
       // If we haven't set payErr yet (network-level failure), set it now
       if (!payErr) {
         const msg = err instanceof Error ? err.message : String(err);
-        setPayErr(zh ? `网络错误：${msg}` : locale === "es" ? `Error de red: ${msg}` : `Network error: ${msg}`);
+        setPayErr(zh ? `网络错误：${msg}` : locale === "es" ? `Error de red: ${msg}` : locale === "fr" ? `Erreur réseau : ${msg}` : `Network error: ${msg}`);
       }
       throw err;
     }
@@ -506,7 +506,7 @@ function TopupContent() {
                   clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? "",
                   currency: "USD",
                   intent:   "capture",
-                  locale:   locale === "zh" ? "zh_CN" : locale === "es" ? "es_ES" : "en_US",
+                  locale:   locale === "zh" ? "zh_CN" : locale === "es" ? "es_ES" : locale === "fr" ? "fr_FR" : "en_US",
                 }}
               >
                 <div className="rounded-2xl overflow-hidden">

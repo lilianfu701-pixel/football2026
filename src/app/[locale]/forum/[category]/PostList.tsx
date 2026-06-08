@@ -122,7 +122,11 @@ export default function PostList({ posts, cachedTranslations, postTagsMap = {}, 
         const name       = author?.nickname ?? (lc(locale, "系统", "System"));
         const transTitle = trans[p.id];
         const isLoading  = loading.has(p.id);
+        const needs      = needsTranslation(p.title, locale);
         const tags       = postTagsMap[p.id] ?? [];
+
+        // Show translated title as primary when available, original as fallback
+        const displayTitle = (needs && transTitle) ? transTitle : p.title;
 
         return (
           <Link
@@ -147,9 +151,9 @@ export default function PostList({ posts, cachedTranslations, postTagsMap = {}, 
               <div className="absolute -bottom-0.5 -right-0.5 text-[10px]">{wl.icon}</div>
             </div>
 
-            {/* Title + translation + meta */}
+            {/* Title + meta */}
             <div className="flex-1 min-w-0">
-              {/* Title row */}
+              {/* Title row — translated title as primary */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 {p.is_pinned && (
                   <span className="text-[9px] font-black bg-red-500/15 text-red-400 px-1.5 py-0.5 rounded border border-red-500/20">
@@ -167,20 +171,17 @@ export default function PostList({ posts, cachedTranslations, postTagsMap = {}, 
                   </span>
                 )}
                 <span className="text-sm font-semibold text-white group-hover:text-[#FFD700] transition-colors line-clamp-1">
-                  {p.title}
+                  {displayTitle}
                 </span>
                 {/* Inline loading spinner for translation */}
                 {isLoading && (
                   <span className="w-2.5 h-2.5 rounded-full border border-gray-600 border-t-[#FFD700] animate-spin shrink-0" />
                 )}
+                {/* AI badge when showing translated title */}
+                {needs && transTitle && (
+                  <span className="text-[8px] text-gray-600 shrink-0">🤖</span>
+                )}
               </div>
-
-              {/* Translated title — auto-shown when available */}
-              {transTitle && (
-                <p className="text-xs text-gray-400 mt-0.5 line-clamp-1 pl-0.5">
-                  {transTitle}
-                </p>
-              )}
 
               {/* Tags row */}
               {tags.length > 0 && (

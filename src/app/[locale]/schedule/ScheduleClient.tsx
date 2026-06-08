@@ -58,6 +58,8 @@ function fmtDate(dateStr: string, locale: string): string {
   }
   const months = locale === "es"
     ? ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]
+    : locale === "fr"
+    ? ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."]
     : ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   return `${months[d.getMonth()]} ${d.getDate()} ${hh}:${mm}`;
 }
@@ -152,7 +154,7 @@ export default function ScheduleClient({ locale, groups, knockoutMatches }: Prop
                       : "text-gray-500 hover:text-white"
                   }`}
                 >
-                  {zh ? `${g}组` : locale === "es" ? `Grupo ${g}` : `Group ${g}`}
+                  {zh ? `${g}组` : locale === "es" ? `Grupo ${g}` : locale === "fr" ? `Groupe ${g}` : `Group ${g}`}
                 </button>
               ))}
             </div>
@@ -163,7 +165,7 @@ export default function ScheduleClient({ locale, groups, knockoutMatches }: Prop
                 <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
                   <div className="px-4 py-3 border-b border-[#1E3A5F] flex items-center justify-between">
                     <h2 className="text-sm font-black text-white">
-                      {zh ? `${activeGroup}组积分榜` : locale === "es" ? `Clasificación Grupo ${activeGroup}` : `Group ${activeGroup} Standings`}
+                      {zh ? `${activeGroup}组积分榜` : locale === "es" ? `Clasificación Grupo ${activeGroup}` : locale === "fr" ? `Classement Groupe ${activeGroup}` : `Group ${activeGroup} Standings`}
                     </h2>
                     <span className="text-[10px] text-gray-500 uppercase tracking-widest">
                       P · W · D · L · GD · Pts
@@ -237,7 +239,7 @@ export default function ScheduleClient({ locale, groups, knockoutMatches }: Prop
                 <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden">
                   <div className="px-4 py-3 border-b border-[#1E3A5F]">
                     <h2 className="text-sm font-black text-white">
-                      {zh ? `${activeGroup}组比赛` : locale === "es" ? `Partidos Grupo ${activeGroup}` : `Group ${activeGroup} Matches`}
+                      {zh ? `${activeGroup}组比赛` : locale === "es" ? `Partidos Grupo ${activeGroup}` : locale === "fr" ? `Matchs Groupe ${activeGroup}` : `Group ${activeGroup} Matches`}
                     </h2>
                   </div>
                   <div className="divide-y divide-[#1E3A5F]/50">

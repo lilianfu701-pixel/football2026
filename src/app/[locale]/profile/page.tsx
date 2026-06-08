@@ -302,7 +302,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
     if (m < 60) return zh ? `${m}分钟前` : `${m}m ago`;
     if (h < 24) return zh ? `${h}小时前` : `${h}h ago`;
     if (d < 30) return zh ? `${d}天前`   : `${d}d ago`;
-    return new Date(dateStr).toLocaleDateString(locale === "zh" ? "zh-CN" : locale === "es" ? "es-ES" : "en-US", { month: "short", day: "numeric" });
+    return new Date(dateStr).toLocaleDateString(locale === "zh" ? "zh-CN" : locale === "es" ? "es-ES" : locale === "fr" ? "fr-FR" : "en-US", { month: "short", day: "numeric" });
   }
 
   function snippet(html: string, max = 120): string {
@@ -430,6 +430,8 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                       ? `距离 ${nextWealthLevel.name} 还差 ${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC`
                       : locale === "es"
                       ? `Faltan ${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC para ${nextWealthLevel.name}`
+                      : locale === "fr"
+                      ? `${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC avant ${nextWealthLevel.name}`
                       : `${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC to ${nextWealthLevel.name}`}
                   </span>
                 </div>
@@ -520,7 +522,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
           <div className="flex justify-between text-xs text-gray-500 mb-1.5">
             <span>{profile.honor_points ?? 0} pts</span>
             {honorLevel.maxPoints && (
-              <span>{zh ? `下一级：${honorLevel.maxPoints + 1} 积分` : locale === "es" ? `Siguiente: ${honorLevel.maxPoints + 1} pts` : `Next: ${honorLevel.maxPoints + 1} pts`}</span>
+              <span>{zh ? `下一级：${honorLevel.maxPoints + 1} 积分` : locale === "es" ? `Siguiente: ${honorLevel.maxPoints + 1} pts` : locale === "fr" ? `Suivant : ${honorLevel.maxPoints + 1} pts` : `Next: ${honorLevel.maxPoints + 1} pts`}</span>
             )}
           </div>
           <div className="h-2 bg-[#1E3A5F] rounded-full overflow-hidden">
