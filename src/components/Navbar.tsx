@@ -19,6 +19,13 @@ interface NavbarProps {
   isAdmin?: boolean;
 }
 
+interface ClientAuth {
+  email: string;
+  nickname?: string;
+  isAdmin: boolean;
+  unreadMessages: number;
+}
+
 export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unreadMessages = 0, isAdmin = false }: NavbarProps) {
   const t = useTranslations("nav");
   const params = useParams();
@@ -27,10 +34,46 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
   const [menuOpen,     setMenuOpen]     = useState(false);
   const [langOpen,     setLangOpen]     = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const { balance: gcBalance } = useGcBalance();
+  const [clientAuth,   setClientAuth]   = useState<ClientAuth | null>(null);
+  const { balance: gcBalance, setBalance } = useGcBalance();
   const langRef     = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const isMobileRoute = pathname === `/${locale}/m` || pathname.startsWith(`/${locale}/m/`);
+
+  // On statically generated / ISR pages the shared layout renders with no
+  // request session, so `user` arrives null even when the visitor is logged
+  // in. Hydrate the real auth state from the client session so switching
+  // locale on a static page does not look like a logout.
+  useEffect(() => {
+    if (user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/navbar", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled || !data.authenticated) return;
+        setClientAuth({
+          email: data.email ?? "",
+          nickname: data.nickname ?? undefined,
+          isAdmin: Boolean(data.isAdmin),
+          unreadMessages: data.unreadMessages ?? 0,
+        });
+        if (typeof data.gcBalance === "number") setBalance(data.gcBalance);
+      } catch {
+        // silent — fall back to logged-out navbar
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, setBalance]);
+
+  const isLoggedIn     = Boolean(user) || Boolean(clientAuth);
+  const displayEmail   = user?.email ?? clientAuth?.email ?? "";
+  const displayNickname = nickname ?? clientAuth?.nickname;
+  const displayIsAdmin = isAdmin || (clientAuth?.isAdmin ?? false);
+  const displayUnread  = unreadMessages || (clientAuth?.unreadMessages ?? 0);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -82,16 +125,16 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
   // User-specific links — shown in avatar dropdown
   // Section 1: personal hub (always useful)
   type UserMenuLink = { href: string; label: string; icon: string; badge?: number };
-  const userHubLinks: UserMenuLink[] = user ? [
+  const userHubLinks: UserMenuLink[] = isLoggedIn ? [
     { href: `/${locale}/profile`,   label: locale === "zh" ? "个人主页" : "Profile",   icon: "👤" },
     { href: `/${locale}/profile?tab=topup`, label: locale === "zh" ? "充值 GC" : "Top Up GC", icon: "🪙" },
     { href: `/${locale}/missions`,  label: locale === "zh" ? "任务中心" : "Missions",  icon: "🎯" },
     { href: `/${locale}/rewards`,   label: locale === "zh" ? "奖励兑换" : "Rewards",   icon: "🎁" },
   ] : [];
   // Section 2: social
-  const userSocialLinks: UserMenuLink[] = user ? [
+  const userSocialLinks: UserMenuLink[] = isLoggedIn ? [
     { href: `/${locale}/feed`,      label: locale === "zh" ? "动态"     : "Feed",           icon: "📰" },
-    { href: `/${locale}/messages`,  label: locale === "zh" ? "消息"     : "Messages",       icon: "💬", badge: unreadMessages },
+    { href: `/${locale}/messages`,  label: locale === "zh" ? "消息"     : "Messages",       icon: "💬", badge: displayUnread },
     { href: `/${locale}/invite`,    label: locale === "zh" ? "邀请好友" : "Invite Friends",  icon: "🤝" },
   ] : [];
   const userMenuLinks = [...userHubLinks, ...userSocialLinks];
@@ -134,7 +177,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
           {/* Right side */}
           <div className="flex items-center gap-2">
             {/* GC Balance (if logged in) */}
-            {user && gcBalance !== undefined && (
+            {isLoggedIn && gcBalance !== undefined && (
               <Link
                 href={`/${locale}/profile`}
                 className="hidden sm:flex items-center gap-1.5 bg-[#FFD700]/10 border border-[#FFD700]/30 text-[#FFD700] text-sm px-3 py-1.5 rounded-xl hover:bg-[#FFD700]/20 transition-colors"
@@ -152,7 +195,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
             )}
 
             {/* Notification Bell — logged-in users only */}
-            {user && <NotificationBell locale={locale} />}
+            {isLoggedIn && <NotificationBell locale={locale} />}
 
             {/* Language Switcher */}
             <div className="relative" ref={langRef}>
@@ -190,7 +233,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
             </div>
 
             {/* Auth Buttons */}
-            {user ? (
+            {isLoggedIn ? (
               <div className="hidden sm:flex items-center gap-1.5">
                 {/* Personal dashboard — always visible when logged in */}
                 <Link
@@ -202,7 +245,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                 </Link>
 
                 {/* Admin shortcut — only shown if is_admin */}
-                {isAdmin && (
+                {displayIsAdmin && (
                   <Link
                     href={`/${locale}/admin`}
                     className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#FFD700] hover:bg-[#FFD700]/10 rounded-lg transition-colors border border-[#FFD700]/30 hover:border-[#FFD700]/60"
@@ -220,16 +263,16 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                   >
                     <div className="relative">
                       <div className="w-6 h-6 bg-[#FFD700] rounded-full flex items-center justify-center text-[#0A1628] font-bold text-xs">
-                        {(nickname ?? user.email ?? "U")[0].toUpperCase()}
+                        {((displayNickname ?? displayEmail) || "U")[0].toUpperCase()}
                       </div>
-                      {unreadMessages > 0 && (
+                      {displayUnread > 0 && (
                         <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center px-0.5">
-                          {unreadMessages > 99 ? "99+" : unreadMessages}
+                          {displayUnread > 99 ? "99+" : displayUnread}
                         </span>
                       )}
                     </div>
                     <span className="max-w-[72px] truncate text-xs font-semibold text-white hidden lg:block">
-                      {nickname ?? (locale === "zh" ? "我的" : "Me")}
+                      {displayNickname ?? (locale === "zh" ? "我的" : "Me")}
                     </span>
                     <span className="text-xs text-white lg:hidden">{locale === "zh" ? "我的" : "Me"}</span>
                     <svg className={`w-3 h-3 transition-transform ${userMenuOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -242,8 +285,8 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                     <div className="absolute right-0 mt-2 w-52 bg-[#0F2040] border border-[#1E3A5F] rounded-xl shadow-2xl overflow-hidden z-50">
                       {/* User info header */}
                       <div className="px-4 py-3 border-b border-[#1E3A5F]/60 bg-[#0A1628]/50">
-                        <p className="text-xs font-bold text-white truncate">{nickname ?? user.email}</p>
-                        <p className="text-[10px] text-gray-500 truncate">{user.email}</p>
+                        <p className="text-xs font-bold text-white truncate">{displayNickname ?? displayEmail}</p>
+                        <p className="text-[10px] text-gray-500 truncate">{displayEmail}</p>
                       </div>
 
                       {/* Section 1: Personal hub */}
@@ -319,7 +362,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
             )}
 
             {/* Mobile login button — only shown when NOT logged in */}
-            {!user && (
+            {!isLoggedIn && (
               <Link
                 href={`/${locale}/auth/login`}
                 className="md:hidden flex items-center gap-1.5 bg-[#FFD700] text-[#0A1628] font-bold text-sm px-3 py-1.5 rounded-xl hover:bg-[#FFC200] transition-colors"
@@ -359,7 +402,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
               </Link>
             ))}
             {/* Personal dashboard — mobile quick entry */}
-            {user && (
+            {isLoggedIn && (
               <Link
                 href={`/${locale}/profile`}
                 onClick={() => setMenuOpen(false)}
@@ -371,7 +414,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
             )}
 
             <div className="pt-2 border-t border-[#1E3A5F] space-y-1">
-              {user ? (
+              {isLoggedIn ? (
                 <>
                   {/* Mobile: Personal hub section */}
                   <p className="px-4 pt-1 pb-0.5 text-[9px] font-black text-gray-600 uppercase tracking-wider">
@@ -408,7 +451,7 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                       )}
                     </Link>
                   ))}
-                  {isAdmin && (
+                  {displayIsAdmin && (
                     <Link
                       href={`/${locale}/admin`}
                       onClick={() => setMenuOpen(false)}
