@@ -8,6 +8,16 @@ import Image from "next/image";
 import { signIn } from "../actions";
 import { createClient } from "@/lib/supabase/client";
 
+// This is the desktop login system (mobile users sign in via /[locale]/m/login).
+// Pin the browser to the desktop site so proxy.ts getDeviceResponse does not
+// bounce a successful login to m.football2026.net when the UA looks mobile
+// (iPad, "request desktop site", devtools emulation). Mirrors the cookie that
+// getDesktopOverrideResponse sets for the ?desktop=1 escape hatch.
+function pinDesktopView() {
+  const oneYear = 60 * 60 * 24 * 365;
+  document.cookie = `site_view=desktop; path=/; max-age=${oneYear}; samesite=lax`;
+}
+
 export default function LoginPage() {
   const t = useTranslations("auth");
   const params = useParams();
@@ -30,6 +40,7 @@ export default function LoginPage() {
       if (result?.error) {
         setError(result.error);
       } else {
+        pinDesktopView();
         // Full-page navigation (not router.push) so the persistent Navbar
         // re-mounts and re-reads the session from /api/navbar.
         window.location.href = `/${locale}`;
@@ -40,6 +51,7 @@ export default function LoginPage() {
   async function handleGoogle() {
     setOauthLoading(true);
     setError(null);
+    pinDesktopView();
     const supabase = createClient();
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -58,6 +70,7 @@ export default function LoginPage() {
   async function handleFacebook() {
     setOauthLoading(true);
     setError(null);
+    pinDesktopView();
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "facebook",
