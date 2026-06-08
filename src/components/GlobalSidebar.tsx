@@ -91,7 +91,7 @@ export default async function GlobalSidebar({ locale }: Props) {
     const honor = profile?.honor_points ?? 0;
     const cc    = ((profile?.country_code ?? (user.user_metadata?.country_code as string | undefined) ?? "UN") as string).toUpperCase();
     let countryName = lc(locale, "未知", "Unknown");
-    try { if (cc !== "UN") countryName = new Intl.DisplayNames([locale === "zh" ? "zh-CN" : locale === "es" ? "es" : locale === "fr" ? "fr" : "en"], { type: "region" }).of(cc) ?? cc; }
+    try { if (cc !== "UN") countryName = new Intl.DisplayNames([locale === "zh" ? "zh-CN" : locale === "es" ? "es" : locale === "fr" ? "fr" : locale === "de" ? "de" : "en"], { type: "region" }).of(cc) ?? cc; }
     catch { /* keep default */ }
     const username  = profile?.nickname
       ?? (user.user_metadata?.name as string | undefined)
@@ -325,7 +325,14 @@ export default async function GlobalSidebar({ locale }: Props) {
           { title: "4-3-3 vs 5-3-2 : quel système pour 2026 ?", href: "tactical", views: "980"  },
           { title: "Le match le plus attendu de la phase de groupes ?", href: "match", views: "762" },
         ];
-        const hotTopics = zh ? hotTopicsZh : locale === "es" ? hotTopicsEs : locale === "fr" ? hotTopicsFr : hotTopicsEn;
+        const hotTopicsDe = [
+          { title: "Kann Argentinien den Titel verteidigen?",   href: "breaking", views: "2.4K" },
+          { title: "Letzte WM für Messi und Ronaldo?",          href: "stars",    views: "1.8K" },
+          { title: "Goldener Schuh 2026 – wer ist dein Favorit?", href: "predict", views: "1.3K" },
+          { title: "4-3-3 vs 5-3-2: Welches System für 2026?",  href: "tactical", views: "980"  },
+          { title: "Das meisterwartete Gruppenspiel?",           href: "match",    views: "762" },
+        ];
+        const hotTopics = zh ? hotTopicsZh : locale === "es" ? hotTopicsEs : locale === "fr" ? hotTopicsFr : locale === "de" ? hotTopicsDe : hotTopicsEn;
         const myLinks = [
           { icon: "📝", label: lc(locale, "我的话题", "My Topics"),  href: `/${locale}/forum/my-topics`  },
           { icon: "💬", label: lc(locale, "我的跟帖", "My Replies"), href: `/${locale}/forum/my-replies` },

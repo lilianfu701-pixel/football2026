@@ -88,6 +88,23 @@ const LABELS_FR: Record<string, string> = {
   profile_reward:    "Récompense de profil",
 };
 
+const LABELS_DE: Record<string, string> = {
+  topup:             "Aufladung",
+  daily_checkin:     "Tägliches Einchecken",
+  welcome_bonus:     "Willkommensbonus",
+  bet_placed:        "Prognose",
+  bet_won:           "Prognose-Belohnung",
+  bet_refunded:      "Prognose-Erstattung",
+  share_reward:      "Teilen-Belohnung",
+  forum_post:        "Forenbeitrag",
+  forum_like:        "Foren-Gefällt-mir",
+  admin_award:       "Admin-Vergabe",
+  admin_deduct:      "Admin-Abzug",
+  transfer_sent:     "GC gesendet",
+  transfer_received: "GC erhalten",
+  profile_reward:    "Profil-Belohnung",
+};
+
 /**
  * Returns the localized label for a transaction type, falling back to the raw
  * type string for any unmapped value.
@@ -97,6 +114,7 @@ export function gcTransactionLabel(type: string, locale: string): string {
     locale === "zh" ? LABELS_ZH :
     locale === "es" ? LABELS_ES :
     locale === "fr" ? LABELS_FR :
+    locale === "de" ? LABELS_DE :
     LABELS_EN;
   return labels[type] ?? type;
 }

@@ -1,5 +1,6 @@
 import esContent from "./content/es.json";
 import frContent from "./content/fr.json";
+import deContent from "./content/de.json";
 
 /**
  * Content localization layer.
@@ -19,6 +20,7 @@ import frContent from "./content/fr.json";
 const DICTS: Record<string, Record<string, string>> = {
   es: esContent as Record<string, string>,
   fr: frContent as Record<string, string>,
+  de: deContent as Record<string, string>,
 };
 
 export function lc(locale: string, zh: string, en: string): string {
