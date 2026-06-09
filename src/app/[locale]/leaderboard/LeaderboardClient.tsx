@@ -6,11 +6,14 @@ import { lc } from "@/i18n/content";
 import { toIntlLocale } from "@/lib/countries";
 
 // Resolve country names client-side so the browser's full ICU data is used.
-// Vercel serverless Node.js ships with stripped ICU, which causes server-side
-// Intl.DisplayNames to fall back to English for ru/ar/pt and other locales.
+// Vercel serverless Node.js ships with stripped ICU (small-icu), which causes
+// server-side Intl.DisplayNames to fall back to English for pt/ru/ar/ja etc.
+// Guard: on the server we return "" so the JSX fallback (|| countryCode) renders
+// the raw ISO code — no hydration mismatch, no accidental English names in SSR HTML.
 const _dnCache: Record<string, Intl.DisplayNames> = {};
 function localName(locale: string, code: string): string {
   if (!code || code === "UN") return "";
+  if (typeof window === "undefined") return ""; // SSR: defer to client
   try {
     if (!_dnCache[locale]) {
       _dnCache[locale] = new Intl.DisplayNames([toIntlLocale(locale)], { type: "region" });
