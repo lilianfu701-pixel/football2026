@@ -35,9 +35,9 @@ export default function ProfileCompletion({ filledFields, rewardedFields, locale
             {lc(locale, "资料完善度", "Profile Completion")}
           </h3>
           <p className="text-gray-500 text-[11px] mt-0.5">
-            {zh
-              ? `完善资料可获得最多 ${MAX_TOTAL_REWARD.toLocaleString()} GC`
-              : `Complete your profile to earn up to ${MAX_TOTAL_REWARD.toLocaleString()} GC`}
+            {lc(locale,
+              `完善资料可获得最多 ${MAX_TOTAL_REWARD.toLocaleString()} GC`,
+              `Complete your profile to earn up to ${MAX_TOTAL_REWARD.toLocaleString()} GC`)}
           </p>
         </div>
         <Link
@@ -88,7 +88,7 @@ export default function ProfileCompletion({ filledFields, rewardedFields, locale
                   {filled ? "✅" : "⬜"}
                 </span>
                 <span className={filled ? "text-green-300 font-semibold" : "text-gray-400"}>
-                  {zh ? field.labelZh : field.labelEn}
+                  {lc(locale, field.labelZh, field.labelEn)}
                 </span>
               </div>
               <span className={`font-bold ${rewarded ? "text-green-400" : filled ? "text-[#FFD700]" : "text-gray-600"}`}>

@@ -118,10 +118,10 @@ export async function generateMetadata({
       locale: locale,
       images: [
         {
-          url: "https://football2026.net/og-image.png",
+          url: `/api/og?locale=${locale}`,
           width: 1200,
           height: 630,
-          alt: "Football2026 — World Cup 2026 Prediction Game",
+          alt: meta.title,
         },
       ],
     },
@@ -129,7 +129,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: meta.title,
       description: meta.description,
-      images: ["https://football2026.net/og-image.png"],
+      images: [`/api/og?locale=${locale}`],
     },
     icons: {
       icon: "/icons/levels/favicon.png",

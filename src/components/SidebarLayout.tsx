@@ -13,10 +13,11 @@ export default function SidebarLayout({ children, sidebar, locale }: SidebarLayo
   const pathname = usePathname();
 
   // No sidebar on home page or auth pages
-  const isHome = pathname === `/${locale}` || pathname === "/" || pathname === `/${locale}/m`;
+  const isMobileRoute = pathname === `/${locale}/m` || pathname.startsWith(`/${locale}/m/`);
+  const isHome = pathname === `/${locale}` || pathname === "/";
   const isAuth = pathname.includes("/auth/");
 
-  if (isHome || isAuth) return <>{children}</>;
+  if (isHome || isAuth || isMobileRoute) return <>{children}</>;
 
   return (
     <div className="max-w-7xl mx-auto px-4 flex items-start gap-6">

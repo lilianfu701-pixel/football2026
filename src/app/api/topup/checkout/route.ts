@@ -12,7 +12,7 @@ function checkoutOrigin(req: NextRequest): string {
   try {
     const requestUrl = new URL(requestOrigin);
     const allowed = new Set(
-      [configured, "http://localhost:3000"]
+      [configured, "https://m.football2026.net", "http://localhost:3000"]
         .filter(Boolean)
         .map((origin) => new URL(origin!).origin),
     );
@@ -32,13 +32,21 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { packageId, locale = "zh" } = await req.json();
+    const { packageId, locale = "zh", mobile = false } = await req.json();
     const pkg = GC_PACKAGES.find((p) => p.id === packageId);
     if (!pkg) return NextResponse.json({ error: "Invalid package" }, { status: 400 });
 
     const totalGc   = Math.floor(pkg.gc * (1 + pkg.bonus / 100));
     const origin    = checkoutOrigin(req);
     const stripe    = getStripe();
+
+    const mobilePath = locale === "en" ? "/m" : `/${locale}/m`;
+    const successUrl = mobile
+      ? `${origin}${mobilePath}?preview=app&view=topup&session_id={CHECKOUT_SESSION_ID}`
+      : `${origin}/${locale}/profile/topup/success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = mobile
+      ? `${origin}${mobilePath}?preview=app&view=topup&cancelled=1`
+      : `${origin}/${locale}/profile/topup?cancelled=1`;
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -64,8 +72,8 @@ export async function POST(req: NextRequest) {
         gc_amount:  String(totalGc),
       },
       customer_email: user.email ?? undefined,
-      success_url: `${origin}/${locale}/profile/topup/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:  `${origin}/${locale}/profile/topup?cancelled=1`,
+      success_url: successUrl,
+      cancel_url:  cancelUrl,
       expires_at:  Math.floor(Date.now() / 1000) + 30 * 60, // 30 min
     });
 
