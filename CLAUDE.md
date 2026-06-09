@@ -238,7 +238,7 @@ lc(locale, "中文原文", "English string")
 | ja 日语 | ✅ 完整 | `content/ja.json` + `messages/ja.json` 全覆盖，专业日语，LTR |
 | ko 韩语 | ✅ 完整 | `content/ko.json` + `messages/ko.json` 全覆盖，专业韩语，LTR |
 | vi 越南语 | ✅ 完整 | `content/vi.json` + `messages/vi.json` 全覆盖，专业越南语，LTR |
-| id | 降级英文 | `content/id.json` 尚未创建 |
+| id 印尼语 | ✅ 完整 | `content/id.json` + `messages/id.json` 全覆盖，专业印尼语，LTR |
 
 **添加新语言**：创建 `src/i18n/content/<locale>.json`（key = 英文原文，value = 译文；在 `content.ts` 的 `DICTS` 中注册）+ `messages/<locale>.json`（next-intl nav/auth/hero 字符串）。同时在 `profile/page.tsx` 的财富等级进度字符串和荣誉等级字符串中添加对应 locale 的本地化文案，并在日期格式化函数中补充 `toLocaleDateString` 的 locale 映射。
 
@@ -376,7 +376,6 @@ a9fa4b2 fix: PayPal 按钮语言跟随站点 locale
    - 添加 `https://www.football2026.net/auth/callback`
    - 添加 `https://m.football2026.net/auth/callback`
 2. **ProfileCompletion.tsx 提交 + 补 es/fr/de 译文**：缺 "Favorite Team"、"Twitter / X"、"Telegram" 三条
-3. **id 翻译 JSON 文件**（当前该语言降级英文；vi/ko/pt/ru/ar/ja 已完成）
 
 ---
 
@@ -495,4 +494,4 @@ XUNHUPAY_APP_SECRET=
 
 ---
 
-*此文件由 Claude Code 维护，反映截至 2026-06-08 的项目真实状态（越南语本地化完成；en/zh/de/pt/ru/ar/ja/ko/vi 共 9 语言全覆盖）。*
+*此文件由 Claude Code 维护，反映截至 2026-06-08 的项目真实状态（印尼语本地化完成；en/zh/de/pt/ru/ar/ja/ko/vi/id 共 10 语言全覆盖）。*
