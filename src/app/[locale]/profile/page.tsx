@@ -302,7 +302,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
     if (m < 60) return zh ? `${m}分钟前` : `${m}m ago`;
     if (h < 24) return zh ? `${h}小时前` : `${h}h ago`;
     if (d < 30) return zh ? `${d}天前`   : `${d}d ago`;
-    return new Date(dateStr).toLocaleDateString(locale === "zh" ? "zh-CN" : locale === "es" ? "es-ES" : locale === "fr" ? "fr-FR" : locale === "de" ? "de-DE" : locale === "pt" ? "pt-BR" : locale === "ru" ? "ru-RU" : locale === "ar" ? "ar-SA" : "en-US", { month: "short", day: "numeric" });
+    return new Date(dateStr).toLocaleDateString(locale === "zh" ? "zh-CN" : locale === "es" ? "es-ES" : locale === "fr" ? "fr-FR" : locale === "de" ? "de-DE" : locale === "pt" ? "pt-BR" : locale === "ru" ? "ru-RU" : locale === "ar" ? "ar-SA" : locale === "ja" ? "ja-JP" : "en-US", { month: "short", day: "numeric" });
   }
 
   function snippet(html: string, max = 120): string {
@@ -440,6 +440,8 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                       ? `Ещё ${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC до ${lc(locale, nextWealthLevel.nameZh, nextWealthLevel.name)}`
                       : locale === "ar"
                       ? `${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC للوصول إلى ${lc(locale, nextWealthLevel.nameZh, nextWealthLevel.name)}`
+                      : locale === "ja"
+                      ? `${lc(locale, nextWealthLevel.nameZh, nextWealthLevel.name)}まであと${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC`
                       : `${formatGc(nextWealthLevel.minGc - profile.gc_balance)} GC to ${nextWealthLevel.name}`}
                   </span>
                 </div>
@@ -529,7 +531,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
           <div className="flex justify-between text-xs text-gray-500 mb-1.5">
             <span>{profile.honor_points ?? 0} pts</span>
             {honorLevel.maxPoints && (
-              <span>{zh ? `下一级：${honorLevel.maxPoints + 1} 积分` : locale === "es" ? `Siguiente: ${honorLevel.maxPoints + 1} pts` : locale === "fr" ? `Suivant : ${honorLevel.maxPoints + 1} pts` : locale === "de" ? `Nächste: ${honorLevel.maxPoints + 1} Pkt.` : locale === "pt" ? `Próximo: ${honorLevel.maxPoints + 1} pts` : locale === "ru" ? `Следующий: ${honorLevel.maxPoints + 1} очк.` : locale === "ar" ? `التالي: ${honorLevel.maxPoints + 1} نقطة` : `Next: ${honorLevel.maxPoints + 1} pts`}</span>
+              <span>{zh ? `下一级：${honorLevel.maxPoints + 1} 积分` : locale === "es" ? `Siguiente: ${honorLevel.maxPoints + 1} pts` : locale === "fr" ? `Suivant : ${honorLevel.maxPoints + 1} pts` : locale === "de" ? `Nächste: ${honorLevel.maxPoints + 1} Pkt.` : locale === "pt" ? `Próximo: ${honorLevel.maxPoints + 1} pts` : locale === "ru" ? `Следующий: ${honorLevel.maxPoints + 1} очк.` : locale === "ar" ? `التالي: ${honorLevel.maxPoints + 1} نقطة` : locale === "ja" ? `次のレベル：${honorLevel.maxPoints + 1} pt` : `Next: ${honorLevel.maxPoints + 1} pts`}</span>
             )}
           </div>
           <div className="h-2 bg-[#1E3A5F] rounded-full overflow-hidden">
