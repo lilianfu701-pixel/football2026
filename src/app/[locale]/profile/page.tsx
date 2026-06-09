@@ -302,7 +302,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
     if (m < 60) return zh ? `${m}分钟前` : `${m}m ago`;
     if (h < 24) return zh ? `${h}小时前` : `${h}h ago`;
     if (d < 30) return zh ? `${d}天前`   : `${d}d ago`;
-    return new Date(dateStr).toLocaleDateString(locale === "zh" ? "zh-CN" : locale === "es" ? "es-ES" : locale === "fr" ? "fr-FR" : locale === "de" ? "de-DE" : locale === "pt" ? "pt-BR" : locale === "ru" ? "ru-RU" : locale === "ar" ? "ar-SA" : locale === "ja" ? "ja-JP" : "en-US", { month: "short", day: "numeric" });
+    return new Date(dateStr).toLocaleDateString(locale === "zh" ? "zh-CN" : locale === "es" ? "es-ES" : locale === "fr" ? "fr-FR" : locale === "de" ? "de-DE" : locale === "pt" ? "pt-BR" : locale === "ru" ? "ru-RU" : locale === "ar" ? "ar-SA" : locale === "ja" ? "ja-JP" : locale === "ko" ? "ko-KR" : "en-US", { month: "short", day: "numeric" });
   }
 
   function snippet(html: string, max = 120): string {
