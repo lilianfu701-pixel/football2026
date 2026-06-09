@@ -522,7 +522,7 @@ export default async function HomePage({ params }: HomePageProps) {
                     }`} />
                     {/* Flag + name */}
                     <img src={getFlagUrl(t.team)} alt={t.team} className="w-6 h-4 rounded-sm object-cover mr-2 flex-shrink-0" />
-                    <span className="flex-1 text-xs font-semibold text-white truncate">{t.team}</span>
+                    <span className="flex-1 text-xs font-semibold text-white truncate">{getTeamDisplayName(t.team, locale)}</span>
                     {/* Stats */}
                     <div className="flex gap-4 text-xs">
                       <span className="w-5 text-center font-black text-[#FFD700]">{t.pts}</span>

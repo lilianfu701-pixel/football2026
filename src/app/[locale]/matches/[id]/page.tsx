@@ -314,8 +314,8 @@ export default async function MatchPage({ params }: MatchPageProps) {
               <MatchFollowButton
                 matchId={Number(id)}
                 initialFollowing={false}
-                homeTeam={getTeamDisplayName(match.home_team, zh ? "zh" : "en")}
-                awayTeam={getTeamDisplayName(match.away_team, zh ? "zh" : "en")}
+                homeTeam={getTeamDisplayName(match.home_team, locale)}
+                awayTeam={getTeamDisplayName(match.away_team, locale)}
                 zh={zh}
               />
             </div>
@@ -324,8 +324,8 @@ export default async function MatchPage({ params }: MatchPageProps) {
 
         {/* ── H2H History ───────────────────────────────────────────────────── */}
         {(() => {
-          const homeNameZh = getTeamDisplayName(match.home_team, zh ? "zh" : "en");
-          const awayNameZh = getTeamDisplayName(match.away_team, zh ? "zh" : "en");
+          const homeNameZh = getTeamDisplayName(match.home_team, locale);
+          const awayNameZh = getTeamDisplayName(match.away_team, locale);
 
           // Translate tournament name to Chinese
           function tourZh(t: string): string {

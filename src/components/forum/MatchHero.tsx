@@ -196,7 +196,7 @@ export default function MatchHero({
           <div className="w-16 h-11 relative overflow-hidden rounded-lg shadow-lg mx-auto mb-1 border border-[#1E3A5F]">
             <Image src={getFlagUrl(homeTeam, 160)} alt={homeTeam} fill className="object-cover" unoptimized />
           </div>
-          <p className="text-white font-black text-sm leading-tight">{getTeamDisplayName(homeTeam, zh ? "zh" : "en")}</p>
+          <p className="text-white font-black text-sm leading-tight">{getTeamDisplayName(homeTeam, locale)}</p>
         </div>
 
         {/* Score / VS */}
@@ -217,7 +217,7 @@ export default function MatchHero({
           <div className="w-16 h-11 relative overflow-hidden rounded-lg shadow-lg mx-auto mb-1 border border-[#1E3A5F]">
             <Image src={getFlagUrl(awayTeam, 160)} alt={awayTeam} fill className="object-cover" unoptimized />
           </div>
-          <p className="text-white font-black text-sm leading-tight">{getTeamDisplayName(awayTeam, zh ? "zh" : "en")}</p>
+          <p className="text-white font-black text-sm leading-tight">{getTeamDisplayName(awayTeam, locale)}</p>
         </div>
       </div>
 
@@ -258,7 +258,7 @@ export default function MatchHero({
             }}
           >
             <div className="flex justify-center mb-0.5"><img src={getFlagUrl(homeTeam, 40)} alt={homeTeam} className="w-6 h-4 object-cover rounded-[2px]" /></div>
-            <div>{zh ? `支持${getTeamDisplayName(homeTeam, "zh")}` : homeTeam}</div>
+            <div>{zh ? `支持${getTeamDisplayName(homeTeam, "zh")}` : getTeamDisplayName(homeTeam, locale)}</div>
             {total > 0 && (
               <div className="mt-1">
                 <div className="h-1 bg-[#1E3A5F] rounded-full overflow-hidden mx-4">
@@ -308,7 +308,7 @@ export default function MatchHero({
             }}
           >
             <div className="flex justify-center mb-0.5"><img src={getFlagUrl(awayTeam, 40)} alt={awayTeam} className="w-6 h-4 object-cover rounded-[2px]" /></div>
-            <div>{zh ? `支持${getTeamDisplayName(awayTeam, "zh")}` : awayTeam}</div>
+            <div>{zh ? `支持${getTeamDisplayName(awayTeam, "zh")}` : getTeamDisplayName(awayTeam, locale)}</div>
             {total > 0 && (
               <div className="mt-1">
                 <div className="h-1 bg-[#1E3A5F] rounded-full overflow-hidden mx-4">

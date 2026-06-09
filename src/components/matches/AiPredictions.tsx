@@ -31,8 +31,8 @@ export default function AiPredictions({
   predictions, successRates, homeTeam, awayTeam, locale,
 }: Props) {
   const zh       = locale === "zh";
-  const homeName = getTeamDisplayName(homeTeam, zh ? "zh" : "en");
-  const awayName = getTeamDisplayName(awayTeam, zh ? "zh" : "en");
+  const homeName = getTeamDisplayName(homeTeam, locale);
+  const awayName = getTeamDisplayName(awayTeam, locale);
 
   // grid: [model 11rem] [home score flex-1] [away score 1.3fr] [rate 1.5rem]
   const grid = "grid grid-cols-[11rem_1fr_1.3fr_3rem] items-center";
