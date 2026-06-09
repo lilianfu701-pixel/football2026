@@ -4,7 +4,7 @@ import { useState, useTransition, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { countries } from "@/lib/countries";
+import { countries, toIntlLocale } from "@/lib/countries";
 import { PROFILE_REWARDS } from "@/lib/profileRewards";
 import { lc } from "@/i18n/content";
 
@@ -89,7 +89,10 @@ export default function SettingsPage() {
         setSocialTelegram(d.social_telegram ?? "");
         if (d.country_code) {
           const c = countries.find(c => c.code === d.country_code);
-          if (c) setSelectedCountry(c);
+          if (c) {
+            const displayNames = new Intl.DisplayNames([toIntlLocale(locale)], { type: "region" });
+            setSelectedCountry({ ...c, name: displayNames.of(c.code) ?? c.name });
+          }
         }
         if (d.avatar_url) setAvatarPreview(d.avatar_url);
       }
@@ -98,11 +101,16 @@ export default function SettingsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const localizedCountries = useMemo(() => {
+    const displayNames = new Intl.DisplayNames([toIntlLocale(locale)], { type: "region" });
+    return countries.map((c) => ({ ...c, name: displayNames.of(c.code) ?? c.name }));
+  }, [locale]);
+
   const filteredCountries = useMemo(() => {
-    if (!countrySearch) return countries;
+    if (!countrySearch) return localizedCountries;
     const q = countrySearch.toLowerCase();
-    return countries.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q));
-  }, [countrySearch]);
+    return localizedCountries.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q));
+  }, [countrySearch, localizedCountries]);
 
 
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {

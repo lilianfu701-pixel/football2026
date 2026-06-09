@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { countries } from "@/lib/countries";
+import { countries, toIntlLocale } from "@/lib/countries";
 import { signUp } from "../actions";
 import { createClient } from "@/lib/supabase/client";
 
@@ -24,11 +24,16 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  const localizedCountries = useMemo(() => {
+    const displayNames = new Intl.DisplayNames([toIntlLocale(locale)], { type: "region" });
+    return countries.map((c) => ({ ...c, name: displayNames.of(c.code) ?? c.name }));
+  }, [locale]);
+
   const filteredCountries = useMemo(() => {
-    if (!countrySearch) return countries;
+    if (!countrySearch) return localizedCountries;
     const q = countrySearch.toLowerCase();
-    return countries.filter((c) => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q));
-  }, [countrySearch]);
+    return localizedCountries.filter((c) => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q));
+  }, [countrySearch, localizedCountries]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

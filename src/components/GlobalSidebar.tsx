@@ -10,6 +10,7 @@ import FavoritesCard from "@/app/[locale]/matches/FavoritesCard";
 import InviteCard from "@/app/[locale]/matches/InviteCard";
 import SidebarGcBalance from "@/components/SidebarGcBalance";
 import { lc } from "@/i18n/content";
+import { toIntlLocale } from "@/lib/countries";
 
 interface Props { locale: string }
 
@@ -91,7 +92,7 @@ export default async function GlobalSidebar({ locale }: Props) {
     const honor = profile?.honor_points ?? 0;
     const cc    = ((profile?.country_code ?? (user.user_metadata?.country_code as string | undefined) ?? "UN") as string).toUpperCase();
     let countryName = lc(locale, "未知", "Unknown");
-    try { if (cc !== "UN") countryName = new Intl.DisplayNames([locale === "zh" ? "zh-CN" : locale === "es" ? "es" : locale === "fr" ? "fr" : locale === "de" ? "de" : "en"], { type: "region" }).of(cc) ?? cc; }
+    try { if (cc !== "UN") countryName = new Intl.DisplayNames([toIntlLocale(locale)], { type: "region" }).of(cc) ?? cc; }
     catch { /* keep default */ }
     const username  = profile?.nickname
       ?? (user.user_metadata?.name as string | undefined)

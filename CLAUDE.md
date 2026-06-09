@@ -228,10 +228,12 @@ lc(locale, "中文原文", "English string")
 | en 英文 | ✅ 完整 | 默认语言 |
 | es 西班牙语 | ~80% | `content/es.json` 覆盖主要 UI |
 | fr 法语 | ~80% | `content/fr.json` 覆盖主要 UI |
-| de 德语 | ~80% | `content/de.json` 覆盖主要 UI |
+| de 德语 | ✅ 完整 | `content/de.json` + `messages/de.json` 全覆盖，国家名 Intl.DisplayNames |
 | pt/ru/ar/ja/ko/vi/id | 降级英文 | `content/<locale>.json` 尚未创建 |
 
-**添加新语言**：创建 `src/i18n/content/<locale>.json`，key = 英文原文，value = 译文；在 `content.ts` 的 `DICTS` 中注册。
+**添加新语言**：创建 `src/i18n/content/<locale>.json`（key = 英文原文，value = 译文；在 `content.ts` 的 `DICTS` 中注册）+ `messages/<locale>.json`（next-intl nav/auth/hero 字符串）。
+
+**国家名本地化**：`src/lib/countries.ts` 提供 `toIntlLocale(locale)` 和 `getLocalizedCountryName(code, locale)` 工具函数，通过 `Intl.DisplayNames` 返回本地化国家名（已覆盖 de/fr/es/zh 等所有 12 个 locale）。注册页和设置页的国家下拉列表会自动显示目标语言的国家名。
 
 **⚠️ 修改英文文案时**：同步更新 `content/es.json`、`fr.json`、`de.json` 中对应的 key（key 是英文字符串本身）。
 
@@ -334,7 +336,8 @@ lc(locale, "中文原文", "English string")
 ## 十一、当前进度 & 近期提交
 
 ```
-63df9ce fix: stop desktop OAuth logins being hijacked to mobile site  ← 最新
+feat: complete German (de) localization across all pages  ← 最新
+63df9ce fix: stop desktop OAuth logins being hijacked to mobile site
 8b92e49 docs: add CLAUDE.md project onboarding guide
 704245b fix: repair desktop login/logout auth flow and header sync
 2161e21 fix: localize Navbar menus for all languages via lc()

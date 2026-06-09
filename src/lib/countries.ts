@@ -205,3 +205,17 @@ export const countries: Country[] = [
 export function getCountryByCode(code: string): Country | undefined {
   return countries.find((c) => c.code === code);
 }
+
+export function toIntlLocale(locale: string): string {
+  if (locale === "zh") return "zh-CN";
+  if (locale === "pt") return "pt-PT";
+  return locale;
+}
+
+export function getLocalizedCountryName(code: string, locale: string): string {
+  try {
+    return new Intl.DisplayNames([toIntlLocale(locale)], { type: "region" }).of(code.toUpperCase()) ?? code;
+  } catch {
+    return getCountryByCode(code)?.name ?? code;
+  }
+}

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getWealthLevel, getHonorLevel, formatGc } from "@/lib/levels";
 import LeaderboardClient from "./LeaderboardClient";
 import { lc } from "@/i18n/content";
+import { toIntlLocale } from "@/lib/countries";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -103,7 +104,7 @@ export default async function LeaderboardPage({ params }: PageProps) {
     let countryName = "";
     try {
       if (cc !== "UN") {
-        countryName = new Intl.DisplayNames([zh ? "zh-CN" : "en"], { type: "region" }).of(cc) ?? "";
+        countryName = new Intl.DisplayNames([toIntlLocale(locale)], { type: "region" }).of(cc) ?? "";
       }
     } catch { /* ignore */ }
     return {
@@ -137,7 +138,7 @@ export default async function LeaderboardPage({ params }: PageProps) {
     countryMap[cc].totalGc   += row.gc_balance ?? 0;
     countryMap[cc].userCount += 1;
   }
-  const displayNames = new Intl.DisplayNames([zh ? "zh-CN" : "en"], { type: "region" });
+  const displayNames = new Intl.DisplayNames([toIntlLocale(locale)], { type: "region" });
   const countryBoard = Object.entries(countryMap)
     .map(([cc, stats]) => {
       let countryName = "";
@@ -173,7 +174,7 @@ export default async function LeaderboardPage({ params }: PageProps) {
     const cc = (u.country_code ?? "UN").toUpperCase();
     let countryName = "";
     try {
-      if (cc !== "UN") countryName = new Intl.DisplayNames([zh ? "zh-CN" : "en"], { type: "region" }).of(cc) ?? "";
+      if (cc !== "UN") countryName = new Intl.DisplayNames([toIntlLocale(locale)], { type: "region" }).of(cc) ?? "";
     } catch { /* ignore */ }
     return {
       id:          u.id,
