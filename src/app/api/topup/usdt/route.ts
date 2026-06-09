@@ -4,6 +4,23 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { GC_PACKAGES }         from "@/lib/stripe";
 import { createNowPayment }    from "@/lib/nowpayments";
 
+// NOWPayments rejects an ipn_callback_url that isn't an absolute public URI
+// ("ipn_callback_url must be a valid uri"). NEXT_PUBLIC_SITE_URL may be unset,
+// blank, missing the scheme, carry a trailing slash, or point at localhost —
+// normalize all of those into a valid https origin so the callback is always valid.
+function resolvePublicOrigin(): string {
+  const FALLBACK = "https://football2026.net";
+  const raw = (process.env.NEXT_PUBLIC_SITE_URL ?? "").trim().replace(/\/+$/, "");
+  let base = raw;
+  if (base && !/^https?:\/\//i.test(base)) base = `https://${base}`;
+  if (!base || /\/\/(localhost|127\.0\.0\.1)/i.test(base)) base = FALLBACK;
+  try {
+    return new URL(base).origin;
+  } catch {
+    return FALLBACK;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     // ── Auth ───────────────────────────────────────────────────────────────
@@ -17,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     const gcAmount = Math.floor(pkg.gc * (1 + pkg.bonus / 100));
     const orderId  = `gc_${user.id}_${Date.now()}`;
-    const origin   = process.env.NEXT_PUBLIC_SITE_URL ?? "https://football2026.net";
+    const origin   = resolvePublicOrigin();
 
     // ── Create NOWPayments order ───────────────────────────────────────────
     const { paymentId, payAddress, payAmount } = await createNowPayment({
