@@ -25,11 +25,14 @@ interface PageProps {
 
 const REPLIES_PER_PAGE = 10;
 
-function formatDate(dateStr: string, zh: boolean, locale: string) {
-  return new Date(dateStr).toLocaleString(zh ? "zh-CN" : "en-US", {
+function formatDate(dateStr: string, zh: boolean) {
+  // Use en-US for the server side (Vercel small-icu returns English regardless of locale).
+  // Numeric format is universally readable.
+  const opts: Intl.DateTimeFormatOptions = {
     year: "numeric", month: "2-digit", day: "2-digit",
     hour: "2-digit", minute: "2-digit",
-  });
+  };
+  return new Date(dateStr).toLocaleString(zh ? "zh-CN" : "en-US", opts);
 }
 
 function timeAgo(dateStr: string, zh: boolean, locale: string): string {
@@ -37,11 +40,30 @@ function timeAgo(dateStr: string, zh: boolean, locale: string): string {
   const m = Math.floor(diff / 60000);
   const h = Math.floor(diff / 3600000);
   const d = Math.floor(diff / 86400000);
-  if (m < 1)  return lc(locale, "刚刚", "just now");
-  if (m < 60) return zh ? `${m}分钟前` : `${m}m ago`;
-  if (h < 24) return zh ? `${h}小时前` : `${h}h ago`;
-  if (d < 7)  return zh ? `${d}天前`   : `${d}d ago`;
-  return formatDate(dateStr, zh, locale);
+  if (m < 1) return lc(locale, "刚刚", "just now");
+
+  // Locale-specific templates (Vercel small-icu blocks Intl.RelativeTimeFormat for non-English)
+  type U = "m" | "h" | "d";
+  const tpl: Record<string, (n: number, u: U) => string> = {
+    ru: (n, u) => u === "m" ? `${n} мин. назад` : u === "h" ? `${n} ч. назад` : `${n} д. назад`,
+    ar: (n, u) => u === "m" ? `منذ ${n} د` : u === "h" ? `منذ ${n} س` : `منذ ${n} ي`,
+    ja: (n, u) => u === "m" ? `${n}分前` : u === "h" ? `${n}時間前` : `${n}日前`,
+    ko: (n, u) => u === "m" ? `${n}분 전` : u === "h" ? `${n}시간 전` : `${n}일 전`,
+    vi: (n, u) => u === "m" ? `${n} phút trước` : u === "h" ? `${n} giờ trước` : `${n} ngày trước`,
+    id: (n, u) => u === "m" ? `${n} mnt lalu` : u === "h" ? `${n} jam lalu` : `${n} hr lalu`,
+    pt: (n, u) => u === "m" ? `há ${n} min` : u === "h" ? `há ${n} h` : `há ${n} d`,
+    es: (n, u) => u === "m" ? `hace ${n} min` : u === "h" ? `hace ${n} h` : `hace ${n} d`,
+    fr: (n, u) => u === "m" ? `il y a ${n} min` : u === "h" ? `il y a ${n} h` : `il y a ${n} j`,
+    de: (n, u) => u === "m" ? `vor ${n} Min.` : u === "h" ? `vor ${n} Std.` : `vor ${n} T.`,
+  };
+  const fmt = zh
+    ? (n: number, u: U) => u === "m" ? `${n}分钟前` : u === "h" ? `${n}小时前` : `${n}天前`
+    : (tpl[locale] ?? ((n: number, u: U) => u === "m" ? `${n}m ago` : u === "h" ? `${n}h ago` : `${n}d ago`));
+
+  if (m < 60) return fmt(m, "m");
+  if (h < 24) return fmt(h, "h");
+  if (d < 7)  return fmt(d, "d");
+  return formatDate(dateStr, zh);
 }
 
 // (RatingRecords replaced by FloorRatingBadge — see component)
@@ -437,7 +459,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
             <div className="flex items-center gap-2 px-4 py-2 bg-[#080F1F]/50 border-b border-[#1E3A5F]/50">
               <span className="text-[11px] text-gray-500 flex items-center gap-1 flex-1 min-w-0">
                 <span className="text-gray-600 shrink-0">🕐</span>
-                <span className="truncate">{formatDate(createdAt, zh, locale)}</span>
+                <span className="truncate">{formatDate(createdAt, zh)}</span>
               </span>
               <span className="text-[11px] font-black px-2 py-0.5 rounded-md shrink-0 bg-[#1E3A5F]/40 text-gray-400">
                 {zh ? `${floorNum}楼` : `#${floorNum}`}
@@ -503,7 +525,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
           </Link>
           <span className="text-gray-700">›</span>
           <Link href={catHref} className="hover:text-[#FFD700] transition-colors flex items-center gap-1">
-            {cat.icon} {zh ? cat.name_zh : cat.name}
+            {cat.icon} {zh ? cat.name_zh : lc(locale, cat.name_zh, cat.name)}
           </Link>
           <span className="text-gray-700">›</span>
           <span className="text-gray-400 truncate max-w-[240px]">
@@ -533,7 +555,7 @@ export default async function PostPage({ params, searchParams }: PageProps) {
             {/* Badges row */}
             <div className="flex items-center gap-2 mb-3 flex-wrap">
               <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#1E3A5F]/60 border border-[#1E3A5F] text-gray-400">
-                {cat.icon} {zh ? cat.name_zh : cat.name}
+                {cat.icon} {zh ? cat.name_zh : lc(locale, cat.name_zh, cat.name)}
               </span>
               {post.is_pinned && (
                 <span className="text-[10px] font-black bg-red-500/15 text-red-400 px-2.5 py-0.5 rounded-full border border-red-500/20">
