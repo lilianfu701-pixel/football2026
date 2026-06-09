@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import Script from "next/script";
 import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -47,10 +48,44 @@ import MobileInstallPrompt from "@/components/mobile/MobileInstallPrompt";
 import MobileScheduleDetails from "@/components/mobile/MobileScheduleDetails";
 import { redirectToMobileLogin } from "@/components/mobile/mobileAuth";
 
+// ── Paddle.js global typing ──────────────────────────────────────────────────
+// Kept structurally identical to the desktop topup page's declaration so the two
+// `Window.Paddle` global augmentations don't clash (TS2717). The optional
+// `settings` on Checkout.open is passed via a cast at the call site, exactly as
+// the desktop page does, so both declarations stay the same shape.
+interface PaddleEvent {
+  name?: string;
+  data?: { custom_data?: { gc_amount?: string | number } | null };
+}
+interface PaddleGlobal {
+  Environment?: { set: (env: "sandbox" | "production") => void };
+  Initialize: (opts: { token: string; eventCallback?: (e: PaddleEvent) => void }) => void;
+  Checkout: { open: (opts: { transactionId: string }) => void };
+}
 declare global {
   interface Navigator {
     standalone?: boolean;
   }
+  interface Window {
+    Paddle?: PaddleGlobal;
+  }
+}
+
+// Inlined at build time; empty if NEXT_PUBLIC_PADDLE_CLIENT_TOKEN wasn't set when
+// the bundle was built. Same client token the desktop topup page uses.
+const PADDLE_CLIENT_TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? "";
+
+// Wait up to tries*stepMs for the async Paddle.js script to attach to window.
+function waitForPaddle(tries = 20, stepMs = 150): Promise<boolean> {
+  return new Promise((resolve) => {
+    let n = 0;
+    const tick = () => {
+      if (typeof window !== "undefined" && window.Paddle) return resolve(true);
+      if (n++ >= tries) return resolve(false);
+      setTimeout(tick, stepMs);
+    };
+    tick();
+  });
 }
 
 export type MobileMatch = {
@@ -3360,6 +3395,29 @@ function MobileTopupView({
   const selected = TOPUP_PACKAGES.find((pkg) => pkg.id === selectedId) ?? null;
   const selectedTotal = selected ? getTopupPackageTotal(selected) : 0;
 
+  // Paddle.js readiness (mirrors the desktop topup page). Card payments go through
+  // Paddle — the same gateway the desktop site uses — not Stripe.
+  const paddleReady = useRef(false);
+  function initPaddle() {
+    if (paddleReady.current || typeof window === "undefined" || !window.Paddle) return;
+    if (!PADDLE_CLIENT_TOKEN) return; // surfaced as an error when the user taps Pay
+    if (process.env.NEXT_PUBLIC_PADDLE_SANDBOX === "true" && window.Paddle.Environment) {
+      window.Paddle.Environment.set("sandbox");
+    }
+    window.Paddle.Initialize({
+      token: PADDLE_CLIENT_TOKEN,
+      // GC is credited by the Paddle webhook (source of truth); this callback only
+      // refreshes the UI once the overlay reports completion.
+      eventCallback: (event) => {
+        if (event.name !== "checkout.completed") return;
+        const gc = Number(event.data?.custom_data?.gc_amount ?? 0) || selectedTotal;
+        setSuccess(zh ? `充值成功：${formatBalance(gc)} GC` : `Top-up successful: ${formatBalance(gc)} GC`);
+        void refreshBalance();
+      },
+    });
+    paddleReady.current = true;
+  }
+
   useEffect(() => {
     setPayErr(null);
     setSuccess(null);
@@ -3430,21 +3488,35 @@ function MobileTopupView({
     if (!selected || paying || !requireRealLogin()) return;
     setPaying(true);
     setPayErr(null);
+    // Paddle.js loads async (afterInteractive); a fast tap can beat it. Wait briefly.
+    const ready = await waitForPaddle();
+    initPaddle();
+    if (!ready || !paddleReady.current || !window.Paddle) {
+      setPayErr(zh ? "支付组件加载中，请稍后重试。" : "Checkout is loading, please retry in a moment.");
+      setPaying(false);
+      return;
+    }
     try {
-      const response = await fetch("/api/topup/checkout", {
+      const response = await fetch("/api/topup/paddle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packageId: selected.id, locale, mobile: true }),
+        body: JSON.stringify({ packageId: selected.id, locale }),
       });
       const data = await response.json();
-      if (!response.ok || !data.url) {
+      if (!response.ok || !data.transactionId) {
         setPayErr(data.error ?? (zh ? "创建订单失败，请重试。" : "Failed to create order."));
+        setPaying(false);
         return;
       }
-      window.location.assign(data.url);
+      // Force the overlay language to match the site locale. The cast keeps the
+      // global Paddle type identical to the desktop declaration (avoids TS2717).
+      window.Paddle.Checkout.open({
+        transactionId: data.transactionId,
+        settings: { locale: locale === "zh" ? "zh-Hans" : locale === "es" ? "es" : locale === "fr" ? "fr" : locale === "de" ? "de" : "en" },
+      } as { transactionId: string });
+      setPaying(false); // overlay is open; release the button
     } catch {
       setPayErr(zh ? "网络错误，请重试。" : "Network error, please retry.");
-    } finally {
       setPaying(false);
     }
   }
@@ -3638,6 +3710,8 @@ function MobileTopupView({
       </section>
 
       <section className="rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
+        {/* Paddle.js — powers the card checkout overlay (same gateway as desktop topup) */}
+        <Script src="https://cdn.paddle.com/paddle/v2/paddle.js" strategy="afterInteractive" onLoad={initPaddle} />
         <p className="mb-2 text-[15px] font-black text-white">{zh ? "支付方式" : "Payment Method"}</p>
         <div className="grid grid-cols-3 gap-1.5">
           <MobilePayMethodButton active={payMethod === "paddle"} icon={CreditCard} label={zh ? "银行卡" : "Card"} onClick={() => setPayMethod("paddle")} />
