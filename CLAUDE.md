@@ -116,7 +116,11 @@ goalcoin2026/
 │   │       ├── de.json         # 德语
 │   │       ├── pt.json         # 葡萄牙语
 │   │       ├── ru.json         # 俄语
-│   │       └── ar.json         # 阿拉伯语（RTL，~975 条目）
+│   │       ├── ar.json         # 阿拉伯语（RTL，~975 条目）
+│   │       ├── ja.json         # 日语
+│   │       ├── ko.json         # 韩语
+│   │       ├── vi.json         # 越南语
+│   │       └── id.json         # 印尼语
 │   ├── lib/
 │   │   ├── supabase/
 │   │   │   ├── client.ts       # createBrowserClient（共享 .football2026.net domain cookie）
@@ -133,7 +137,9 @@ goalcoin2026/
 │       └── GcBalance.tsx       # 全局 GC 余额 Context（客户端，供 Navbar 实时更新）
 ├── messages/
 │   ├── en.json                 # next-intl 英文消息（nav/auth/等 key）
-│   └── zh.json                 # 中文消息
+│   ├── zh.json                 # 中文消息
+│   ├── de.json / pt.json / ru.json / ar.json  # 全覆盖语言（含 nav/auth/levels/footer）
+│   └── ja.json / ko.json / vi.json / id.json  # 全覆盖语言
 ├── supabase/
 │   └── migrations/             # SQL 迁移文件（当前 049 个，001–049）
 ├── scripts/                    # 一次性工具脚本（migrate.mjs, sync-scores.mjs 等）
@@ -242,7 +248,11 @@ lc(locale, "中文原文", "English string")
 
 **添加新语言**：创建 `src/i18n/content/<locale>.json`（key = 英文原文，value = 译文；在 `content.ts` 的 `DICTS` 中注册）+ `messages/<locale>.json`（next-intl nav/auth/hero 字符串）。同时在 `profile/page.tsx` 的财富等级进度字符串和荣誉等级字符串中添加对应 locale 的本地化文案，并在日期格式化函数中补充 `toLocaleDateString` 的 locale 映射。
 
-**国家名本地化**：`src/lib/countries.ts` 提供 `toIntlLocale(locale)` 和 `getLocalizedCountryName(code, locale)` 工具函数，通过 `Intl.DisplayNames` 返回本地化国家名（已覆盖 de/fr/es/zh 等所有 12 个 locale）。注册页和设置页的国家下拉列表会自动显示目标语言的国家名。
+**国家名本地化**：`src/lib/countries.ts` 提供 `toIntlLocale(locale)`（所有 12 个 locale 已映射到明确 BCP-47 子标签，如 `ru-RU`、`ar-SA`、`id-ID`）和 `getLocalizedCountryName(code, locale)`。**⚠️ 重要架构约束**：Vercel serverless 使用 `small-icu`（仅英文 ICU 数据），服务端调用 `Intl.DisplayNames` 只会返回英文国家名。正确做法：
+- 注册页 / 设置页的下拉列表：已用 `useMemo` 在浏览器端解析，✅ 正常
+- 排行榜国家名：`LeaderboardClient.tsx` 中有 `localName(locale, code)` 模块级缓存，在浏览器端解析，✅ 已修复
+- 侧边栏国家名：`CountryNameTag` (`src/components/CountryNameTag.tsx`) 是 `"use client"` 组件，在浏览器端解析，✅ 已修复
+- **禁止**在 Server Component 中调用 `new Intl.DisplayNames([...])` 用于国家名显示
 
 **⚠️ 修改英文文案时**：同步更新 `content/es.json`、`fr.json`、`de.json` 中对应的 key（key 是英文字符串本身）。
 
@@ -345,26 +355,17 @@ lc(locale, "中文原文", "English string")
 ## 十一、当前进度 & 近期提交
 
 ```
-feat: add Japanese (ja) localization  ← 最新
-feat: add Arabic (ar) full localization
-feat: add Russian (ru) localization across all pages
-feat: add Portuguese (pt) localization across all pages
-feat: complete German (de) localization across all pages
+fc37694 fix: resolve country names client-side to fix pt/ru/ar localization  ← 最新
+423417d feat: add Indonesian (id) localization
+43a0c6e feat: add Vietnamese (vi) localization across all pages
+5eb4ce6 feat: add Korean (ko) localization across all pages
+c644a5a feat: dynamic OG image per locale, mobile checkout, UI fixes
+697da32 docs: update CLAUDE.md — Japanese localization complete
+5dfad19 feat: add Japanese (ja) localization
+76bdb58 feat: add Arabic (ar) full localization
+bce5317 feat: add Russian (ru) localization across all pages
+07787ea feat: add Portuguese (pt) localization across all pages
 63df9ce fix: stop desktop OAuth logins being hijacked to mobile site
-8b92e49 docs: add CLAUDE.md project onboarding guide
-704245b fix: repair desktop login/logout auth flow and header sync
-2161e21 fix: localize Navbar menus for all languages via lc()
-7f46eef fix: disable browser locale detection so unprefixed URLs always serve English
-1dab0b6 fix: localize level names and remove redundant subtitles on profile page
-500b28c feat: add German (de) localization across web UI
-5199570 feat: add French (fr) localization and redesign forum auto-translation
-d889ef8 feat: localize schedule page and sidebar for Spanish (es)
-94277e8 fix: refresh header GC balance after admin self-award
-eeb0011 feat: localize teams and personal dashboard for Spanish (es)
-85778fa fix: hydrate navbar auth state on static/ISR pages
-d6dd6e6 feat: add Spanish (es) localization across web UI
-a9fa4b2 fix: PayPal 按钮语言跟随站点 locale
-5c96fc7 fix: Paddle checkout locale 代码改为 zh-Hans
 ```
 
 ### 未提交的工作（用户维护部分）
@@ -494,4 +495,4 @@ XUNHUPAY_APP_SECRET=
 
 ---
 
-*此文件由 Claude Code 维护，反映截至 2026-06-08 的项目真实状态（印尼语本地化完成；en/zh/de/pt/ru/ar/ja/ko/vi/id 共 10 语言全覆盖）。*
+*此文件由 Claude Code 维护，反映截至 2026-06-08 的项目真实状态（印尼语本地化完成，国家名客户端渲染修复；en/zh/de/pt/ru/ar/ja/ko/vi/id 共 10 语言全覆盖）。*
