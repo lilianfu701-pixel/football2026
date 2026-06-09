@@ -1,7 +1,6 @@
 "use client";
 
 import { Check, ChevronDown, Copy, ExternalLink, Share2 } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useGcBalance } from "@/context/GcBalance";
 import MatchFanSection from "@/components/matches/MatchFanSection";
@@ -49,6 +48,41 @@ function formatGc(value: number) {
   return String(value);
 }
 
+// Escape raw user text before it is rendered through dangerouslySetInnerHTML.
+// Optimistic replies are inserted from the local <input> (plain text) before
+// the server round-trip; without escaping, input like "<img onerror=...>" would
+// execute in the author's own session. The persisted copy is separately
+// sanitized server-side (cleanForumHtml) on the next load.
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function getMobileMatchLabel(locale: string, match: MobileMatch) {
+  return `${getTeamDisplayName(match.homeTeam, locale)} vs ${getTeamDisplayName(match.awayTeam, locale)}`;
+}
+
+function getMobileMatchUrl(locale: string, match: MobileMatch) {
+  const path = `/${locale}/m`;
+  const matchLabel = getMobileMatchLabel(locale, match);
+  if (typeof window === "undefined") {
+    return `${path}?view=matches&match=${encodeURIComponent(matchLabel)}`;
+  }
+  const base = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? window.location.origin
+    : "https://m.football2026.net";
+  const url = new URL(path, base);
+  const preview = new URLSearchParams(window.location.search).get("preview");
+  if (preview) url.searchParams.set("preview", preview);
+  url.searchParams.set("view", "matches");
+  url.searchParams.set("match", matchLabel);
+  return url.toString();
+}
+
 function resultOdds(match: MobileMatch, choice: ResultChoice | null) {
   if (choice === "home") return match.oddsHome ?? 2;
   if (choice === "draw") return match.oddsDraw ?? 3.2;
@@ -91,10 +125,15 @@ export default function MobileScheduleDetails({ locale, match, isLoggedIn, canPe
 
   return (
     <div className="grid gap-1.5 border-t border-[#FFD700]/20 bg-[#102f2a] p-1.5">
-      <SupportAndShare locale={locale} match={match} canPersistActions={canPersistActions} initialData={data} onVoteSaved={handleVoteSaved} />
-      <WinBet locale={locale} match={match} canPersistActions={canPersistActions} existingBet={data?.existingBet ?? null} detailLoading={loading} />
-      <ScoreBet locale={locale} match={match} canPersistActions={canPersistActions} initialBets={data?.scoreBets ?? []} />
-      <FoldRow title="球迷地图" summary={`${data?.countries.length ?? 0} 个国家`} open={folds.map} onToggle={() => toggle("map")}>
+      <SupportAndShare locale={locale} match={match} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} initialData={data} onVoteSaved={handleVoteSaved} />
+      <WinBet locale={locale} match={match} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} existingBet={data?.existingBet ?? null} detailLoading={loading} />
+      <ScoreBet locale={locale} match={match} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} initialBets={data?.scoreBets ?? []} />
+      <FoldRow
+        title={locale === "zh" ? "球迷地图" : "Fan Map"}
+        summary={locale === "zh" ? `${data?.countries.length ?? 0} 个国家` : `${data?.countries.length ?? 0} countries`}
+        open={folds.map}
+        onToggle={() => toggle("map")}
+      >
         <MatchFanSection
           key={`${match.id}-${mapVoteState.revision}`}
           matchId={match.id}
@@ -103,22 +142,29 @@ export default function MobileScheduleDetails({ locale, match, isLoggedIn, canPe
           homeColors={getTeamColor(match.homeTeam)}
           awayColors={getTeamColor(match.awayTeam)}
           zh={locale === "zh"}
-          loggedIn={canPersistActions}
+          loggedIn={isLoggedIn || canPersistActions}
+          canPersistProps={canPersistActions}
           userVote={mapVoteState.vote}
           showCurrentUserMarker
+          mobileAudioUnlock
         />
       </FoldRow>
-      <FoldRow title="赛事帖子" summary={`${data?.forumPostCount ?? 0} 条讨论`} open={folds.posts} onToggle={() => toggle("posts")}>
-        <InlineForumPanel locale={locale} post={data?.forumPost ?? null} canPersistActions={canPersistActions} />
+      <FoldRow
+        title={locale === "zh" ? "赛事帖子" : "Match Discussion"}
+        summary={locale === "zh" ? `${data?.forumPostCount ?? 0} 条讨论` : `${data?.forumPostCount ?? 0} discussions`}
+        open={folds.posts}
+        onToggle={() => toggle("posts")}
+      >
+        <InlineForumPanel locale={locale} post={data?.forumPost ?? null} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} />
       </FoldRow>
-      <Link href={`/${locale}/matches/${match.id}`} className="flex h-7 items-center justify-center gap-1 rounded-md border border-white/10 bg-white/[0.035] text-[12px] font-black text-slate-300">
-        完整赛事页 <ExternalLink className="h-3 w-3" />
-      </Link>
+      <a href={getMobileMatchUrl(locale, match)} className="flex h-7 items-center justify-center gap-1 rounded-md border border-white/10 bg-white/[0.035] text-[12px] font-black text-slate-300">
+        {locale === "zh" ? "完整赛事页" : "Full Match Details"} <ExternalLink className="h-3 w-3" />
+      </a>
     </div>
   );
 }
 
-function SupportAndShare({ locale, match, canPersistActions, initialData, onVoteSaved }: { locale: string; match: MobileMatch; canPersistActions: boolean; initialData: DetailData | null; onVoteSaved: (vote: VoteChoice) => void }) {
+function SupportAndShare({ locale, match, isLoggedIn, canPersistActions, initialData, onVoteSaved }: { locale: string; match: MobileMatch; isLoggedIn: boolean; canPersistActions: boolean; initialData: DetailData | null; onVoteSaved: (vote: VoteChoice) => void }) {
   const [counts, setCounts] = useState({ home: 0, neutral: 0, away: 0 });
   const [myVote, setMyVote] = useState<VoteChoice | null>(null);
   const [message, setMessage] = useState("");
@@ -131,7 +177,7 @@ function SupportAndShare({ locale, match, canPersistActions, initialData, onVote
   }, [initialData]);
 
   async function vote(choice: VoteChoice) {
-    if (!canPersistActions) { redirectToMobileLogin(locale); return; }
+    if (!isLoggedIn && !canPersistActions) { redirectToMobileLogin(locale); return; }
     if (loading || myVote === choice) return;
     const previous = myVote;
     const next = { ...counts };
@@ -139,6 +185,11 @@ function SupportAndShare({ locale, match, canPersistActions, initialData, onVote
     next[choice]++;
     setCounts(next);
     setMyVote(choice);
+    if (!canPersistActions) {
+      setMessage(locale === "zh" ? "已支持" : "Supported");
+      onVoteSaved(choice);
+      return;
+    }
     setLoading(true);
     try {
       const response = await fetch("/api/match-vote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ match_id: match.id, vote: choice }) });
@@ -148,7 +199,7 @@ function SupportAndShare({ locale, match, canPersistActions, initialData, onVote
     } catch {
       setCounts(counts);
       setMyVote(previous);
-      setMessage(locale === "zh" ? "投票失败，请重新登录" : "Vote failed. Please sign in again.");
+      setMessage(locale === "zh" ? "支持失败，请重试" : "Vote failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -161,7 +212,10 @@ function SupportAndShare({ locale, match, canPersistActions, initialData, onVote
 
   return (
     <section className="rounded-md border border-white/10 bg-white/[0.035] p-1.5">
-      <div className="mb-1 flex items-center justify-between text-[12px] font-black"><span className="text-[#FFD700]">支持谁</span><span className="text-slate-500">{total} 人投票</span></div>
+      <div className="mb-1 flex items-center justify-between text-[12px] font-black">
+        <span className="text-[#FFD700]">{locale === "zh" ? "支持谁" : "Who do you support?"}</span>
+        <span className="text-slate-500">{locale === "zh" ? `${total} 人支持` : `${total} supporters`}</span>
+      </div>
       <div className="grid grid-cols-3 gap-1">
         <button type="button" onClick={() => vote("home")} disabled={loading} className={`rounded border px-1 py-1.5 text-[12px] font-black ${myVote === "home" ? "border-[#FFD700]/70 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-white/[0.035] text-slate-200"}`}>{getTeamDisplayName(match.homeTeam, locale)} {homePct}%</button>
         <button type="button" onClick={() => vote("neutral")} disabled={loading} className={`rounded border px-1 py-1.5 text-[12px] font-black ${myVote === "neutral" ? "border-slate-300/70 bg-slate-300/15 text-slate-200" : "border-white/10 bg-white/[0.035] text-slate-200"}`}>{locale === "zh" ? "中立" : "Neutral"} {neutralPct}%</button>
@@ -177,8 +231,8 @@ function MobileShareBar({ locale, match, compact = false, canReward = false }: {
   const [more, setMore] = useState(false);
   const [copied, setCopied] = useState(false);
   const [reward, setReward] = useState("");
-  const url = typeof window === "undefined" ? "" : `${window.location.origin}/${locale}/matches/${match.id}`;
-  const text = `${getTeamDisplayName(match.homeTeam, locale)} vs ${getTeamDisplayName(match.awayTeam, locale)}`;
+  const url = typeof window === "undefined" ? "" : getMobileMatchUrl(locale, match);
+  const text = getMobileMatchLabel(locale, match);
 
   async function rewardShare() {
     if (!canReward) return;
@@ -214,13 +268,13 @@ function MobileShareBar({ locale, match, compact = false, canReward = false }: {
 
   return (
     <div className={`${compact ? "mt-1" : "mt-1.5"} flex flex-wrap items-center gap-1`}>
-      <span className="mr-auto text-[12px] font-black text-slate-400">分享 {reward && <b className="ml-1 text-emerald-400">{reward}</b>}</span>
-      <ShareChip label="分享" onClick={nativeShare} icon={<Share2 className="h-3 w-3" />} />
-      <ShareChip label="微博" onClick={() => open(`https://service.weibo.com/share/share.php?url=${encodeURIComponent(url)}&title=${encodeURIComponent(text)}`)} />
+      <span className="mr-auto text-[12px] font-black text-slate-400">{locale === "zh" ? "分享" : "Share"} {reward && <b className="ml-1 text-emerald-400">{reward}</b>}</span>
+      <ShareChip label={locale === "zh" ? "分享" : "Share"} onClick={nativeShare} icon={<Share2 className="h-3 w-3" />} />
+      <ShareChip label={locale === "zh" ? "微博" : "Weibo"} onClick={() => open(`https://service.weibo.com/share/share.php?url=${encodeURIComponent(url)}&title=${encodeURIComponent(text)}`)} />
       <ShareChip label="X" onClick={() => open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`)} />
-      <ShareChip label="更多" onClick={() => setMore((value) => !value)} />
+      <ShareChip label={locale === "zh" ? "更多" : "More"} onClick={() => setMore((value) => !value)} />
       {more && <>
-        <ShareChip label={copied ? "已复制" : "复制"} onClick={copy} icon={copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />} />
+        <ShareChip label={copied ? (locale === "zh" ? "已复制" : "Copied") : (locale === "zh" ? "复制" : "Copy")} onClick={copy} icon={copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />} />
         <ShareChip label="Telegram" onClick={() => open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`)} />
       </>}
     </div>
@@ -231,7 +285,7 @@ function ShareChip({ label, onClick, icon }: { label: string; onClick: () => voi
   return <button type="button" onClick={onClick} className="flex h-5 items-center gap-0.5 rounded border border-white/10 bg-white/[0.04] px-1.5 text-[11px] font-black text-slate-300">{icon}{label}</button>;
 }
 
-function WinBet({ locale, match, canPersistActions, existingBet, detailLoading }: { locale: string; match: MobileMatch; canPersistActions: boolean; existingBet: ExistingBet | null; detailLoading: boolean }) {
+function WinBet({ locale, match, isLoggedIn, canPersistActions, existingBet, detailLoading }: { locale: string; match: MobileMatch; isLoggedIn: boolean; canPersistActions: boolean; existingBet: ExistingBet | null; detailLoading: boolean }) {
   const { balance, setBalance } = useGcBalance();
   const [choice, setChoice] = useState<ResultChoice | null>(null);
   const [amount, setAmount] = useState(DEFAULT_AMOUNT);
@@ -248,25 +302,31 @@ function WinBet({ locale, match, canPersistActions, existingBet, detailLoading }
 
   function preset(value: number) {
     const next = Math.floor(balance * value);
-    if (next < MIN_BET) setMessage("最低消耗 10K GC");
+    if (next < MIN_BET) setMessage(locale === "zh" ? "最低消耗 10K GC" : "Minimum 10K GC");
     setAmount(formatAmount(next));
   }
 
   async function submit() {
     if (!choice || loading) return;
-    if (!canPersistActions) { redirectToMobileLogin(locale); return; }
-    if (amountNum < MIN_BET) { setMessage("最低消耗 10K GC"); return; }
+    if (!isLoggedIn && !canPersistActions) { redirectToMobileLogin(locale); return; }
+    if (amountNum < MIN_BET) { setMessage(locale === "zh" ? "最低消耗 10K GC" : "Minimum 10K GC"); return; }
+    if (!canPersistActions) {
+      setBalance(Math.max(0, balance - amountNum));
+      setSuccess(true);
+      setMessage(locale === "zh" ? "预测成功" : "Prediction saved");
+      return;
+    }
     setLoading(true);
     setMessage("");
     try {
       const response = await fetch("/api/bets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ match_id: match.id, prediction: choice, gc_amount: amountNum }) });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "预测失败");
+      if (!response.ok) throw new Error(data.error ?? (locale === "zh" ? "预测失败" : "Prediction failed"));
       setBalance(Math.max(0, balance - amountNum));
       setSuccess(true);
-      setMessage("预测成功");
+      setMessage(locale === "zh" ? "预测成功" : "Prediction saved");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "预测失败");
+      setMessage(error instanceof Error ? error.message : (locale === "zh" ? "预测失败" : "Prediction failed"));
     } finally {
       setLoading(false);
     }
@@ -274,26 +334,29 @@ function WinBet({ locale, match, canPersistActions, existingBet, detailLoading }
 
   return (
     <section className="rounded-md border border-white/10 bg-white/[0.035] p-1.5">
-      <div className="mb-1 flex justify-between text-[12px] font-black"><span className="text-[#FFD700]">输赢预测</span><span className="text-slate-500">余额 {formatGc(balance)} GC</span></div>
+      <div className="mb-1 flex justify-between text-[12px] font-black">
+        <span className="text-[#FFD700]">{locale === "zh" ? "输赢预测" : "Win Prediction"}</span>
+        <span className="text-slate-500">{locale === "zh" ? "余额" : "Balance"} {formatGc(balance)} GC</span>
+      </div>
       <div className="grid grid-cols-3 gap-1">
         <BetChoice active={choice === "home"} disabled={locked} label={getTeamDisplayName(match.homeTeam, locale)} odds={match.oddsHome} onClick={() => setChoice("home")} />
-        <BetChoice active={choice === "draw"} disabled={locked} label="平局" odds={match.oddsDraw} onClick={() => setChoice("draw")} />
+        <BetChoice active={choice === "draw"} disabled={locked} label={locale === "zh" ? "平局" : "Draw"} odds={match.oddsDraw} onClick={() => setChoice("draw")} />
         <BetChoice active={choice === "away"} disabled={locked} label={getTeamDisplayName(match.awayTeam, locale)} odds={match.oddsAway} onClick={() => setChoice("away")} />
       </div>
       <QuickAmounts onPick={preset} onAll={() => setAmount(formatAmount(balance))} />
       <div className="mt-1 grid grid-cols-[1.25fr_.85fr_3rem] gap-1">
-        <input value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="numeric" className="h-7 min-w-0 rounded border border-white/10 bg-[#081120] px-1.5 text-[12px] text-white outline-none" />
-        <span className="flex min-w-0 items-center justify-center truncate rounded border border-white/10 bg-[#081120] px-1 text-[11px] text-slate-400">预计 {formatGc(Math.round(amountNum * odds))}</span>
-        <button type="button" onClick={submit} disabled={!choice || loading || success || locked} className="h-7 rounded bg-[#FFD700] text-[12px] font-black text-[#081120] disabled:bg-slate-700 disabled:text-slate-500">{existingBet ? "已提交" : "确认"}</button>
+        <input aria-label={locale === "zh" ? "预测金额" : "Prediction amount"} value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="numeric" className="h-7 min-w-0 rounded border border-white/10 bg-[#081120] px-1.5 text-[12px] text-white outline-none" />
+        <span className="flex min-w-0 items-center justify-center truncate rounded border border-white/10 bg-[#081120] px-1 text-[11px] text-slate-400">{locale === "zh" ? "预计" : "Expected"} {formatGc(Math.round(amountNum * odds))}</span>
+        <button type="button" onClick={submit} disabled={!choice || loading || success || locked} className="h-7 rounded bg-[#FFD700] text-[12px] font-black text-[#081120] disabled:bg-slate-700 disabled:text-slate-500">{existingBet ? (locale === "zh" ? "已提交" : "Submitted") : (locale === "zh" ? "确认" : "Confirm")}</button>
       </div>
-      {existingBet && <p className="mt-1 text-[11px] text-emerald-300">已参与：{existingBet.prediction === "home" ? getTeamDisplayName(match.homeTeam, locale) : existingBet.prediction === "away" ? getTeamDisplayName(match.awayTeam, locale) : "平局"} · {formatGc(existingBet.gcAmount)} GC</p>}
+      {existingBet && <p className="mt-1 text-[11px] text-emerald-300">{locale === "zh" ? "已参与：" : "Your prediction: "}{existingBet.prediction === "home" ? getTeamDisplayName(match.homeTeam, locale) : existingBet.prediction === "away" ? getTeamDisplayName(match.awayTeam, locale) : (locale === "zh" ? "平局" : "Draw")} · {formatGc(existingBet.gcAmount)} GC</p>}
       {message && <p className={`mt-1 text-[11px] ${success ? "text-emerald-400" : "text-rose-300"}`}>{message}</p>}
       {success && <MobileShareBar locale={locale} match={match} compact canReward={canPersistActions} />}
     </section>
   );
 }
 
-function ScoreBet({ locale, match, canPersistActions, initialBets }: { locale: string; match: MobileMatch; canPersistActions: boolean; initialBets: ScoreBetRow[] }) {
+function ScoreBet({ locale, match, isLoggedIn, canPersistActions, initialBets }: { locale: string; match: MobileMatch; isLoggedIn: boolean; canPersistActions: boolean; initialBets: ScoreBetRow[] }) {
   const { balance, setBalance } = useGcBalance();
   const [homeScore, setHomeScore] = useState("");
   const [awayScore, setAwayScore] = useState("");
@@ -307,25 +370,31 @@ function ScoreBet({ locale, match, canPersistActions, initialBets }: { locale: s
 
   function preset(value: number) {
     const next = Math.floor(balance * value);
-    if (next < MIN_BET) setMessage("最低消耗 10K GC");
+    if (next < MIN_BET) setMessage(locale === "zh" ? "最低消耗 10K GC" : "Minimum 10K GC");
     setAmount(formatAmount(next));
   }
 
   async function submit() {
     if (!scoreReady || loading) return;
-    if (!canPersistActions) { redirectToMobileLogin(locale); return; }
-    if (amountNum < MIN_BET) { setMessage("最低消耗 10K GC"); return; }
+    if (!isLoggedIn && !canPersistActions) { redirectToMobileLogin(locale); return; }
+    if (amountNum < MIN_BET) { setMessage(locale === "zh" ? "最低消耗 10K GC" : "Minimum 10K GC"); return; }
+    if (!canPersistActions) {
+      setBalance(Math.max(0, balance - amountNum));
+      setSuccess(true);
+      setMessage(locale === "zh" ? "比分预测成功" : "Score prediction saved");
+      return;
+    }
     setLoading(true);
     setMessage("");
     try {
       const response = await fetch("/api/score-bets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ match_id: match.id, score_home: Number(homeScore), score_away: Number(awayScore), gc_amount: amountNum }) });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "预测失败");
+      if (!response.ok) throw new Error(data.error ?? (locale === "zh" ? "预测失败" : "Prediction failed"));
       setBalance(Math.max(0, balance - amountNum));
       setSuccess(true);
-      setMessage("比分预测成功");
+      setMessage(locale === "zh" ? "比分预测成功" : "Score prediction saved");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "预测失败");
+      setMessage(error instanceof Error ? error.message : (locale === "zh" ? "预测失败" : "Prediction failed"));
     } finally {
       setLoading(false);
     }
@@ -333,7 +402,10 @@ function ScoreBet({ locale, match, canPersistActions, initialBets }: { locale: s
 
   return (
     <section className="rounded-md border border-white/10 bg-white/[0.035] p-1.5">
-      <div className="mb-1 flex justify-between text-[12px] font-black"><span className="text-[#FFD700]">比分预测</span><span className="text-slate-500">最低 10K GC</span></div>
+      <div className="mb-1 flex justify-between text-[12px] font-black">
+        <span className="text-[#FFD700]">{locale === "zh" ? "比分预测" : "Score Prediction"}</span>
+        <span className="text-slate-500">{locale === "zh" ? "最低" : "Minimum"} 10K GC</span>
+      </div>
       <div className="grid grid-cols-[1fr_1.4rem_1fr] gap-1">
         <ScoreInput label={getTeamDisplayName(match.homeTeam, locale)} value={homeScore} onChange={setHomeScore} />
         <span className="flex h-7 items-center justify-center text-[15px] font-black text-slate-500">:</span>
@@ -341,12 +413,12 @@ function ScoreBet({ locale, match, canPersistActions, initialBets }: { locale: s
       </div>
       <QuickAmounts onPick={preset} onAll={() => setAmount(formatAmount(balance))} />
       <div className="mt-1 grid grid-cols-[1.25fr_.85fr_3rem] gap-1">
-        <input value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="numeric" className="h-7 min-w-0 rounded border border-white/10 bg-[#081120] px-1.5 text-[12px] text-white outline-none" />
-        <span className="flex min-w-0 items-center justify-center truncate rounded border border-white/10 bg-[#081120] px-1 text-[11px] text-slate-400">预计 {formatGc(netPayout(amountNum, odds))}</span>
-        <button type="button" onClick={submit} disabled={!scoreReady || loading} className="h-7 rounded bg-[#FFD700] text-[12px] font-black text-[#081120] disabled:bg-slate-700 disabled:text-slate-500">确认</button>
+        <input aria-label={locale === "zh" ? "预测金额" : "Prediction amount"} value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="numeric" className="h-7 min-w-0 rounded border border-white/10 bg-[#081120] px-1.5 text-[12px] text-white outline-none" />
+        <span className="flex min-w-0 items-center justify-center truncate rounded border border-white/10 bg-[#081120] px-1 text-[11px] text-slate-400">{locale === "zh" ? "预计" : "Expected"} {formatGc(netPayout(amountNum, odds))}</span>
+        <button type="button" onClick={submit} disabled={!scoreReady || loading} className="h-7 rounded bg-[#FFD700] text-[12px] font-black text-[#081120] disabled:bg-slate-700 disabled:text-slate-500">{locale === "zh" ? "确认" : "Confirm"}</button>
       </div>
       {message && <p className={`mt-1 text-[11px] ${success ? "text-emerald-400" : "text-rose-300"}`}>{message}</p>}
-      {initialBets.length > 0 && <p className="mt-1 truncate text-[11px] text-emerald-300">已参与：{initialBets.map((bet) => `${bet.scoreHome}:${bet.scoreAway} ${formatGc(bet.gcAmount)} GC`).join(" · ")}</p>}
+      {initialBets.length > 0 && <p className="mt-1 truncate text-[11px] text-emerald-300">{locale === "zh" ? "已参与：" : "Your predictions: "}{initialBets.map((bet) => `${bet.scoreHome}:${bet.scoreAway} ${formatGc(bet.gcAmount)} GC`).join(" · ")}</p>}
       {success && <MobileShareBar locale={locale} match={match} compact canReward={canPersistActions} />}
     </section>
   );
@@ -372,7 +444,7 @@ function EmptyText({ children }: { children: React.ReactNode }) {
   return <p className="p-2 text-[12px] text-slate-500">{children}</p>;
 }
 
-function InlineForumPanel({ locale, post, canPersistActions }: { locale: string; post: ForumPost | null; canPersistActions: boolean }) {
+function InlineForumPanel({ locale, post, isLoggedIn, canPersistActions }: { locale: string; post: ForumPost | null; isLoggedIn: boolean; canPersistActions: boolean }) {
   const [replies, setReplies] = useState(post?.replies ?? []);
   const [value, setValue] = useState("");
   const [message, setMessage] = useState("");
@@ -380,12 +452,18 @@ function InlineForumPanel({ locale, post, canPersistActions }: { locale: string;
 
   useEffect(() => setReplies(post?.replies ?? []), [post]);
 
-  if (!post) return <EmptyText>暂无赛事帖子</EmptyText>;
+  if (!post) return <EmptyText>{locale === "zh" ? "暂无赛事帖子" : "No match post yet"}</EmptyText>;
 
   async function submit() {
     if (!post) return;
-    if (!canPersistActions) { redirectToMobileLogin(locale); return; }
+    if (!isLoggedIn && !canPersistActions) { redirectToMobileLogin(locale); return; }
     if (!value.trim() || loading) return;
+    if (!canPersistActions) {
+      setReplies((current) => [...current, { id: Date.now(), content: escapeHtml(value.trim()), likeCount: 0, createdAt: new Date().toISOString() }]);
+      setValue("");
+      setMessage(locale === "zh" ? "回复成功" : "Reply posted");
+      return;
+    }
     setLoading(true);
     setMessage("");
     try {
@@ -395,12 +473,12 @@ function InlineForumPanel({ locale, post, canPersistActions }: { locale: string;
         body: JSON.stringify({ post_id: post.id, content: value.trim() }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "回复失败");
-      setReplies((current) => [...current, { id: data.id, content: value.trim(), likeCount: 0, createdAt: new Date().toISOString() }]);
+      if (!response.ok) throw new Error(data.error ?? (locale === "zh" ? "回复失败" : "Reply failed"));
+      setReplies((current) => [...current, { id: data.id, content: escapeHtml(value.trim()), likeCount: 0, createdAt: new Date().toISOString() }]);
       setValue("");
-      setMessage("回复成功");
+      setMessage(locale === "zh" ? "回复成功" : "Reply posted");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "回复失败");
+      setMessage(error instanceof Error ? error.message : (locale === "zh" ? "回复失败" : "Reply failed"));
     } finally {
       setLoading(false);
     }
@@ -411,19 +489,19 @@ function InlineForumPanel({ locale, post, canPersistActions }: { locale: string;
       <div className="rounded border border-white/10 bg-[#081120] p-2">
         <div className="flex items-center justify-between gap-2">
           <h4 className="truncate text-[12px] font-black text-white">{post.title}</h4>
-          <span className="shrink-0 text-[11px] text-slate-500">{post.replyCount} 回复 · {post.likeCount} 赞</span>
+          <span className="shrink-0 text-[11px] text-slate-500">{locale === "zh" ? `${post.replyCount} 回复 · ${post.likeCount} 赞` : `${post.replyCount} replies · ${post.likeCount} likes`}</span>
         </div>
         <ForumHtml html={post.content} className="mt-1 text-[12px] leading-4 text-slate-300" />
       </div>
       {replies.map((reply) => (
         <div key={reply.id} className="rounded border border-white/10 bg-white/[0.025] px-2 py-1.5">
           <ForumHtml html={reply.content} className="text-[12px] leading-4 text-slate-400" />
-          <p className="mt-1 text-[11px] text-slate-600">{reply.likeCount} 赞</p>
+          <p className="mt-1 text-[11px] text-slate-600">{locale === "zh" ? `${reply.likeCount} 赞` : `${reply.likeCount} likes`}</p>
         </div>
       ))}
       <div className="grid grid-cols-[1fr_3rem] gap-1">
-        <input value={value} onChange={(event) => setValue(event.target.value)} placeholder="参与赛事讨论" className="h-7 min-w-0 rounded border border-white/10 bg-[#081120] px-2 text-[12px] text-white outline-none placeholder:text-slate-600" />
-        <button type="button" onClick={submit} disabled={!value.trim() || loading} className="h-7 rounded bg-[#FFD700] text-[12px] font-black text-[#081120] disabled:bg-slate-700 disabled:text-slate-500">回复</button>
+        <input value={value} onChange={(event) => setValue(event.target.value)} placeholder={locale === "zh" ? "参与赛事讨论" : "Join the match discussion"} className="h-7 min-w-0 rounded border border-white/10 bg-[#081120] px-2 text-[12px] text-white outline-none placeholder:text-slate-600" />
+        <button type="button" onClick={submit} disabled={!value.trim() || loading} className="h-7 rounded bg-[#FFD700] text-[12px] font-black text-[#081120] disabled:bg-slate-700 disabled:text-slate-500">{locale === "zh" ? "回复" : "Reply"}</button>
       </div>
       {message && <p className="text-[11px] text-slate-400">{message}</p>}
     </div>

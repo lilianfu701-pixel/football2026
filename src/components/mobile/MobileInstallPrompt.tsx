@@ -22,9 +22,6 @@ interface MobileInstallPromptProps {
   allowDismiss?: boolean;
 }
 
-const MOBILE_URL = "https://m.football2026.net/zh/m";
-const QR_URL = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(MOBILE_URL)}`;
-
 const copy = {
   zh: {
     title: "添加 Football2026 到桌面",
@@ -81,6 +78,12 @@ function getCopy(locale: string) {
   return locale === "zh" ? copy.zh : copy.en;
 }
 
+function getMobileUrl(locale: string) {
+  return locale === "en"
+    ? "https://m.football2026.net/m"
+    : `https://m.football2026.net/${locale}/m`;
+}
+
 function detectPlatform(): Platform {
   const ua = navigator.userAgent.toLowerCase();
   const platform = navigator.platform?.toLowerCase() ?? "";
@@ -101,6 +104,8 @@ export default function MobileInstallPrompt({
   allowDismiss = true,
 }: MobileInstallPromptProps) {
   const t = getCopy(locale);
+  const mobileUrl = getMobileUrl(locale);
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(mobileUrl)}`;
   const [platform, setPlatform] = useState<Platform>("other");
   const [dismissed, setDismissed] = useState(true);
   const [installed, setInstalled] = useState(false);
@@ -182,11 +187,11 @@ export default function MobileInstallPrompt({
         </div>
 
         <div className="mt-3 grid grid-cols-[7rem_1fr] items-center gap-3 rounded-lg border border-[#FFD700]/25 bg-black/25 p-2.5">
-          <img src={QR_URL} alt={t.scanTitle} className="aspect-square w-28 rounded-md bg-white p-1" />
+          <img src={qrUrl} alt={t.scanTitle} className="aspect-square w-28 rounded-md bg-white p-1" />
           <div className="min-w-0">
             <p className="text-[15px] font-black text-[#FFD700]">{t.scanTitle}</p>
             <p className="mt-1 text-[13px] leading-4 text-slate-300">{t.scanHint}</p>
-            <p className="mt-2 break-all text-[12px] font-bold leading-4 text-white">{MOBILE_URL}</p>
+            <p className="mt-2 break-all text-[12px] font-bold leading-4 text-white">{mobileUrl}</p>
           </div>
         </div>
       </div>
