@@ -6,6 +6,7 @@ import ruContent from "./content/ru.json";
 import arContent from "./content/ar.json";
 import jaContent from "./content/ja.json";
 import koContent from "./content/ko.json";
+import viContent from "./content/vi.json";
 
 /**
  * Content localization layer.
@@ -31,6 +32,7 @@ const DICTS: Record<string, Record<string, string>> = {
   ar: arContent as Record<string, string>,
   ja: jaContent as Record<string, string>,
   ko: koContent as Record<string, string>,
+  vi: viContent as Record<string, string>,
 };
 
 export function lc(locale: string, zh: string, en: string): string {
