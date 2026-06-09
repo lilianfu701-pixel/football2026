@@ -43,8 +43,18 @@ const CITY_COUNTRY: Record<string, string> = {
 
 // Country abbreviation → localized label
 const COUNTRY_LABEL: Record<string, Record<string, string>> = {
-  zh: { "USA": "美国", "MEX": "墨西哥", "CAN": "加拿大" },
-  en: { "USA": "USA", "MEX": "MEX", "CAN": "CAN" },
+  zh: { "USA": "美国",            "MEX": "墨西哥",       "CAN": "加拿大" },
+  en: { "USA": "USA",             "MEX": "Mexico",       "CAN": "Canada" },
+  es: { "USA": "EE. UU.",         "MEX": "México",       "CAN": "Canadá" },
+  fr: { "USA": "États-Unis",      "MEX": "Mexique",      "CAN": "Canada" },
+  de: { "USA": "USA",             "MEX": "Mexiko",       "CAN": "Kanada" },
+  pt: { "USA": "EUA",             "MEX": "México",       "CAN": "Canadá" },
+  ru: { "USA": "США",             "MEX": "Мексика",      "CAN": "Канада" },
+  ar: { "USA": "الولايات المتحدة","MEX": "المكسيك",     "CAN": "كندا" },
+  ja: { "USA": "アメリカ",         "MEX": "メキシコ",     "CAN": "カナダ" },
+  ko: { "USA": "미국",             "MEX": "멕시코",       "CAN": "캐나다" },
+  vi: { "USA": "Mỹ",              "MEX": "México",       "CAN": "Canada" },
+  id: { "USA": "Amerika Serikat", "MEX": "Meksiko",      "CAN": "Kanada" },
 };
 
 // City → Chinese name
