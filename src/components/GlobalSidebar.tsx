@@ -9,8 +9,8 @@ import AwardSidebarCard from "@/app/[locale]/matches/AwardSidebarCard";
 import FavoritesCard from "@/app/[locale]/matches/FavoritesCard";
 import InviteCard from "@/app/[locale]/matches/InviteCard";
 import SidebarGcBalance from "@/components/SidebarGcBalance";
+import CountryNameTag from "@/components/CountryNameTag";
 import { lc } from "@/i18n/content";
-import { toIntlLocale } from "@/lib/countries";
 
 interface Props { locale: string }
 
@@ -83,7 +83,7 @@ export default async function GlobalSidebar({ locale }: Props) {
     hl: ReturnType<typeof getHonorLevel>;
     gc: number; honor: number; username: string;
     avatarUrl: string | null; initials: string;
-    flagUrl: string | null; countryName: string;
+    flagUrl: string | null; countryCode: string;
     inviteCount: number;
   } | null = null;
 
@@ -91,9 +91,6 @@ export default async function GlobalSidebar({ locale }: Props) {
     const gc    = profile?.gc_balance   ?? 0;
     const honor = profile?.honor_points ?? 0;
     const cc    = ((profile?.country_code ?? (user.user_metadata?.country_code as string | undefined) ?? "UN") as string).toUpperCase();
-    let countryName = lc(locale, "未知", "Unknown");
-    try { if (cc !== "UN") countryName = new Intl.DisplayNames([toIntlLocale(locale)], { type: "region" }).of(cc) ?? cc; }
-    catch { /* keep default */ }
     const username  = profile?.nickname
       ?? (user.user_metadata?.name as string | undefined)
       ?? (user.user_metadata?.full_name as string | undefined)
@@ -106,7 +103,7 @@ export default async function GlobalSidebar({ locale }: Props) {
       gc, honor, username, avatarUrl,
       initials: username.slice(0, 2).toUpperCase(),
       flagUrl: cc !== "UN" ? `https://flagcdn.com/w40/${cc.toLowerCase()}.png` : null,
-      countryName,
+      countryCode: cc,
       inviteCount: (profile?.invite_count as number | undefined) ?? 0,
     };
   }
@@ -167,14 +164,14 @@ export default async function GlobalSidebar({ locale }: Props) {
                 </div>
                 {sp.flagUrl && (
                   <div className="absolute -bottom-1 -right-1 w-6 h-4 rounded-sm overflow-hidden border border-[#0F2040] shadow">
-                    <Image src={sp.flagUrl} alt={sp.countryName} width={24} height={16} className="w-full h-full object-cover" unoptimized />
+                    <Image src={sp.flagUrl} alt={sp.countryCode} width={24} height={16} className="w-full h-full object-cover" unoptimized />
                   </div>
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white font-black text-base truncate">@{sp.username}</p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <p className="text-gray-500 text-xs truncate">{sp.countryName}</p>
+                  <CountryNameTag code={sp.countryCode} locale={locale} className="text-gray-500 text-xs truncate" />
                   <Link href={`/${locale}/profile`}
                     className="text-[10px] text-gray-600 hover:text-[#FFD700] transition-colors shrink-0">
                     {lc(locale, "编辑", "Edit")} →

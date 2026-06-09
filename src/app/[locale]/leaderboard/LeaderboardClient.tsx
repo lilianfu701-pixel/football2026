@@ -3,6 +3,23 @@
 import Image from "next/image";
 import Link from "next/link";
 import { lc } from "@/i18n/content";
+import { toIntlLocale } from "@/lib/countries";
+
+// Resolve country names client-side so the browser's full ICU data is used.
+// Vercel serverless Node.js ships with stripped ICU, which causes server-side
+// Intl.DisplayNames to fall back to English for ru/ar/pt and other locales.
+const _dnCache: Record<string, Intl.DisplayNames> = {};
+function localName(locale: string, code: string): string {
+  if (!code || code === "UN") return "";
+  try {
+    if (!_dnCache[locale]) {
+      _dnCache[locale] = new Intl.DisplayNames([toIntlLocale(locale)], { type: "region" });
+    }
+    return _dnCache[locale].of(code.toUpperCase()) ?? code;
+  } catch {
+    return code;
+  }
+}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -214,7 +231,7 @@ function CountryBoard({ entries, myCountryCode, zh, locale }: {
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className={`text-sm font-bold truncate ${isMe ? "text-[#FFD700]" : "text-white"}`}>
-                      {entry.countryName || entry.countryCode}
+                      {localName(locale, entry.countryCode) || entry.countryCode}
                     </span>
                     {isMe && (
                       <span className="shrink-0 text-[9px] font-black bg-[#FFD700] text-[#0A1628] px-1.5 py-0.5 rounded-full leading-none">
@@ -314,8 +331,8 @@ function WealthBoard({
                       style={{ color: badge.color, backgroundColor: badge.bg }}>
                       {badge.icon} {badge.label}
                     </span>
-                    {u.countryName && (
-                      <span className="text-[10px] text-gray-600 truncate">{u.countryName}</span>
+                    {localName(locale, u.countryCode) && (
+                      <span className="text-[10px] text-gray-600 truncate">{localName(locale, u.countryCode)}</span>
                     )}
                   </div>
                 </div>
@@ -476,7 +493,7 @@ function InviteBoard({ users, myId, zh, locale }: {
                     )}
                   </div>
                   <p className="text-[10px] text-gray-500 mt-0.5 truncate">
-                    {u.countryName || u.countryCode}
+                    {localName(locale, u.countryCode) || u.countryCode}
                   </p>
                 </div>
               </div>

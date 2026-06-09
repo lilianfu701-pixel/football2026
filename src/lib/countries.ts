@@ -207,9 +207,12 @@ export function getCountryByCode(code: string): Country | undefined {
 }
 
 export function toIntlLocale(locale: string): string {
-  if (locale === "zh") return "zh-CN";
-  if (locale === "pt") return "pt-PT";
-  return locale;
+  const map: Record<string, string> = {
+    zh: "zh-CN", en: "en-US", es: "es-ES", fr: "fr-FR",
+    de: "de-DE", pt: "pt-PT", ru: "ru-RU", ar: "ar-SA",
+    ja: "ja-JP", ko: "ko-KR", vi: "vi-VN", id: "id-ID",
+  };
+  return map[locale] ?? locale;
 }
 
 export function getLocalizedCountryName(code: string, locale: string): string {
