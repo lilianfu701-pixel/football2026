@@ -2,27 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import { lc } from "@/i18n/content";
 import { toIntlLocale } from "@/lib/countries";
-
-// Resolve country names client-side so the browser's full ICU data is used.
-// Vercel serverless Node.js ships with stripped ICU (small-icu), which causes
-// server-side Intl.DisplayNames to fall back to English for pt/ru/ar/ja etc.
-// Guard: on the server we return "" so the JSX fallback (|| countryCode) renders
-// the raw ISO code — no hydration mismatch, no accidental English names in SSR HTML.
-const _dnCache: Record<string, Intl.DisplayNames> = {};
-function localName(locale: string, code: string): string {
-  if (!code || code === "UN") return "";
-  if (typeof window === "undefined") return ""; // SSR: defer to client
-  try {
-    if (!_dnCache[locale]) {
-      _dnCache[locale] = new Intl.DisplayNames([toIntlLocale(locale)], { type: "region" });
-    }
-    return _dnCache[locale].of(code.toUpperCase()) ?? code;
-  } catch {
-    return code;
-  }
-}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -132,6 +114,34 @@ export default function LeaderboardClient({
   const zh = locale === "zh";
   const myCountryCode = wealthBoard.find((u) => u.id === myId)?.countryCode ?? null;
 
+  // Resolve country names client-side using the browser's full ICU data.
+  // Vercel serverless ships small-icu (English only), so server-side Intl.DisplayNames
+  // would return English for pt/ru/ar/ja/ko/vi/id.  We start with {} (renders ISO codes
+  // on both server and initial client render — no hydration mismatch), then fire a
+  // useEffect after mount to populate localized names and trigger one clean re-render.
+  const [cnMap, setCnMap] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const codes = new Set<string>();
+    [...wealthBoard, ...honorBoard, ...winBoard, ...inviteBoard].forEach((u) => {
+      if (u.countryCode && u.countryCode !== "UN") codes.add(u.countryCode);
+    });
+    countryBoard.forEach((c) => {
+      if (c.countryCode && c.countryCode !== "UN") codes.add(c.countryCode);
+    });
+    try {
+      const dn = new Intl.DisplayNames([toIntlLocale(locale)], { type: "region" });
+      const map: Record<string, string> = {};
+      for (const code of codes) {
+        try { map[code] = dn.of(code) ?? ""; } catch { /* skip */ }
+      }
+      setCnMap(map);
+    } catch { /* browser may lack locale — ISO codes remain as fallback */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locale]);
+
+  // cn(code) → localized country name, or "" before useEffect fires (ISO code shown)
+  const cn = (code: string) => cnMap[code] ?? "";
+
   return (
     <div className="space-y-8">
 
@@ -151,14 +161,14 @@ export default function LeaderboardClient({
       {/* ① 国家财富榜 */}
       <section>
         <SectionTitle icon="🌍" title={lc(locale, "国家财富榜", "Nation Wealth")} myRank={myRanks.country} zh={zh} />
-        <CountryBoard entries={countryBoard} myCountryCode={myCountryCode} zh={zh} locale={locale} />
+        <CountryBoard entries={countryBoard} myCountryCode={myCountryCode} zh={zh} locale={locale} cn={cn} />
       </section>
 
       {/* ② 财富榜 */}
       <section>
         <SectionTitle icon="💰" title={lc(locale, "财富榜", "Wealth")} myRank={myRanks.wealth} zh={zh} />
         <WealthBoard
-          users={wealthBoard} myId={myId} zh={zh} locale={locale}
+          users={wealthBoard} myId={myId} zh={zh} locale={locale} cn={cn}
           metricLabel={lc(locale, "GC 余额", "GC Balance")}
           metricFn={(u) => u.gcFormatted + " GC"}
           badgeFn={(u) => ({ label: u.wlName, color: u.wlColor, bg: u.wlBg, icon: u.wlIcon })}
@@ -169,7 +179,7 @@ export default function LeaderboardClient({
       <section>
         <SectionTitle icon="🏅" title={lc(locale, "荣誉榜", "Honor")} myRank={myRanks.honor} zh={zh} />
         <WealthBoard
-          users={honorBoard} myId={myId} zh={zh} locale={locale}
+          users={honorBoard} myId={myId} zh={zh} locale={locale} cn={cn}
           metricLabel={lc(locale, "荣誉积分", "Honor Points")}
           metricFn={(u) => u.honorFormatted}
           badgeFn={(u) => ({ label: u.hlName, color: u.hlColor, bg: u.hlColor + "22", icon: u.hlIcon })}
@@ -185,7 +195,7 @@ export default function LeaderboardClient({
       {/* ⑤ 邀请榜 */}
       <section>
         <SectionTitle icon="🤝" title={lc(locale, "邀请榜", "Invites")} myRank={myRanks.invite} zh={zh} />
-        <InviteBoard users={inviteBoard} myId={myId} zh={zh} locale={locale} />
+        <InviteBoard users={inviteBoard} myId={myId} zh={zh} locale={locale} cn={cn} />
       </section>
 
     </div>
@@ -194,11 +204,12 @@ export default function LeaderboardClient({
 
 // ── Country board ─────────────────────────────────────────────────────────────
 
-function CountryBoard({ entries, myCountryCode, zh, locale }: {
+function CountryBoard({ entries, myCountryCode, zh, locale, cn }: {
   entries: CountryEntry[];
   myCountryCode: string | null;
   zh: boolean;
   locale: string;
+  cn: (code: string) => string;
 }) {
   if (entries.length === 0) return <EmptyState zh={zh} locale={locale} />;
 
@@ -234,7 +245,7 @@ function CountryBoard({ entries, myCountryCode, zh, locale }: {
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className={`text-sm font-bold truncate ${isMe ? "text-[#FFD700]" : "text-white"}`}>
-                      {localName(locale, entry.countryCode) || entry.countryCode}
+                      {cn(entry.countryCode) || entry.countryCode}
                     </span>
                     {isMe && (
                       <span className="shrink-0 text-[9px] font-black bg-[#FFD700] text-[#0A1628] px-1.5 py-0.5 rounded-full leading-none">
@@ -270,12 +281,13 @@ function CountryBoard({ entries, myCountryCode, zh, locale }: {
 // ── Wealth / Honor board ──────────────────────────────────────────────────────
 
 function WealthBoard({
-  users, myId, zh, locale, metricLabel, metricFn, badgeFn,
+  users, myId, zh, locale, cn, metricLabel, metricFn, badgeFn,
 }: {
   users: WealthUser[];
   myId: string | null;
   zh: boolean;
   locale: string;
+  cn: (code: string) => string;
   metricLabel: string;
   metricFn: (u: WealthUser) => string;
   badgeFn: (u: WealthUser) => { label: string; color: string; bg: string; icon: string };
@@ -334,8 +346,8 @@ function WealthBoard({
                       style={{ color: badge.color, backgroundColor: badge.bg }}>
                       {badge.icon} {badge.label}
                     </span>
-                    {localName(locale, u.countryCode) && (
-                      <span className="text-[10px] text-gray-600 truncate">{localName(locale, u.countryCode)}</span>
+                    {cn(u.countryCode) && (
+                      <span className="text-[10px] text-gray-600 truncate">{cn(u.countryCode)}</span>
                     )}
                   </div>
                 </div>
@@ -445,8 +457,9 @@ function WinBoard({ users, myId, zh, locale }: {
 
 // ── Invite board ──────────────────────────────────────────────────────────────
 
-function InviteBoard({ users, myId, zh, locale }: {
+function InviteBoard({ users, myId, zh, locale, cn }: {
   users: InviteUser[]; myId: string | null; zh: boolean; locale: string;
+  cn: (code: string) => string;
 }) {
   if (users.length === 0) return <EmptyState zh={zh} locale={locale} />;
 
@@ -496,7 +509,7 @@ function InviteBoard({ users, myId, zh, locale }: {
                     )}
                   </div>
                   <p className="text-[10px] text-gray-500 mt-0.5 truncate">
-                    {localName(locale, u.countryCode) || u.countryCode}
+                    {cn(u.countryCode) || u.countryCode}
                   </p>
                 </div>
               </div>
