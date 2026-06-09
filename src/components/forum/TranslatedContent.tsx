@@ -18,9 +18,10 @@ interface Props {
 /**
  * Forum post/reply content — auto-translated into the user's locale.
  *
- * Default view: translated content.
- * Button toggles between "原贴 / Original" and "翻译 / Translate".
- * If the post is already in the user's language, shows original directly.
+ * Default view: translated content (auto-fetched on mount).
+ * "原贴" button is always shown when content needs translation.
+ * Clicking "原贴" reveals the original language; button becomes "翻译".
+ * Clicking "翻译" returns to translated view; button becomes "原贴".
  */
 export default function TranslatedContent({
   originalHtml, cachedTranslations, defaultLang, type, id, zh,
@@ -80,10 +81,13 @@ export default function TranslatedContent({
     return <RichTextContent html={originalHtml} />;
   }
 
+  // Currently showing translated content?
+  const showingTranslation = !showOriginal && !!translated;
+
   return (
     <div className="space-y-3">
 
-      {/* ── Main content — translated by default ──────────────────────── */}
+      {/* ── Main content ──────────────────────────────────────────────── */}
       {showOriginal ? (
         <RichTextContent html={originalHtml} />
       ) : translated ? (
@@ -93,49 +97,61 @@ export default function TranslatedContent({
         <RichTextContent html={originalHtml} />
       )}
 
-      {/* ── Loading indicator ─────────────────────────────────────────── */}
-      {isLoading && !translated && (
-        <div className="flex items-center gap-2 py-1">
-          <div className="w-3 h-3 rounded-full border-2 border-[#1E3A5F] border-t-[#FFD700] animate-spin" />
-          <span className="text-xs text-gray-600 italic">
-            {lc(locale, "翻译中…", "Translating…")}
-          </span>
-        </div>
-      )}
+      {/* ── Translation control bar — always visible when translation needed ── */}
+      {!noProvider && (
+        <div className="flex items-center gap-2.5 pt-2 mt-1 border-t border-[#1E3A5F]/40 flex-wrap">
 
-      {/* ── Error + retry ─────────────────────────────────────────────── */}
-      {error && !isLoading && (
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-red-400/80">⚠ {error}</span>
-          <button
-            onClick={() => {
-              setError(null);
-              fetchedRef.current = false;
-            }}
-            className="text-xs text-[#FFD700] font-semibold hover:text-[#FFC200]"
-          >
-            {lc(locale, "重试", "Retry")}
-          </button>
-        </div>
-      )}
-
-      {/* ── Toggle button + AI disclaimer ─────────────────────────────── */}
-      {(translated || isLoading) && (
-        <div className="flex items-center gap-3 pt-1 border-t border-[#1E3A5F]/30">
-          {translated && (
+          {/* Loading state */}
+          {isLoading && !translated ? (
+            <div className="flex items-center gap-2 text-xs text-gray-500 px-1 py-1">
+              <div className="w-3.5 h-3.5 rounded-full border-2 border-[#1E3A5F] border-t-[#FFD700] animate-spin flex-shrink-0" />
+              <span className="italic">{lc(locale, "翻译中…", "Translating…")}</span>
+            </div>
+          ) : (
+            /* Toggle button */
             <button
-              onClick={() => setShowOriginal(!showOriginal)}
-              className="flex items-center gap-1 text-[11px] font-bold text-gray-500 hover:text-[#FFD700] transition-colors"
+              onClick={() => {
+                // If no translation loaded and not loading, allow re-trigger on next render
+                if (!showOriginal && !translated && !isLoading) {
+                  setError(null);
+                  fetchedRef.current = false;
+                }
+                setShowOriginal(v => !v);
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                showingTranslation
+                  // Showing translation → offer "原贴"
+                  ? "border-[#1E3A5F] text-[#7EB3E0] hover:text-white hover:border-[#2A5A8F] hover:bg-[#1E3A5F]/30"
+                  // Showing original → offer "翻译"
+                  : "border-[#FFD700]/30 text-[#FFD700]/80 hover:text-[#FFD700] hover:border-[#FFD700]/50 hover:bg-[#FFD700]/5"
+              }`}
             >
-              <span className="text-xs">🌐</span>
-              {showOriginal
-                ? lc(locale, "翻译", "Translate")
-                : lc(locale, "原贴", "Original")}
+              {showingTranslation
+                ? <>📄 {lc(locale, "原贴", "Original")}</>
+                : <>🌐 {lc(locale, "翻译", "Translate")}</>
+              }
             </button>
           )}
-          <span className="text-[9px] text-gray-700">
-            🤖 {lc(locale, "AI 机器翻译，仅供参考", "AI machine translation — for reference only")}
-          </span>
+
+          {/* AI disclaimer — only when viewing translation */}
+          {showingTranslation && !isLoading && (
+            <span className="text-[9px] text-gray-700 italic">
+              🤖 {lc(locale, "AI 翻译", "AI translated")}
+            </span>
+          )}
+
+          {/* Error + retry */}
+          {error && !isLoading && (
+            <span className="flex items-center gap-1.5">
+              <span className="text-[10px] text-red-400/70">⚠ {error}</span>
+              <button
+                onClick={() => { setError(null); fetchedRef.current = false; }}
+                className="text-[11px] text-[#FFD700]/70 hover:text-[#FFD700] font-semibold transition-colors"
+              >
+                {lc(locale, "重试", "Retry")}
+              </button>
+            </span>
+          )}
         </div>
       )}
     </div>

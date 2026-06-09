@@ -237,7 +237,7 @@ export default function PostActions({
     }
 
     const newPostHref = categorySlug
-      ? `/${locale}/forum/${categorySlug}/new`
+      ? `/${locale}/forum/new?cat=${categorySlug}`
       : `/${locale}/forum/new`;
 
     return (
@@ -422,7 +422,7 @@ export default function PostActions({
         {/* New Post */}
         {categorySlug && (
           <a
-            href={`/${locale}/forum/${categorySlug}/new`}
+            href={`/${locale}/forum/new?cat=${categorySlug}`}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-bold border border-transparent text-gray-500 hover:text-white hover:border-[#1E3A5F] transition-all"
           >
             📝 {lc(locale, "新帖", "New Post")}
