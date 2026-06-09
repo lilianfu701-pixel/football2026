@@ -3390,10 +3390,13 @@ function MobileTopupView({
   const [usdtPayAmount, setUsdtPayAmount] = useState<number | null>(null);
   const [usdtStatus, setUsdtStatus] = useState<"idle" | "pending" | "completed">("idle");
   const [copied, setCopied] = useState<"address" | "amount" | null>(null);
+  const [usdtMin, setUsdtMin] = useState<number>(1.99);
   const usdtPollRef = useRef<number | null>(null);
   const verifiedCheckoutRef = useRef<string | null>(null);
   const selected = TOPUP_PACKAGES.find((pkg) => pkg.id === selectedId) ?? null;
   const selectedTotal = selected ? getTopupPackageTotal(selected) : 0;
+  // true when the selected package's USDT price is below NOWPayments minimum
+  const usdtTooSmall = !!selected && selected.priceUsdt < usdtMin;
 
   // Paddle.js readiness (mirrors the desktop topup page). Card payments go through
   // Paddle — the same gateway the desktop site uses — not Stripe.
@@ -3434,6 +3437,22 @@ function MobileTopupView({
   useEffect(() => () => {
     if (usdtPollRef.current) window.clearInterval(usdtPollRef.current);
   }, []);
+
+  // Fetch the real NOWPayments minimum for USDT TRC-20 once on mount
+  useEffect(() => {
+    fetch("/api/topup/usdt-min")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d: { minAmount?: number } | null) => {
+        if (d && typeof d.minAmount === "number" && d.minAmount > 0) setUsdtMin(d.minAmount);
+      })
+      .catch(() => {});
+  }, []);
+
+  // If the selected package is below the minimum, silently switch back to card payment
+  useEffect(() => {
+    if (usdtTooSmall && payMethod === "usdt") setPayMethod("paddle");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usdtTooSmall]);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -3716,7 +3735,14 @@ function MobileTopupView({
         <div className="grid grid-cols-3 gap-1.5">
           <MobilePayMethodButton active={payMethod === "paddle"} icon={CreditCard} label={zh ? "银行卡" : "Card"} onClick={() => setPayMethod("paddle")} />
           <MobilePayMethodButton active={payMethod === "paypal"} icon={CircleDollarSign} label="PayPal" onClick={() => setPayMethod("paypal")} />
-          <MobilePayMethodButton active={payMethod === "usdt"} icon={Wallet} label="USDT" onClick={() => setPayMethod("usdt")} />
+          <MobilePayMethodButton
+            active={payMethod === "usdt"}
+            icon={Wallet}
+            label="USDT"
+            hint={usdtTooSmall ? (zh ? `最低 $${usdtMin.toFixed(2)}` : `Min $${usdtMin.toFixed(2)}`) : undefined}
+            disabled={usdtTooSmall}
+            onClick={() => setPayMethod("usdt")}
+          />
         </div>
 
         {selected && (
@@ -3913,23 +3939,33 @@ function MobilePayMethodButton({
   active,
   icon: Icon,
   label,
+  hint,
   onClick,
+  disabled,
 }: {
   active: boolean;
   icon: LucideIcon;
   label: string;
+  hint?: string;
   onClick: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
-      onClick={onClick}
-      className={`flex h-16 flex-col items-center justify-center gap-1 rounded-lg border text-[12px] font-black ${
-        active ? "border-[#FFD700]/70 bg-[#FFD700]/10 text-[#FFD700]" : "border-white/10 bg-white/[0.035] text-slate-300"
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      className={`flex h-16 flex-col items-center justify-center gap-0.5 rounded-lg border text-[12px] font-black ${
+        disabled
+          ? "cursor-not-allowed border-white/5 bg-white/[0.02] text-slate-600"
+          : active
+          ? "border-[#FFD700]/70 bg-[#FFD700]/10 text-[#FFD700]"
+          : "border-white/10 bg-white/[0.035] text-slate-300"
       }`}
     >
-      <Icon className="h-4 w-4" />
-      <span>{label}</span>
+      <Icon className={`h-4 w-4 ${disabled ? "opacity-40" : ""}`} />
+      <span className={disabled ? "opacity-40" : ""}>{label}</span>
+      {hint && <span className="mt-0.5 text-[9px] font-bold opacity-60">{hint}</span>}
     </button>
   );
 }

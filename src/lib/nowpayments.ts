@@ -73,6 +73,30 @@ export function verifyNowPaymentsSignature(
   }
 }
 
+/**
+ * Fetch the minimum payment amount (in USD) for USDT TRC-20 payments from NOWPayments.
+ * Returns a fallback of 1.99 if the key is missing or the request fails.
+ * The result is cached for 1 hour via Next.js `revalidate`.
+ */
+export async function getUsdtMinAmount(): Promise<number> {
+  const FALLBACK = 1.99;
+  const apiKey = process.env.NOWPAYMENTS_API_KEY;
+  if (!apiKey) return FALLBACK;
+  try {
+    const res = await fetch(
+      `${API_BASE}/min-amount?currency_from=usd&currency_to=usdttrc20`,
+      { headers: { "x-api-key": apiKey }, next: { revalidate: 3600 } },
+    );
+    if (!res.ok) return FALLBACK;
+    const data = await res.json() as { min_amount?: unknown };
+    return typeof data.min_amount === "number" && data.min_amount > 0
+      ? data.min_amount
+      : FALLBACK;
+  } catch {
+    return FALLBACK;
+  }
+}
+
 function deepSortJson(obj: unknown): unknown {
   if (Array.isArray(obj))   return obj.map(deepSortJson);
   if (obj !== null && typeof obj === "object") {
