@@ -1,7 +1,7 @@
 # Football2026 — CLAUDE.md
 
 > 项目说明文档，供 Claude Code 或新接手的开发者快速上手。
-> 最后更新：2026-06-08（当前会话）
+> 最后更新：2026-06-08（葡萄牙语本地化完成）
 >
 > **维护约定**：用户说"更新md" → Claude 更新此文件并 `git push origin main`。
 
@@ -229,9 +229,10 @@ lc(locale, "中文原文", "English string")
 | es 西班牙语 | ~80% | `content/es.json` 覆盖主要 UI |
 | fr 法语 | ~80% | `content/fr.json` 覆盖主要 UI |
 | de 德语 | ✅ 完整 | `content/de.json` + `messages/de.json` 全覆盖，国家名 Intl.DisplayNames |
-| pt/ru/ar/ja/ko/vi/id | 降级英文 | `content/<locale>.json` 尚未创建 |
+| pt 葡萄牙语 | ✅ 完整 | `content/pt.json` + `messages/pt.json` 全覆盖，巴西葡语，国家名 Intl.DisplayNames |
+| ru/ar/ja/ko/vi/id | 降级英文 | `content/<locale>.json` 尚未创建 |
 
-**添加新语言**：创建 `src/i18n/content/<locale>.json`（key = 英文原文，value = 译文；在 `content.ts` 的 `DICTS` 中注册）+ `messages/<locale>.json`（next-intl nav/auth/hero 字符串）。
+**添加新语言**：创建 `src/i18n/content/<locale>.json`（key = 英文原文，value = 译文；在 `content.ts` 的 `DICTS` 中注册）+ `messages/<locale>.json`（next-intl nav/auth/hero 字符串）。同时在 `profile/page.tsx` 的财富等级进度字符串和荣誉等级字符串中添加对应 locale 的本地化文案，并在日期格式化函数中补充 `toLocaleDateString` 的 locale 映射。
 
 **国家名本地化**：`src/lib/countries.ts` 提供 `toIntlLocale(locale)` 和 `getLocalizedCountryName(code, locale)` 工具函数，通过 `Intl.DisplayNames` 返回本地化国家名（已覆盖 de/fr/es/zh 等所有 12 个 locale）。注册页和设置页的国家下拉列表会自动显示目标语言的国家名。
 
@@ -336,7 +337,8 @@ lc(locale, "中文原文", "English string")
 ## 十一、当前进度 & 近期提交
 
 ```
-feat: complete German (de) localization across all pages  ← 最新
+feat: add Portuguese (pt) localization across all pages  ← 最新
+feat: complete German (de) localization across all pages
 63df9ce fix: stop desktop OAuth logins being hijacked to mobile site
 8b92e49 docs: add CLAUDE.md project onboarding guide
 704245b fix: repair desktop login/logout auth flow and header sync
@@ -363,7 +365,7 @@ a9fa4b2 fix: PayPal 按钮语言跟随站点 locale
    - 添加 `https://www.football2026.net/auth/callback`
    - 添加 `https://m.football2026.net/auth/callback`
 2. **ProfileCompletion.tsx 提交 + 补 es/fr/de 译文**：缺 "Favorite Team"、"Twitter / X"、"Telegram" 三条
-3. **pt/ru/ar/ja/ko/vi/id 翻译 JSON 文件**（当前这 7 语言均降级英文）
+3. **ru/ar/ja/ko/vi/id 翻译 JSON 文件**（当前这 6 语言均降级英文；pt 已完成）
 
 ---
 
