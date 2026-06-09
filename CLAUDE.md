@@ -1,7 +1,7 @@
 # Football2026 — CLAUDE.md
 
 > 项目说明文档，供 Claude Code 或新接手的开发者快速上手。
-> 最后更新：2026-06-08（日语本地化完成）
+> 最后更新：2026-06-08（韩语本地化完成）
 >
 > **维护约定**：用户说"更新md" → Claude 更新此文件并 `git push origin main`。
 
@@ -236,7 +236,8 @@ lc(locale, "中文原文", "English string")
 | ru 俄语 | ✅ 完整 | `content/ru.json` + `messages/ru.json` 全覆盖，专业俄语，国家名 Intl.DisplayNames |
 | ar 阿拉伯语 | ✅ 完整 | `content/ar.json` + `messages/ar.json` 全覆盖，RTL 自动支持，专业阿拉伯语 |
 | ja 日语 | ✅ 完整 | `content/ja.json` + `messages/ja.json` 全覆盖，专业日语，LTR |
-| ko/vi/id | 降级英文 | `content/<locale>.json` 尚未创建 |
+| ko 韩语 | ✅ 完整 | `content/ko.json` + `messages/ko.json` 全覆盖，专业韩语，LTR |
+| vi/id | 降级英文 | `content/<locale>.json` 尚未创建 |
 
 **添加新语言**：创建 `src/i18n/content/<locale>.json`（key = 英文原文，value = 译文；在 `content.ts` 的 `DICTS` 中注册）+ `messages/<locale>.json`（next-intl nav/auth/hero 字符串）。同时在 `profile/page.tsx` 的财富等级进度字符串和荣誉等级字符串中添加对应 locale 的本地化文案，并在日期格式化函数中补充 `toLocaleDateString` 的 locale 映射。
 
@@ -374,7 +375,7 @@ a9fa4b2 fix: PayPal 按钮语言跟随站点 locale
    - 添加 `https://www.football2026.net/auth/callback`
    - 添加 `https://m.football2026.net/auth/callback`
 2. **ProfileCompletion.tsx 提交 + 补 es/fr/de 译文**：缺 "Favorite Team"、"Twitter / X"、"Telegram" 三条
-3. **ko/vi/id 翻译 JSON 文件**（当前这 3 语言降级英文；pt/ru/ar/ja 已完成）
+3. **vi/id 翻译 JSON 文件**（当前这 2 语言降级英文；ko/pt/ru/ar/ja 已完成）
 
 ---
 
@@ -493,4 +494,4 @@ XUNHUPAY_APP_SECRET=
 
 ---
 
-*此文件由 Claude Code 维护，反映截至 2026-06-08 的项目真实状态（阿拉伯语本地化完成，RTL 全站支持）。*
+*此文件由 Claude Code 维护，反映截至 2026-06-08 的项目真实状态（韩语本地化完成；en/zh/de/pt/ru/ar/ja/ko 共 8 语言全覆盖）。*
