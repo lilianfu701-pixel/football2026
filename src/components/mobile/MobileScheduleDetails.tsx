@@ -9,7 +9,6 @@ import { calcScoreOdds, netPayout } from "@/lib/scoreOdds";
 import { getTeamColor } from "@/lib/teamColors";
 import type { MobileMatch } from "@/components/mobile/MobileHome";
 import { redirectToMobileLogin } from "@/components/mobile/mobileAuth";
-import { nextMobileVoteMapState, type MobileVoteMapState } from "@/components/mobile/mobileVoteMapSync";
 
 const MIN_BET = 10_000;
 const DEFAULT_AMOUNT = "10,000";
@@ -94,7 +93,6 @@ export default function MobileScheduleDetails({ locale, match, isLoggedIn, canPe
   const [data, setData] = useState<DetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [folds, setFolds] = useState<Record<FoldKey, boolean>>({ map: true, posts: false });
-  const [mapVoteState, setMapVoteState] = useState<MobileVoteMapState>({ vote: null, revision: 0 });
 
   useEffect(() => {
     let active = true;
@@ -108,24 +106,12 @@ export default function MobileScheduleDetails({ locale, match, isLoggedIn, canPe
     return () => { active = false; };
   }, [match.id]);
 
-  useEffect(() => {
-    if (!data) return;
-    setMapVoteState((current) => current.vote === data.myVote
-      ? current
-      : { vote: data.myVote, revision: current.revision + 1 });
-  }, [data]);
-
   function toggle(key: FoldKey) {
     setFolds((current) => ({ ...current, [key]: !current[key] }));
   }
 
-  function handleVoteSaved(vote: VoteChoice) {
-    setMapVoteState((current) => nextMobileVoteMapState(current, vote));
-  }
-
   return (
     <div className="grid gap-1.5 border-t border-[#FFD700]/20 bg-[#102f2a] p-1.5">
-      <SupportAndShare locale={locale} match={match} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} initialData={data} onVoteSaved={handleVoteSaved} />
       <WinBet locale={locale} match={match} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} existingBet={data?.existingBet ?? null} detailLoading={loading} />
       <ScoreBet locale={locale} match={match} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} initialBets={data?.scoreBets ?? []} />
       <FoldRow
@@ -135,7 +121,7 @@ export default function MobileScheduleDetails({ locale, match, isLoggedIn, canPe
         onToggle={() => toggle("map")}
       >
         <MatchFanSection
-          key={`${match.id}-${mapVoteState.revision}`}
+          key={String(match.id)}
           matchId={match.id}
           homeTeam={getTeamDisplayName(match.homeTeam, locale)}
           awayTeam={getTeamDisplayName(match.awayTeam, locale)}
@@ -144,7 +130,6 @@ export default function MobileScheduleDetails({ locale, match, isLoggedIn, canPe
           zh={locale === "zh"}
           loggedIn={isLoggedIn || canPersistActions}
           canPersistProps={canPersistActions}
-          userVote={mapVoteState.vote}
           showCurrentUserMarker
           mobileAudioUnlock
         />
