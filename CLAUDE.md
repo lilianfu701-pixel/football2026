@@ -1,7 +1,9 @@
 # Football2026 — CLAUDE.md
 
 > 项目说明文档，供 Claude Code 或新接手的开发者快速上手。
-> 最后更新：2026-06-10（locale 持久化 + 登录后语言修复；移动端投票、票改 bug 修复）
+> 最后更新：2026-06-10（移动端多语言本地化方法 + 西班牙语完成；Paddle 运行时 token；PWA scope 修复）
+>
+> **👉 接手移动端多语言开发的人：直接看 [§十五 移动端多语言本地化方法](#十五移动端多语言本地化方法sop)。**
 >
 > **维护约定**：用户说"更新md" → Claude 更新此文件并 `git push origin main`。
 
@@ -235,14 +237,16 @@ lc(locale, "中文原文", "English string")
 ```
 `content/<locale>.json` 以**英文字符串**作为 key，对应语言译文作为 value。
 
+> **移动端也用 `lc()`**（2026-06-10 起）。移动端历史上是 `locale === "zh" ? 中 : 英` 裸三元（非中文一律落英文），现已全部转成 `lc(locale, 中, 英)`，所以加任何语言只需补 `content/<locale>.json`。详见 [§十五 移动端多语言本地化方法](#十五移动端多语言本地化方法sop)。
+
 ### 当前翻译完成度
 
 | 语言 | 完成度 | 备注 |
 |---|---|---|
 | zh 中文 | ✅ 完整 | 原始语言 |
 | en 英文 | ✅ 完整 | 默认语言 |
-| es 西班牙语 | ~80% | `content/es.json` 覆盖主要 UI |
-| fr 法语 | ~80% | `content/fr.json` 覆盖主要 UI |
+| es 西班牙语 | ✅ 完整（桌面+移动） | `content/es.json` 1080 条；移动端全量本地化（2026-06-10） |
+| fr 法语 | ~80%（移动端待补） | `content/fr.json` 覆盖桌面主要 UI；移动端约 69 条待补（见 §十五） |
 | de 德语 | ✅ 完整 | `content/de.json` + `messages/de.json` 全覆盖，国家名 Intl.DisplayNames |
 | pt 葡萄牙语 | ✅ 完整 | `content/pt.json` + `messages/pt.json` 全覆盖，巴西葡语，国家名 Intl.DisplayNames |
 | ru 俄语 | ✅ 完整 | `content/ru.json` + `messages/ru.json` 全覆盖，专业俄语，国家名 Intl.DisplayNames |
@@ -360,28 +364,32 @@ lc(locale, "中文原文", "English string")
 
 ## 十一、当前进度 & 近期提交
 
+### 2026-06-10 本轮会话（移动端多语言 + 支付 + PWA）
+
 ```
-b490477 fix: persist locale preference and redirect root URL to saved language  ← 最新
-e2e054e fix: prevent geolocation callback from reverting a subsequent vote change
-225aac6 fix: show vote buttons inside fan section on mobile match detail
-fc37694 fix: resolve country names client-side to fix pt/ru/ar localization
-423417d feat: add Indonesian (id) localization
-43a0c6e feat: add Vietnamese (vi) localization across all pages
-5eb4ce6 feat: add Korean (ko) localization across all pages
-c644a5a feat: dynamic OG image per locale, mobile checkout, UI fixes
-63df9ce fix: stop desktop OAuth logins being hijacked to mobile site
-704245b fix: repair desktop login/logout auth flow and header sync
+04ff3f3 feat(mobile): localize the mobile site for Spanish (and all dict locales)  ← 最新
+ab2b637 fix(mobile): resolve Paddle token at runtime for card checkout
+f03776e fix(pwa): no-cache the web manifest so installed apps adopt the new scope
+8b4f30f fix(topup): read Paddle token via runtime env, defeating NEXT_PUBLIC inlining
+10ac5eb fix(pwa): keep installed app in standalone mode across language switches
+d6abd69 fix(mobile): persist locale choice so switching to English sticks
+1076bfb fix(topup): resolve Paddle client token at runtime, not build time
+7bb896c fix(mobile): polish awkward English copy in forum/settings
+b0d29a9 fix(mobile): gate forum auto-translate by needsTranslation, matching desktop
+b490477 fix: persist locale preference and redirect root URL to saved language
 ```
 
-### 未提交的工作（用户维护部分）
-- `src/components/mobile/**` — 用户持续开发中，多处未提交（**不要碰**）
-- `src/components/ProfileCompletion.tsx` — i18n 修改（zh → lc()）尚未提交（待用户决定）
+**本轮做了什么（按主题）：**
+1. **PC 语言识别/持久化**：语言切换写 `NEXT_LOCALE` cookie；proxy 在 `/` 按 cookie 跳转；登录后也保持所选语言（`Navbar.tsx`、`proxy.ts` `getRootLocaleRedirectResponse`）。
+2. **论坛翻译对齐桌面**：移动端论坛加 `needsTranslation` 判断——外语帖默认翻成 UI 语言、英文帖不显示翻译按钮、不浪费每天 50 次额度（`MobileHome.tsx`）。
+3. **Paddle 银行卡支付（PC + 移动端都修好）**：根因是 `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` 被 Next.js **构建时内联**成空值。改为运行时从 `/api/topup/paddle-config` 读取（该路由用**动态键名** `["NEXT","PUBLIC",…].join("_")` 绕过内联，读 Vercel 运行时注入的真实值）。**并且**该 env 之前被错误存在 Preview 环境 / 标了 Sensitive 存成空值——必须存到 **Production、不勾 Sensitive**。
+4. **移动端切换语言不掉出 App（PWA）**：manifest `scope` 从 `/${locale}/` 改成 `/`（覆盖所有语言路径）；切换器写 `NEXT_LOCALE` cookie + 带 `source=pwa`；manifest 加 `no-cache`。**已安装的 App 需重装一次**才能换到新 scope。
+5. **移动端西班牙语**：211 处 `locale === "zh" ? 中 : 英` 三元转成 `lc()`；`content/es.json` 补 89 条专业西语。顺带点亮所有 `content/<lang>.json` 已有词条。
 
 ### 已知待办
-1. **Supabase Redirect URLs 白名单**（必做，治本 OAuth 回调）
-   - 添加 `https://www.football2026.net/auth/callback`
-   - 添加 `https://m.football2026.net/auth/callback`
-2. **ProfileCompletion.tsx 提交 + 补 es/fr/de 译文**：缺 "Favorite Team"、"Twitter / X"、"Telegram" 三条
+1. **Supabase Redirect URLs 白名单**（必做，治本 OAuth 回调）：`https://www.football2026.net/auth/callback`、`https://m.football2026.net/auth/callback`
+2. **其余语言移动端补全**：fr/de/pt/ru/ar/ja/ko/vi/id 的移动端缺失词条（用 §十五 的脚本逐个语言补 `content/<lang>.json`）。fr 约 69 条待补。
+3. **移动端小遗留**：相对时间紧凑写法（"5m ago"）、"Weibo" 专有名词暂留英文；`m/login`、`m/register` 独立页未走 `lc()`（如需多语言要单独处理）。
 
 ---
 
@@ -390,10 +398,12 @@ c644a5a feat: dynamic OG image per locale, mobile checkout, UI fixes
 ### 🚫 绝对禁止
 | 禁止事项 | 原因 |
 |---|---|
-| 修改 `src/components/mobile/**` 任何文件 | 用户自维护，不接受 AI 修改 |
 | 创建 `src/middleware.ts` | 与 `src/proxy.ts` 冲突，Next.js 16 报错 |
 | 把 `localeDetection` 写到 `createIntlMiddleware()` 第二参数 | next-intl v4 只接受单参，配置应在 `defineRouting()` |
 | 提交 `.env`、Service Key、支付 API Key | 安全，绝对禁止 |
+| 在 Server Component 调 `Intl.DisplayNames`/`Intl.RelativeTimeFormat` 渲染国家名/相对时间 | Vercel small-icu 服务端只有英文，必须客户端渲染 |
+
+> **移动端政策（2026-06-10 更新）**：`src/components/mobile/**` **现在由开发者正常开发**（早期"用户自维护、勿动"的规则已作废）。开发移动端其他语言时，**按现有中文/英文移动端的逻辑来做，不是 bug 就不要改**；英文/西语等要用**地道专业的母语用词，不要从其他语言直译**。多语言方法见 §十五。
 
 ### ⚠️ 容易踩坑的地方
 
@@ -455,6 +465,29 @@ matcher: "/((?!api|auth/callback|_next|_vercel|.*\\..*).*)"
 - 修复：Navbar 语言切换器写入 `NEXT_LOCALE` cookie；proxy 在 `/` 请求时读取该 cookie 并 redirect 到对应语言
 - 修复文件：`src/components/Navbar.tsx`、`src/proxy.ts`（`getRootLocaleRedirectResponse`）
 
+**11. ⚠️ `NEXT_PUBLIC_*` 是构建时内联，不是运行时读取（Paddle token 血泪教训）**
+```typescript
+// ❌ 在任何代码里（含 Route Handler）这样写，Next.js 在 BUILD 时就把它替换成字面量；
+//    构建时 env 为空 → 永远是空字符串，事后在 Vercel 改值也没用（除非重新构建且构建时有值）
+const t = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? "";
+// ✅ 要真正读运行时值：服务端路由 + 动态键名绕过内联
+const key = ["NEXT","PUBLIC","PADDLE","CLIENT","TOKEN"].join("_");
+const t = process.env[key] || process.env.PADDLE_CLIENT_TOKEN || "";
+```
+- 客户端需要的"公开"值（如 Paddle client token）：做一个服务端路由（`/api/topup/paddle-config`）用动态键名读、返回给前端，前端运行时 fetch。
+- 自检：浏览器开 `https://www.football2026.net/api/topup/paddle-config`，看 `{"token":"live_…"}` 是否有值；`debug.paddleKeys`/`debug.vercelEnv` 能区分"值为空"还是"变量不在该环境"。
+- Vercel 配置：`NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` 必须存在 **Production**、**不要勾 Sensitive**（Sensitive 是只写的、编辑框永远空白，容易一保存就写成空值）；改完要**重新部署**才生效。
+
+**12. ⚠️ PWA manifest `scope` 必须是 `/`（移动端切换语言不掉出 App）**
+- `localePrefix: as-needed` 下移动端路径是 `/m`(英)、`/zh/m`、`/es/m`… 唯一公共祖先是 `/`。
+- manifest（`src/app/[locale]/manifest.webmanifest/route.ts`）的 `scope` 若是 `/${locale}/`，在装好的 App 里切到别的语言就跨出 scope → 掉回浏览器标签（出现地址栏）。**必须 `scope: "/"`**。
+- 已安装的 App 缓存旧 scope，改完**必须删掉重装一次**（manifest 已加 `no-cache` 帮助传播）。
+
+**13. 移动端切换语言要写 `NEXT_LOCALE` cookie（含英文也要写 `en`）**
+- `m.football2026.net` 的 `getPreferredLocale` 没 cookie 时回退浏览器 `Accept-Language`。点英文跳 `/m` 时，若不写 cookie，会被重定向回 `/zh/m`（中文浏览器）。
+- 切换器/设置页切语言时 `document.cookie = "NEXT_LOCALE=<code>; path=/; max-age=…"`；英文要**显式写 `en`**（不能清空），否则又回退 Accept-Language。
+- 相关文件：`src/components/locale-switcher/MobileLocaleSwitcher.tsx`、`MobileHome.tsx` 设置页语言行。
+
 ---
 
 ## 十三、移动端架构说明
@@ -466,12 +499,20 @@ Mobile UA 访问 www.football2026.net  →  proxy redirect  →  m.football2026.
 m.football2026.net/[locale]          →  proxy rewrite   →  /[locale]/m（MobileHome 页面）
 ```
 
-**移动端独立路由**（用户自维护）：
+**移动端独立路由**：
 ```
-/[locale]/m/         →  src/app/[locale]/m/page.tsx        (MobileHome)
+/[locale]/m/         →  src/app/[locale]/m/page.tsx        (服务端取数 → 渲染 MobileHome)
 /[locale]/m/login/   →  src/app/[locale]/m/login/page.tsx
 /[locale]/m/register →  src/app/[locale]/m/register/page.tsx
 ```
+
+**移动端"页面"如何组织（重要，开发前必读）：**
+- 整个移动端 App 是**一个大组件** `src/components/mobile/MobileHome.tsx`（5000+ 行），用 **`?view=` query 切换"页面"**（home/matches/predict/forum/mine/topup/invite/settings…），不是多个路由。
+- `src/app/[locale]/m/page.tsx` 是 Server Component：用 `unstable_cache` 拉公共数据（赛程/论坛/射手榜，30s 缓存）+ 用户数据，转成 props 传给 `<MobileHome>`，并渲染 `<MobileLocaleSwitcher>`（右下角浮动语言切换器）。
+- 赛事详情：`MobileScheduleDetails.tsx`（内嵌投票/预测/球迷地图/赛事帖子）。
+- 安装引导：`MobileInstallPrompt.tsx`（12 语言 + 英文步骤图）。SW 注册：`MobilePwaRegister.tsx`。
+- App 模式判定：`MobileHome` 用 `display-mode: standalone` / `?source=pwa` / `?view=` / `navigator.standalone` 判断 `isAppMode`，决定渲染"App 样式"还是"浏览器样式"（见 §十二 踩坑 12）。
+- 文案 i18n：**用 `lc(locale, 中, 英)`**（2026-06-10 起），加语言只需补 `content/<locale>.json`（见 §十五）。
 
 **桌面/移动端 auth 对比**：
 | | 桌面 | 移动 |
@@ -496,6 +537,8 @@ RESEND_API_KEY=
 
 # 支付
 PADDLE_API_KEY=                    # ⚠️ 历史上曾在聊天中泄露，确认已在 Paddle 后台 Revoke 并重新生成
+NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=   # Paddle 后台 Developer Tools → Authentication → Client-side token（live_ 开头）
+                                   # ⚠️ 必须存 Production、不勾 Sensitive；客户端通过 /api/topup/paddle-config 运行时读取（见 §十二.11）
 PADDLE_WEBHOOK_SECRET=
 PAYPAL_CLIENT_ID=
 PAYPAL_CLIENT_SECRET=
@@ -511,4 +554,79 @@ XUNHUPAY_APP_SECRET=
 
 ---
 
-*此文件由 Claude Code 维护，反映截至 2026-06-10 的项目真实状态（locale 持久化 + 登录后语言修复，移动端投票 bug 修复；en/zh/de/pt/ru/ar/ja/ko/vi/id 共 10 语言全覆盖）。*
+## 十五、移动端多语言本地化方法（SOP）
+
+> 给"用另一个账号继续开发移动端其他语言"的人。**照这个流程做任意语言（fr/de/pt/ru/ar/ja/ko/vi/id）。**
+
+### 核心原理（一定先理解）
+
+移动端所有 UI 文案现在都走 **`lc(locale, "中文", "English")`**（`src/i18n/content.ts`）：
+- `zh` → 返回中文，`en` → 返回英文，其他语言 → 查 `src/i18n/content/<locale>.json[英文]`，缺失则回退英文。
+- **所以加一个语言 = 往 `content/<locale>.json` 补"英文 key → 该语言译文"。不用改组件代码。**
+- 论坛正文翻译、PWA App 模式都是 **locale 通用**的，加语言**不需要**单独处理（见下方"自动生效"）。
+
+### 前置条件（12 语言已就绪，新增"第 13 种语言"才需要）
+
+- 该 locale 已在 `src/i18n/routing.ts` 的 `locales` 数组里（当前 12 个都在）。
+- `src/i18n/content/<locale>.json` 存在且在 `content.ts` 的 `DICTS` 注册（当前 12 个都在）。
+- `MobileLocaleSwitcher.tsx` 的 `LOCALES` 列表含该语言（当前 12 个都在）。
+
+### 工具脚本（已提交在 `scripts/`）
+
+```bash
+# 1) 把某文件里还没转的 `locale === "zh" ? 中 : 英` 三元转成 lc()（一般已转完，新增文件才用）
+node scripts/mobile-i18n-codemod.mjs src/components/mobile/MobileHome.tsx
+
+# 2) 找出某文件里、某语言还缺哪些翻译 key（核心工具）
+node scripts/mobile-i18n-gaps.mjs src/components/mobile/MobileHome.tsx fr
+node scripts/mobile-i18n-gaps.mjs src/components/mobile/MobileScheduleDetails.tsx fr
+# 输出形如：  "Featured Matches": "",   → 复制到 content/fr.json，填上专业法语
+```
+
+### 操作步骤（以法语 fr 为例）
+
+1. **跑 gaps** 找出两个移动端主文件缺的 key：
+   ```bash
+   node scripts/mobile-i18n-gaps.mjs src/components/mobile/MobileHome.tsx fr
+   node scripts/mobile-i18n-gaps.mjs src/components/mobile/MobileScheduleDetails.tsx fr
+   ```
+2. **补 `content/fr.json`**：把输出的 key 加进去，value 填**地道专业的法语网络用词**（足球/预测/论坛语境），**不要英→法直译、不要机翻腔**。
+   - 保持原有键顺序，新键追加到末尾即可（`lc` 按 key 查找，顺序无所谓）。
+   - 必须是合法 JSON（注意逗号、引号；German 书名号坑见 §十二.4）。可用：
+     ```bash
+     node -e "JSON.parse(require('fs').readFileSync('src/i18n/content/fr.json','utf8'));console.log('OK')"
+     ```
+3. **验证**：`npx tsc --noEmit` + `pnpm build` 必须通过。
+4. **再跑一次 gaps** 确认 `missing=0`（只剩专有名词如 "Weibo" 可忽略）。
+5. **提交推送**：只提交 `content/<locale>.json`（组件代码不需要动）。`git push origin main` → Vercel 自动部署。
+6. **测试**：移动端右下角语言切换器选该语言（或访问 `m.football2026.net/<locale>/m`）。
+
+### 自动生效（加语言时不用做，但要"确认到位"）
+
+- **论坛翻译成该语言**：外语帖在该语言站打开会自动翻成该语言（`needsTranslation` + `/api/forum/translate`，DeepL/Google 支持），论坛按钮显示该语言的 "Original/Translate"（来自 `content/<locale>.json` 的 "Original"/"Translate" key——确认这两个 key 有翻译）。
+- **切换语言不掉出 App**：manifest `scope:"/"` + 切换器写 `NEXT_LOCALE` cookie + `source=pwa`（locale 通用）。**已装的 App 要重装一次**才换到新 scope（见 §十二.12）。
+
+### 注意事项（务必遵守）
+
+- **专业母语，不直译**：英文用地道英文网络词，西/法/德等用各自母语习惯表达。宁可保留英文 fallback，也不要塞机翻。
+- **不是 bug 不要改**：移动端布局/逻辑按现有中文版来，只补文案，别"顺手优化"。
+- **改英文原文要同步**：`lc()` 的 key 是英文字符串本身；改了某处英文文案，要同步改所有 `content/<locale>.json` 里那个 key（否则其他语言查不到、回退英文）。
+- **模板字符串/相对时间**：`\`${x}分钟前\` : \`${x}m ago\`` 这类**不会**被 codemod 转（key 是动态的），目前对非 zh 显示英文紧凑写法（"5m ago"），属已知小遗留，要做需手写 per-locale 分支或用 `Intl.RelativeTimeFormat`（注意 §十二 的 small-icu：客户端可用、服务端只英文）。
+- **验证三件套**：`tsc` + `pnpm build` + gaps `missing=0`。改用户面文件后务必本地 `pnpm build` 过了再推（构建挂了 Vercel 不会部署）。
+
+### 完成度速查
+
+| 文件 | 已转 lc() | 说明 |
+|---|---|---|
+| `MobileHome.tsx` | ✅ 164 处 | 移动端主体（所有 view） |
+| `MobileScheduleDetails.tsx` | ✅ 47 处 | 赛事详情 |
+| `m/login`、`m/register` | ❌ 未转 | 独立登录/注册页，仍是 zh/en，多语言要另做 |
+
+| 语言 | 移动端文案 |
+|---|---|
+| es 西语 | ✅ 完成（本轮，`content/es.json` 1080 条）|
+| fr/de/pt/ru/ar/ja/ko/vi/id | ⏳ 待补（桌面词典已有部分覆盖，移动端缺口用 gaps 脚本逐个补）|
+
+---
+
+*此文件由 Claude Code 维护，反映截至 2026-06-10 的项目真实状态（移动端多语言本地化方法落地 + 西班牙语移动端完成；Paddle 运行时 token 修复；PWA scope 修复；en/zh/de/pt/ru/ar/ja/ko/vi/id/es 共 11 语言桌面覆盖，移动端 zh/en/es 完成、余者待补）。*
