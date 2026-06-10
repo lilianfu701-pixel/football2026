@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { lc } from "@/i18n/content";
 import { useLocale } from "next-intl";
+import { getFlagUrl, getTeamDisplayName } from "@/lib/flags";
+import ShareButtons from "@/components/forum/ShareButtons";
 
 const GEO_URL = "/countries-110m.json";
 
@@ -90,9 +92,10 @@ interface CountryVote {
   home: number; neutral: number; away: number; total: number;
 }
 interface VoterDot {
-  coords: [number, number];
-  side: "home" | "away";
-  country: string;
+  coords:    [number, number];
+  side:      "home" | "away";
+  country:   string;
+  isPrecise?: boolean;   // true = real lat/lng, false = country-centroid jitter
 }
 interface TooltipState {
   x: number; y: number;
@@ -146,6 +149,8 @@ interface Props {
   userVote?:  "home" | "neutral" | "away" | null;
   showCurrentUserMarker?: boolean;
   mobileAudioUnlock?: boolean;
+  /** Server-rendered initial vote counts — seeds the vote buttons before the first API reload */
+  initialVotes?: { home: number; neutral: number; away: number };
 }
 
 const MAX_DOTS_PER_COUNTRY = 60;
@@ -602,8 +607,13 @@ async function playPropSound(type: PropType, volume = 0.85): Promise<void> {
   }
 }
 
+// Append 2-digit hex opacity to a 6-digit hex color: hexOp("#FF0000", 0.15) → "#FF000026"
+function hexOp(hex: string, alpha: number): string {
+  return hex + Math.round(alpha * 255).toString(16).padStart(2, "0");
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
-export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColors, awayColors, zh, loggedIn, canPersistProps = true, userVote, showCurrentUserMarker = false, mobileAudioUnlock = false }: Props) {
+export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColors, awayColors, zh, loggedIn, canPersistProps = true, userVote, showCurrentUserMarker = false, mobileAudioUnlock = false, initialVotes }: Props) {
   const locale = useLocale();
   const [dots,      setDots]      = useState<VoterDot[]>([]);
   const [totals,    setTotals]    = useState({ home: 0, neutral: 0, away: 0 });
@@ -634,6 +644,10 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
   const [cooldownLeft,  setCooldownLeft]  = useState(0);   // seconds remaining
   const [soundOn,       setSoundOn]       = useState(true);
   const soundOnRef    = useRef(true);   // stable ref so the realtime callback reads latest value
+
+  // ── Vote section state ────────────────────────────────────────────────────
+  const [voting,   setVoting]   = useState(false);
+  const [voteData, setVoteData] = useState(initialVotes ?? { home: 0, neutral: 0, away: 0 });
 
   const FIREWORK_COOLDOWN = 10; // seconds between launches
 
@@ -690,24 +704,100 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
     fetch(`/api/match-votes-by-country?match_id=${matchId}`)
       .then((r) => r.json())
       .then((d) => {
-        const allDots: VoterDot[] = [];
+        // ── Precise dots: fans who shared their geolocation ──────────────────
+        interface PreciseDotRaw { vote: "home" | "away"; lat: number; lng: number; country_code: string; }
+        const preciseDots: VoterDot[] = ((d.dots ?? []) as PreciseDotRaw[]).map((r) => ({
+          coords:    [r.lng, r.lat] as [number, number],
+          side:      r.vote,
+          country:   r.country_code,
+          isPrecise: true,
+        }));
+        // Track how many precise dots exist per country+side (avoid double-counting)
+        const preciseByCountry = new Map<string, { home: number; away: number }>();
+        for (const dot of preciseDots) {
+          const t = preciseByCountry.get(dot.country) ?? { home: 0, away: 0 };
+          t[dot.side as "home" | "away"]++;
+          preciseByCountry.set(dot.country, t);
+        }
+        // ── Jittered dots: remaining fans without precise coordinates ─────────
+        const jitteredDots: VoterDot[] = [];
         for (const cv of (d.countries ?? []) as CountryVote[]) {
           const centroid = centroidMap.get(cv.country_code);
           if (!centroid) continue;
-          const homeCap = Math.min(cv.home, MAX_DOTS_PER_COUNTRY);
-          const awayCap = Math.min(cv.away, MAX_DOTS_PER_COUNTRY);
+          const pc = preciseByCountry.get(cv.country_code) ?? { home: 0, away: 0 };
+          const homeCap = Math.min(Math.max(0, cv.home - pc.home), MAX_DOTS_PER_COUNTRY);
+          const awayCap = Math.min(Math.max(0, cv.away - pc.away), MAX_DOTS_PER_COUNTRY);
           const totalForSpread = cv.home + cv.away;
           for (let i = 0; i < homeCap; i++)
-            allDots.push({ coords: jitteredCoords(centroid.lng, centroid.lat, cv.country_code + "H", i, totalForSpread), side: "home",  country: cv.country_code });
+            jitteredDots.push({ coords: jitteredCoords(centroid.lng, centroid.lat, cv.country_code + "H", i, totalForSpread), side: "home",  country: cv.country_code });
           for (let i = 0; i < awayCap; i++)
-            allDots.push({ coords: jitteredCoords(centroid.lng, centroid.lat, cv.country_code + "A", i, totalForSpread), side: "away",  country: cv.country_code });
+            jitteredDots.push({ coords: jitteredCoords(centroid.lng, centroid.lat, cv.country_code + "A", i, totalForSpread), side: "away",  country: cv.country_code });
         }
-        setDots(allDots);
-        setTotals(d.totals ?? { home: 0, neutral: 0, away: 0 });
+        setDots([...preciseDots, ...jitteredDots]);
+        const t = d.totals ?? { home: 0, neutral: 0, away: 0 };
+        setTotals(t);
+        setVoteData(t);
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, [matchId]);
+
+  // ── Vote handler — also triggers geolocation prompt on the first team vote ─
+  async function handleVote(vote: "home" | "neutral" | "away") {
+    if (!effectiveLoggedIn || voting) return;
+    setVoting(true);
+
+    const oldVote     = effectiveUserVote;
+    const isFirstVote = oldVote === null;
+
+    // Optimistic update
+    const newVoteData = { ...voteData };
+    if (oldVote && oldVote !== vote && oldVote in newVoteData) {
+      newVoteData[oldVote as keyof typeof newVoteData]--;
+    }
+    if (oldVote !== vote) newVoteData[vote]++;
+    setVoteData(newVoteData);
+    setClientVote(vote);
+
+    try {
+      const res = await fetch("/api/match-vote", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ match_id: matchId, vote }),
+      });
+      if (!res.ok) {
+        // Revert optimistic update
+        setVoteData(voteData);
+        setClientVote(oldVote);
+        return;
+      }
+      // Let the map reload (picked up by the match-vote-changed listener below)
+      window.dispatchEvent(new CustomEvent("match-vote-changed", { detail: { matchId, vote } }));
+
+      // On the very first team vote, prompt for precise location once
+      if (isFirstVote && vote !== "neutral" &&
+          typeof navigator !== "undefined" && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async ({ coords }) => {
+            // Store precise lat/lng alongside the already-saved vote
+            await fetch("/api/match-vote", {
+              method:  "POST",
+              headers: { "Content-Type": "application/json" },
+              body:    JSON.stringify({ match_id: matchId, vote, lat: coords.latitude, lng: coords.longitude }),
+            });
+            loadCountryVotes(); // refresh map to show the precise dot immediately
+          },
+          () => { /* location denied — vote is already saved without coords */ },
+          { enableHighAccuracy: true, timeout: 10_000, maximumAge: 0 },
+        );
+      }
+    } catch {
+      setVoteData(voteData);
+      setClientVote(oldVote);
+    } finally {
+      setVoting(false);
+    }
+  }
 
   useEffect(() => { loadCountryVotes(); }, [loadCountryVotes]);
 
@@ -900,6 +990,8 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
 
   const mapTotal     = totals.home + totals.away;
   const countryCount = new Set(dots.map((d) => d.country)).size;
+  const voteTotal    = voteData.home + voteData.neutral + voteData.away;
+  const votePct      = (n: number) => voteTotal > 0 ? Math.round((n / voteTotal) * 100) : 0;
 
   function handleDotEnter(e: React.MouseEvent<SVGCircleElement>, dot: VoterDot) {
     const rect = (e.currentTarget.closest("[data-map]") as HTMLElement)?.getBoundingClientRect();
@@ -919,6 +1011,93 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
   return (
     <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden mb-4">
       <div className="px-5 pt-4 pb-5">
+
+        {/* ── Fan Support Vote ──────────────────────────────────────────────── */}
+        <div className="mb-4 pb-4 border-b border-[#1E3A5F]/60">
+          <p className="text-xs font-bold text-gray-400 mb-2.5 text-center">
+            {zh
+              ? `⚡ 你支持谁？${voteTotal > 0 ? ` · ${voteTotal} 人投票` : ""}`
+              : `⚡ Who do you support?${voteTotal > 0 ? ` · ${voteTotal} votes` : ""}`}
+          </p>
+          <div className="flex gap-2">
+            {/* Home */}
+            <button
+              onClick={() => handleVote("home")}
+              disabled={!effectiveLoggedIn || voting}
+              className="flex-1 py-1.5 rounded-xl text-xs font-bold border transition-all disabled:opacity-50"
+              style={effectiveUserVote === "home" ? {
+                backgroundColor: hexOp(homeColors.primary, 0.15),
+                borderColor:     hexOp(homeColors.primary, 0.65),
+                color:           homeColors.primary,
+              } : { backgroundColor: "#0A1628", borderColor: "#1E3A5F", color: "#9CA3AF" }}
+            >
+              <div className="flex justify-center mb-0.5">
+                <img src={getFlagUrl(homeTeam, 40)} alt={homeTeam} className="w-6 h-4 object-cover rounded-[2px]" />
+              </div>
+              <div>{zh ? `支持${getTeamDisplayName(homeTeam, "zh")}` : getTeamDisplayName(homeTeam, locale)}</div>
+              {voteTotal > 0 && (
+                <div className="mt-1">
+                  <div className="h-1 bg-[#1E3A5F] rounded-full overflow-hidden mx-4">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${votePct(voteData.home)}%`, backgroundColor: homeColors.primary }} />
+                  </div>
+                  <span className="text-[10px] text-gray-500 mt-0.5 block">{voteData.home} ({votePct(voteData.home)}%)</span>
+                </div>
+              )}
+            </button>
+
+            {/* Neutral */}
+            <button
+              onClick={() => handleVote("neutral")}
+              disabled={!effectiveLoggedIn || voting}
+              className={`flex-[0.7] py-1.5 rounded-xl text-xs font-bold border transition-all disabled:opacity-50 ${
+                effectiveUserVote === "neutral"
+                  ? "bg-blue-500/15 border-blue-500/40 text-blue-400"
+                  : "bg-[#0A1628] border-[#1E3A5F] text-gray-400"
+              }`}
+            >
+              <div className="text-base leading-none mb-0.5">🤝</div>
+              <div>{lc(locale, "中立", "Neutral")}</div>
+              {voteTotal > 0 && (
+                <div className="mt-1">
+                  <div className="h-1 bg-[#1E3A5F] rounded-full overflow-hidden mx-3">
+                    <div className="h-full bg-blue-400 rounded-full transition-all" style={{ width: `${votePct(voteData.neutral)}%` }} />
+                  </div>
+                  <span className="text-[10px] text-gray-500 mt-0.5 block">{voteData.neutral} ({votePct(voteData.neutral)}%)</span>
+                </div>
+              )}
+            </button>
+
+            {/* Away */}
+            <button
+              onClick={() => handleVote("away")}
+              disabled={!effectiveLoggedIn || voting}
+              className="flex-1 py-1.5 rounded-xl text-xs font-bold border transition-all disabled:opacity-50"
+              style={effectiveUserVote === "away" ? {
+                backgroundColor: hexOp(awayColors.primary, 0.15),
+                borderColor:     hexOp(awayColors.primary, 0.65),
+                color:           awayColors.primary,
+              } : { backgroundColor: "#0A1628", borderColor: "#1E3A5F", color: "#9CA3AF" }}
+            >
+              <div className="flex justify-center mb-0.5">
+                <img src={getFlagUrl(awayTeam, 40)} alt={awayTeam} className="w-6 h-4 object-cover rounded-[2px]" />
+              </div>
+              <div>{zh ? `支持${getTeamDisplayName(awayTeam, "zh")}` : getTeamDisplayName(awayTeam, locale)}</div>
+              {voteTotal > 0 && (
+                <div className="mt-1">
+                  <div className="h-1 bg-[#1E3A5F] rounded-full overflow-hidden mx-4">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${votePct(voteData.away)}%`, backgroundColor: awayColors.primary }} />
+                  </div>
+                  <span className="text-[10px] text-gray-500 mt-0.5 block">{voteData.away} ({votePct(voteData.away)}%)</span>
+                </div>
+              )}
+            </button>
+          </div>
+          {!effectiveLoggedIn && (
+            <p className="text-[10px] text-gray-600 text-center mt-1.5">
+              {lc(locale, "登录后参与投票", "Login to vote")}
+            </p>
+          )}
+        </div>
 
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
@@ -1502,7 +1681,7 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
             <div className="mb-2.5 flex items-center gap-2 bg-[#1A2D4A] border border-[#FFD700]/20 rounded-xl px-3 py-2">
               <span className="text-sm shrink-0">⚠️</span>
               <p className="text-[11px] text-[#FFD700]/80 leading-snug">
-                {lc(locale, "道具仅限支持某一方的球迷使用，请先在下方选择支持队伍", "Props are for fans who support a team. Please vote for a side below.")}
+                {lc(locale, "道具仅限支持某一方的球迷使用，请先在上方选择支持队伍", "Props are for fans who support a team. Please vote for a side above.")}
               </p>
             </div>
           )}
@@ -1562,6 +1741,24 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
               {lc(locale, "登录后可使用道具", "Login to use props")}
             </p>
           )}
+        </div>
+
+        {/* ── Share & Earn GC ───────────────────────────────────────────────── */}
+        <div className="mt-4 pt-3.5 border-t border-[#1E3A5F]/60">
+          <div className="mb-2.5">
+            <h4 className="text-sm font-bold text-gray-200">
+              📣 {lc(locale, "分享赛事 · 赢取 GoalCoin", "Share & Earn GoalCoin")}
+            </h4>
+            <p className="text-[11px] text-gray-500 mt-0.5">
+              {lc(locale, "每次分享最高可获 1M GC 奖励", "Earn up to 1M GC for every share")}
+            </p>
+          </div>
+          <ShareButtons
+            title={`${getTeamDisplayName(homeTeam, "en")} vs ${getTeamDisplayName(awayTeam, "en")}`}
+            locale={locale}
+            zh={zh}
+            username={null}
+          />
         </div>
 
       </div>

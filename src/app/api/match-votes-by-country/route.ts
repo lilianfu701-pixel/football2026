@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   // Fetch all votes for this match, join users to get country_code
   const { data, error } = await supabase
     .from("match_votes")
-    .select("vote, users!inner(country_code)")
+    .select("vote, lat, lng, users!inner(country_code)")
     .eq("match_id", match_id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   // Aggregate by country_code + vote
   const countryVotes: Record<string, { home: number; neutral: number; away: number }> = {};
 
-  for (const row of (data ?? []) as { vote: string; users: { country_code: string | null } | { country_code: string | null }[] }[]) {
+  for (const row of (data ?? []) as { vote: string; lat: number | null; lng: number | null; users: { country_code: string | null } | { country_code: string | null }[] }[]) {
     const u = Array.isArray(row.users) ? row.users[0] : row.users;
     const code = u?.country_code ?? "XX";
     if (!countryVotes[code]) countryVotes[code] = { home: 0, neutral: 0, away: 0 };
@@ -52,5 +52,22 @@ export async function GET(req: NextRequest) {
     { home: 0, neutral: 0, away: 0 }
   );
 
-  return NextResponse.json({ countries: result, totals });
+  // Precise dots: fans who shared their geolocation (lat/lng both present)
+  interface PreciseDotRow {
+    vote: string; lat: number; lng: number;
+    users: { country_code: string | null } | { country_code: string | null }[];
+  }
+  const dots = ((data ?? []) as unknown as PreciseDotRow[])
+    .filter((r) => (r.vote === "home" || r.vote === "away") && r.lat != null && r.lng != null)
+    .map((r) => {
+      const u = Array.isArray(r.users) ? r.users[0] : r.users;
+      return {
+        vote:         r.vote as "home" | "away",
+        lat:          r.lat,
+        lng:          r.lng,
+        country_code: u?.country_code ?? "XX",
+      };
+    });
+
+  return NextResponse.json({ countries: result, totals, dots });
 }

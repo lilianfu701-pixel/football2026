@@ -73,6 +73,8 @@ interface Props {
   awayColors?: TeamColors;
   /** When true, renders without its own card wrapper — for embedding inside another card */
   embedded?:  boolean;
+  /** Hide the fan-support vote section (vote is rendered in a sibling component instead) */
+  hideVote?:  boolean;
 }
 
 // Append 2-digit hex opacity to a 6-digit hex color: hexOp("#FF0000", 0.15) → "#FF000026"
@@ -88,7 +90,7 @@ export default function MatchHero({
   groupName, venue, city, kickoff,
   homeScore, awayScore, status,
   votes: initialVotes, myVote: initialMyVote,
-  loggedIn, zh, embedded = false,
+  loggedIn, zh, embedded = false, hideVote = false,
   homeColors: hc = DEFAULT_HOME,
   awayColors: ac = DEFAULT_AWAY,
 }: Props) {
@@ -235,6 +237,7 @@ export default function MatchHero({
       </div>
 
       {/* ── Fan Support Vote ── */}
+      {!hideVote && (
       <div className="border-t border-[#1E3A5F] px-5 pt-2 pb-2">
         <p className="text-xs font-bold text-gray-400 mb-2 text-center">
           {zh ? `⚡ 你支持谁？${total > 0 ? ` · ${total} 人投票` : ""}` : `⚡ Who do you support?${total > 0 ? ` · ${total} votes` : ""}`}
@@ -326,6 +329,7 @@ export default function MatchHero({
           </p>
         )}
       </div>
+      )}
     </>
   );
 

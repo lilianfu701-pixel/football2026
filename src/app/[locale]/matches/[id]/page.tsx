@@ -297,10 +297,112 @@ export default async function MatchPage({ params }: MatchPageProps) {
               homeColors={homeColors}
               awayColors={awayColors}
               embedded
+              hideVote
             />
 
+            {/* ── H2H (inline — no separate card wrapper) ──────────────────── */}
+            {(() => {
+              const homeNameZh = getTeamDisplayName(match.home_team, locale);
+              const awayNameZh = getTeamDisplayName(match.away_team, locale);
+
+              function tourZh(t: string): string {
+                if (!zh || !t) return t;
+                const s = t.toLowerCase();
+                if (s.includes("world cup qual")) return "世界杯预选赛";
+                if (s.includes("world cup")) return "世界杯";
+                if (s.includes("friendly")) return "友谊赛";
+                if (s.includes("euro")) return "欧洲杯";
+                if (s.includes("copa am")) return "美洲杯";
+                if (s.includes("africa cup") || s.includes("afcon")) return "非洲杯";
+                if (s.includes("asian cup")) return "亚洲杯";
+                if (s.includes("gold cup")) return "金杯赛";
+                if (s.includes("nations league")) return "国家联赛";
+                if (s.includes("nations cup")) return "国家杯";
+                if (s.includes("olympic")) return "奥运会";
+                if (s.includes("confed")) return "联合会杯";
+                if (s.includes("qual")) return "预选赛";
+                return t;
+              }
+
+              return (
+                <div className="mt-3 border-t border-[#1E3A5F]">
+
+                  {/* Header row */}
+                  <div className="grid grid-cols-[2fr_3fr_3fr] gap-x-2 items-center px-4 py-2 border-b border-[#1E3A5F]">
+                    <span className="text-sm font-bold text-gray-200">⚔️ {lc(locale, "交战历史", "Head to Head")}</span>
+                    <div className="flex items-center justify-center gap-1.5">
+                      {!isTBD(match.home_team) && (
+                        <div className="w-7 h-[18px] relative overflow-hidden rounded-sm shadow shrink-0">
+                          <Image src={getFlagUrl(match.home_team, 40)} alt={match.home_team} fill className="object-cover" unoptimized />
+                        </div>
+                      )}
+                      <span className="text-xs font-bold text-[#FFD700] leading-none">{homeNameZh}</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-1.5">
+                      {!isTBD(match.away_team) && (
+                        <div className="w-7 h-[18px] relative overflow-hidden rounded-sm shadow shrink-0">
+                          <Image src={getFlagUrl(match.away_team, 40)} alt={match.away_team} fill className="object-cover" unoptimized />
+                        </div>
+                      )}
+                      <span className="text-xs font-bold text-purple-400 leading-none">{awayNameZh}</span>
+                    </div>
+                  </div>
+
+                  {/* Data rows */}
+                  {h2hMatches.length > 0 ? (
+                    <>
+                      {h2hMatches.map((m) => {
+                        const isForward  = m.home_team === match.home_team;
+                        const leftScore  = isForward ? m.home_score : m.away_score;
+                        const rightScore = isForward ? m.away_score : m.home_score;
+                        const leftWon    = leftScore > rightScore;
+                        const rightWon   = rightScore > leftScore;
+                        const yr         = m.match_date.slice(0, 4);
+                        return (
+                          <div
+                            key={`${m.match_date}-${m.home_team}-${m.away_team}`}
+                            className="grid grid-cols-[2fr_3fr_3fr] gap-x-2 items-center px-4 py-2 border-b border-[#1E3A5F]/30 last:border-0"
+                          >
+                            <div className="flex items-baseline gap-1.5 min-w-0">
+                              <span className="text-xs text-gray-500 font-mono shrink-0">{yr}</span>
+                              <span className="text-[11px] text-gray-600 truncate">{tourZh(m.tournament)}</span>
+                            </div>
+                            <span className={`text-base font-black text-center block ${leftWon ? "text-[#FFD700]" : leftScore === rightScore ? "text-gray-400" : "text-gray-600"}`}>
+                              {leftScore}
+                            </span>
+                            <span className={`text-base font-black text-center block ${rightWon ? "text-purple-400" : leftScore === rightScore ? "text-gray-400" : "text-gray-600"}`}>
+                              {rightScore}
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {/* Stats footer */}
+                      <div className="grid grid-cols-[2fr_6fr] gap-x-2 items-center px-4 py-3 bg-[#0A1628]/50 border-t border-[#1E3A5F]">
+                        <span className="text-xs font-bold text-gray-500">{lc(locale, "统计", "Record")}</span>
+                        <div className="flex justify-evenly items-center">
+                          <span className="text-sm font-black text-[#FFD700]">{h2hStats.homeWins}{lc(locale, "赢", "W")}</span>
+                          <span className="text-sm font-black text-blue-400">{h2hStats.draws}{lc(locale, "平", "D")}</span>
+                          <span className="text-sm font-black text-purple-400">{h2hStats.awayWins}{lc(locale, "胜", "W")}</span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center py-5 gap-1.5">
+                      <span className="text-2xl">🥇</span>
+                      <p className="text-sm font-bold text-gray-400">{lc(locale, "首次交锋", "First Ever Meeting")}</p>
+                      <p className="text-xs text-gray-600 text-center px-4">
+                        {zh
+                          ? `${homeNameZh} 与 ${awayNameZh} 历史上首次正式交锋`
+                          : `${match.home_team} and ${match.away_team} have never met in official competition`}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* ── Action bar ───────────────────────────────────────────────── */}
-            <div className="flex items-center justify-between pt-3 mt-1 border-t border-[#1E3A5F] gap-3 flex-wrap">
+            <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#1E3A5F] gap-3 flex-wrap">
               {/* Left: share buttons */}
               <ShareButtons
                 title={forumPost?.title ?? `${match.home_team} vs ${match.away_team}`}
@@ -321,131 +423,6 @@ export default async function MatchPage({ params }: MatchPageProps) {
             </div>
           </div>
         </div>
-
-        {/* ── H2H History ───────────────────────────────────────────────────── */}
-        {(() => {
-          const homeNameZh = getTeamDisplayName(match.home_team, locale);
-          const awayNameZh = getTeamDisplayName(match.away_team, locale);
-
-          // Translate tournament name to Chinese
-          function tourZh(t: string): string {
-            if (!zh || !t) return t;
-            const s = t.toLowerCase();
-            if (s.includes("world cup qual")) return "世界杯预选赛";
-            if (s.includes("world cup")) return "世界杯";
-            if (s.includes("friendly")) return "友谊赛";
-            if (s.includes("euro")) return "欧洲杯";
-            if (s.includes("copa am")) return "美洲杯";
-            if (s.includes("africa cup") || s.includes("afcon")) return "非洲杯";
-            if (s.includes("asian cup")) return "亚洲杯";
-            if (s.includes("gold cup")) return "金杯赛";
-            if (s.includes("nations league")) return "国家联赛";
-            if (s.includes("nations cup")) return "国家杯";
-            if (s.includes("olympic")) return "奥运会";
-            if (s.includes("confed")) return "联合会杯";
-            if (s.includes("qual")) return "预选赛";
-            return t;
-          }
-
-          return (
-            <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden mb-4">
-
-              {/* ── Header row ── */}
-              <div className="grid grid-cols-[2fr_3fr_3fr] gap-x-2 items-center px-4 py-2 border-b border-[#1E3A5F]">
-                {/* Title */}
-                <span className="text-sm font-bold text-gray-200">⚔️ {lc(locale, "交战历史", "Head to Head")}</span>
-
-                {/* Home team: flag → name (horizontal) */}
-                <div className="flex items-center justify-center gap-1.5">
-                  {!isTBD(match.home_team) && (
-                    <div className="w-7 h-[18px] relative overflow-hidden rounded-sm shadow shrink-0">
-                      <Image src={getFlagUrl(match.home_team, 40)} alt={match.home_team} fill className="object-cover" unoptimized />
-                    </div>
-                  )}
-                  <span className="text-xs font-bold text-[#FFD700] leading-none">{homeNameZh}</span>
-                </div>
-
-                {/* Away team: flag → name (horizontal) */}
-                <div className="flex items-center justify-center gap-1.5">
-                  {!isTBD(match.away_team) && (
-                    <div className="w-7 h-[18px] relative overflow-hidden rounded-sm shadow shrink-0">
-                      <Image src={getFlagUrl(match.away_team, 40)} alt={match.away_team} fill className="object-cover" unoptimized />
-                    </div>
-                  )}
-                  <span className="text-xs font-bold text-purple-400 leading-none">{awayNameZh}</span>
-                </div>
-              </div>
-
-              {/* ── Data rows ── */}
-              {h2hMatches.length > 0 ? (
-                <>
-                  {h2hMatches.map((m) => {
-                    // Always: left = match.home_team, right = match.away_team
-                    const isForward = m.home_team === match.home_team;
-                    const leftScore  = isForward ? m.home_score : m.away_score;
-                    const rightScore = isForward ? m.away_score : m.home_score;
-                    const leftWon    = leftScore > rightScore;
-                    const rightWon   = rightScore > leftScore;
-                    const yr         = m.match_date.slice(0, 4);
-
-                    return (
-                      <div
-                        key={`${m.match_date}-${m.home_team}-${m.away_team}`}
-                        className="grid grid-cols-[2fr_3fr_3fr] gap-x-2 items-center px-4 py-2 border-b border-[#1E3A5F]/30 last:border-0"
-                      >
-                        {/* Year + tournament */}
-                        <div className="flex items-baseline gap-1.5 min-w-0">
-                          <span className="text-xs text-gray-500 font-mono shrink-0">{yr}</span>
-                          <span className="text-[11px] text-gray-600 truncate">{tourZh(m.tournament)}</span>
-                        </div>
-
-                        {/* Home (left) score */}
-                        <span className={`text-base font-black text-center block ${
-                          leftWon ? "text-[#FFD700]" : leftScore === rightScore ? "text-gray-400" : "text-gray-600"
-                        }`}>
-                          {leftScore}
-                        </span>
-
-                        {/* Away (right) score */}
-                        <span className={`text-base font-black text-center block ${
-                          rightWon ? "text-purple-400" : leftScore === rightScore ? "text-gray-400" : "text-gray-600"
-                        }`}>
-                          {rightScore}
-                        </span>
-                      </div>
-                    );
-                  })}
-
-                  {/* ── Stats footer ── */}
-                  <div className="grid grid-cols-[2fr_6fr] gap-x-2 items-center px-4 py-3 bg-[#0A1628]/50 border-t border-[#1E3A5F]">
-                    <span className="text-xs font-bold text-gray-500">{lc(locale, "统计", "Record")}</span>
-                    <div className="flex justify-evenly items-center">
-                      <span className="text-sm font-black text-[#FFD700]">
-                        {h2hStats.homeWins}{lc(locale, "赢", "W")}
-                      </span>
-                      <span className="text-sm font-black text-blue-400">
-                        {h2hStats.draws}{lc(locale, "平", "D")}
-                      </span>
-                      <span className="text-sm font-black text-purple-400">
-                        {h2hStats.awayWins}{lc(locale, "胜", "W")}
-                      </span>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="flex flex-col items-center py-5 gap-1.5">
-                  <span className="text-2xl">🥇</span>
-                  <p className="text-sm font-bold text-gray-400">{lc(locale, "首次交锋", "First Ever Meeting")}</p>
-                  <p className="text-xs text-gray-600 text-center px-4">
-                    {zh
-                      ? `${homeNameZh} 与 ${awayNameZh} 历史上首次正式交锋`
-                      : `${match.home_team} and ${match.away_team} have never met in official competition`}
-                  </p>
-                </div>
-              )}
-            </div>
-          );
-        })()}
 
         {/* ── AI Predictions ───────────────────────────────────────────────── */}
         <AiPredictions
@@ -488,6 +465,7 @@ export default async function MatchPage({ params }: MatchPageProps) {
           zh={zh}
           loggedIn={false}
           userVote={null}
+          initialVotes={fanCounts}
         />
 
     </div>
