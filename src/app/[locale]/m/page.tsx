@@ -11,6 +11,7 @@ import MobileHome, {
   type MobileMatch,
   type MobileTopScorer,
 } from "@/components/mobile/MobileHome";
+import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getBetPhase } from "@/lib/awardPhase";
@@ -169,6 +170,54 @@ const FORUM_POST_COLUMNS = `
   forum_categories!inner(slug, name, name_zh, icon),
   users(nickname, email, avatar_url, gc_balance)
 `;
+
+// ── Public data cache (shared across all users, revalidates every 30 s) ─────
+// All queries here are user-agnostic, so using service client is safe.
+const getCachedPublicData = unstable_cache(
+  async () => {
+    const sb = createServiceClient();
+    const nowIso = new Date().toISOString();
+    const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
+
+    const [
+      upcomingRes,
+      scheduleRes,
+      featuredRes,
+      topScorersRes,
+      categoriesRes,
+      hotPostsRes,
+      latestPostsRes,
+      tagsRes,
+    ] = await Promise.all([
+      sb.from("matches").select(MATCH_COLUMNS).gte("kickoff_time", nowIso).order("kickoff_time", { ascending: true }).limit(12).returns<DbMatch[]>(),
+      sb.from("matches").select(MATCH_COLUMNS).order("kickoff_time", { ascending: true }).returns<DbMatch[]>(),
+      sb.from("matches").select(MATCH_COLUMNS).eq("is_featured", true).order("kickoff_time", { ascending: true }).limit(4).returns<DbMatch[]>(),
+      sb.from("top_scorers").select("id, player_name, player_name_zh, team, goals, assists, matches_played").eq("is_visible", true).order("sort_order", { ascending: true }).limit(5).returns<DbTopScorer[]>(),
+      sb.from("forum_categories").select("id, slug, name, name_zh, icon, description, description_zh, post_count, cat_group, cat_group_zh").order("sort_order").returns<DbForumCategory[]>(),
+      sb.from("forum_posts").select(FORUM_POST_COLUMNS).eq("is_deleted", false).gte("created_at", weekAgo).order("like_count", { ascending: false }).limit(5).returns<DbForumPost[]>(),
+      sb.from("forum_posts").select(FORUM_POST_COLUMNS).eq("is_deleted", false).order("last_reply_at", { ascending: false }).limit(8).returns<DbForumPost[]>(),
+      sb.from("forum_tags").select("id, name, name_zh, color, post_count").order("post_count", { ascending: false }).limit(10).returns<DbForumTag[]>(),
+    ]);
+
+    // If no upcoming matches, fall back to the nearest past/future matches from the full schedule
+    const upcomingRows = upcomingRes.data?.length
+      ? upcomingRes.data
+      : (scheduleRes.data?.slice(0, 12) ?? []);
+
+    return {
+      upcomingRows,
+      scheduleRows:    scheduleRes.data    ?? [],
+      featuredRows:    featuredRes.data    ?? [],
+      topScorerRows:   topScorersRes.data  ?? [],
+      forumCategories: categoriesRes.data  ?? [],
+      hotPosts:        hotPostsRes.data    ?? [],
+      latestPosts:     latestPostsRes.data ?? [],
+      forumTags:       tagsRes.data        ?? [],
+    };
+  },
+  ["mobile-public-data"],
+  { revalidate: 30 },
+);
 
 function toMobileMatch(match: DbMatch, followCount = 0, isFollowing = false): MobileMatch {
   return {
@@ -359,6 +408,10 @@ function toMobileCheckinRecord(row: DbCheckinRow): MobileCheckinRecord {
 }
 
 export default async function MobileHomePage({ params, searchParams }: MobileHomePageProps) {
+  // Kick off the public-data cache fetch immediately, before any user-specific awaits,
+  // so it runs in parallel with auth + profile queries.
+  const publicDataPromise = getCachedPublicData();
+
   const { locale } = await params;
   const { preview, thread } = await searchParams;
   const selectedThreadId = thread && Number.isInteger(Number(thread)) ? Number(thread) : null;
@@ -440,72 +493,22 @@ export default async function MobileHomePage({ params, searchParams }: MobileHom
         .returns<DbCheckinRow[]>()
     : { data: [] as DbCheckinRow[] };
 
-  const nowIso = new Date().toISOString();
-  let { data: upcomingRows } = await supabase
-    .from("matches")
-    .select(MATCH_COLUMNS)
-    .gte("kickoff_time", nowIso)
-    .order("kickoff_time", { ascending: true })
-    .limit(12)
-    .returns<DbMatch[]>();
+  // ── Public data (from 30-s cache, runs in parallel with user queries above) ─
+  const {
+    upcomingRows,
+    scheduleRows,
+    featuredRows,
+    topScorerRows,
+    forumCategories,
+    hotPosts: hotPostData,
+    latestPosts: latestPostData,
+    forumTags: forumTagData,
+  } = await publicDataPromise;
 
-  if (!upcomingRows?.length) {
-    const fallback = await supabase
-      .from("matches")
-      .select(MATCH_COLUMNS)
-      .order("kickoff_time", { ascending: true })
-      .limit(12)
-      .returns<DbMatch[]>();
-    upcomingRows = fallback.data ?? [];
-  }
+  const rows = upcomingRows;
 
-  const rows = upcomingRows ?? [];
-  const { data: scheduleRows } = await supabase
-    .from("matches")
-    .select(MATCH_COLUMNS)
-    .order("kickoff_time", { ascending: true })
-    .returns<DbMatch[]>();
-  const [{ data: featuredRows }, { data: topScorerRows }, forumCategoriesRes, forumHotRes, forumLatestRes, forumTagsRes, selectedForumRes, myPostsRes, myRepliesRes] = await Promise.all([
-    supabase
-      .from("matches")
-      .select(MATCH_COLUMNS)
-      .eq("is_featured", true)
-      .order("kickoff_time", { ascending: true })
-      .limit(4)
-      .returns<DbMatch[]>(),
-    supabase
-      .from("top_scorers")
-      .select("id, player_name, player_name_zh, team, goals, assists, matches_played")
-      .eq("is_visible", true)
-      .order("sort_order", { ascending: true })
-      .limit(5)
-      .returns<DbTopScorer[]>(),
-    supabase
-      .from("forum_categories")
-      .select("id, slug, name, name_zh, icon, description, description_zh, post_count, cat_group, cat_group_zh")
-      .order("sort_order")
-      .returns<DbForumCategory[]>(),
-    supabase
-      .from("forum_posts")
-      .select(FORUM_POST_COLUMNS)
-      .eq("is_deleted", false)
-      .gte("created_at", new Date(Date.now() - 7 * 86_400_000).toISOString())
-      .order("like_count", { ascending: false })
-      .limit(5)
-      .returns<DbForumPost[]>(),
-    supabase
-      .from("forum_posts")
-      .select(FORUM_POST_COLUMNS)
-      .eq("is_deleted", false)
-      .order("last_reply_at", { ascending: false })
-      .limit(8)
-      .returns<DbForumPost[]>(),
-    supabase
-      .from("forum_tags")
-      .select("id, name, name_zh, color, post_count")
-      .order("post_count", { ascending: false })
-      .limit(10)
-      .returns<DbForumTag[]>(),
+  // ── User-specific forum queries ──────────────────────────────────────────
+  const [selectedForumRes, myPostsRes, myRepliesRes] = await Promise.all([
     selectedThreadId
       ? supabase
           .from("forum_posts")
@@ -537,8 +540,8 @@ export default async function MobileHomePage({ params, searchParams }: MobileHom
       : Promise.resolve({ data: [] }),
   ]);
   const forumRows = [
-    ...(forumHotRes.data ?? []),
-    ...(forumLatestRes.data ?? []),
+    ...hotPostData,
+    ...latestPostData,
     ...(selectedForumRes.data ? [selectedForumRes.data] : []),
     ...(myPostsRes.data ?? []),
   ];
@@ -609,8 +612,8 @@ export default async function MobileHomePage({ params, searchParams }: MobileHom
   const featuredMatches = (featuredRows ?? []).map(toVisibleMobileMatch);
   const scheduleMobileMatches = (scheduleRows ?? rows).map(toVisibleMobileMatch);
   const followedMatches = scheduleMobileMatches.filter((match) => followedIds.has(match.id));
-  const forumLatestPosts = (forumLatestRes.data ?? []).map((post) => toMobileForumPost(post, locale, repliesByPost, forumState));
-  const forumHotPosts = (forumHotRes.data?.length ? forumHotRes.data : forumLatestRes.data ?? []).map((post) => toMobileForumPost(post, locale, repliesByPost, forumState));
+  const forumLatestPosts = latestPostData.map((post) => toMobileForumPost(post, locale, repliesByPost, forumState));
+  const forumHotPosts = (hotPostData.length ? hotPostData : latestPostData).map((post) => toMobileForumPost(post, locale, repliesByPost, forumState));
   const forumSelectedPost = selectedForumRes.data ? toMobileForumPost(selectedForumRes.data, locale, repliesByPost, forumState) : null;
   const myReplyPostTitleMap = new Map((myReplyPostRows ?? []).map((post) => [post.id, locale === "zh" ? (post.title_zh || post.title) : post.title]));
   const forumMyPosts = (myPostsRes.data ?? []).map((post) => toMobileForumPost(post, locale, repliesByPost, forumState));
@@ -684,13 +687,13 @@ export default async function MobileHomePage({ params, searchParams }: MobileHom
       featuredMatches={featuredMatches}
       scheduleMatches={scheduleMobileMatches}
       topScorers={topScorers}
-      forumCategories={(forumCategoriesRes.data ?? []).map(toMobileForumCategory)}
+      forumCategories={forumCategories.map(toMobileForumCategory)}
       forumHotPosts={forumHotPosts}
       forumLatestPosts={forumLatestPosts}
       forumSelectedPost={forumSelectedPost}
       forumMyPosts={forumMyPosts}
       forumMyReplies={forumMyReplies}
-      forumTags={(forumTagsRes.data ?? []).map(toMobileForumTag)}
+      forumTags={forumTagData.map(toMobileForumTag)}
       minePredictions={minePredictions}
       awardBets={(awardBetRows ?? []).map(toMobileAwardBet)}
       awardPhase={awardPhase}
