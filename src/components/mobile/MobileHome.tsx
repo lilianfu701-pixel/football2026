@@ -489,8 +489,15 @@ const CITY_ZH: Record<string, string> = {
   Boston: "波士顿",
 };
 
-function getCopy(locale: string) {
-  return locale === "zh" ? copy.zh : copy.en;
+function getCopy(locale: string): MobileCopy {
+  if (locale === "zh") return copy.zh;
+  if (locale === "en") return copy.en;
+  return Object.fromEntries(
+    Object.entries(copy.en).map(([k, v]) => [
+      k,
+      lc(locale, copy.zh[k as keyof typeof copy.zh], String(v)),
+    ])
+  ) as MobileCopy;
 }
 
 function isMobileView(value: string | null): value is MobileView {
