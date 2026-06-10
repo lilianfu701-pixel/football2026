@@ -1111,8 +1111,8 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
           </span>
         </div>
 
-        {/* Legend */}
-        <div className="flex items-center gap-5 mb-3">
+        {/* Legend — home left, away right, no counts until there's enough data */}
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5">
             <span
               className="w-2.5 h-2.5 rounded-full inline-block ring-1"
@@ -1122,13 +1122,9 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
               }}
             />
             <span className="text-xs text-gray-400">{zh ? `支持 ${homeTeam}` : homeTeam}</span>
-            {mapTotal > 0 && (
-              <span className="text-xs font-black ml-0.5" style={{ color: homeColors.primary }}>
-                {totals.home}
-              </span>
-            )}
           </div>
           <div className="flex items-center gap-1.5">
+            <span className="text-xs text-gray-400">{zh ? `支持 ${awayTeam}` : awayTeam}</span>
             <span
               className="w-2.5 h-2.5 rounded-full inline-block"
               style={{
@@ -1136,12 +1132,6 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
                 boxShadow: `0 0 0 1.5px ${awayColors.secondary}55`,
               }}
             />
-            <span className="text-xs text-gray-400">{zh ? `支持 ${awayTeam}` : awayTeam}</span>
-            {mapTotal > 0 && (
-              <span className="text-xs font-black ml-0.5" style={{ color: awayColors.primary }}>
-                {totals.away}
-              </span>
-            )}
           </div>
         </div>
 
@@ -1477,6 +1467,24 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
                           animation: "gc-fw-label 3.5s ease-out 0.3s forwards",
                           opacity:   0,
                         }} />
+                        {/* Gooooooooooal! text — appears after ball starts flying */}
+                        <div style={{
+                          position:      "absolute",
+                          left:          "50%",
+                          top:           "46%",
+                          color:         "#FFD700",
+                          fontSize:      "clamp(1.4rem, 5.5vw, 2.8rem)",
+                          fontWeight:    900,
+                          lineHeight:    1,
+                          letterSpacing: "0.04em",
+                          textShadow:    "0 0 10px #FFD700, 0 0 26px #FF8C00, 0 0 44px #FFD700aa",
+                          whiteSpace:    "nowrap",
+                          opacity:       0,
+                          animation:     "gc-rally-pulse 3.2s ease-out 1.0s forwards",
+                          pointerEvents: "none",
+                        }}>
+                          Gooooooooooal!
+                        </div>
                       </>
                     )}
 
@@ -1539,7 +1547,7 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
                           opacity:       0,
                           animation:     "gc-rally-pulse 2.1s ease-out 0.55s forwards",
                         }}>
-                          {lc(locale, "加油!", "GO!")}
+                          Come On!
                         </div>
                         {RALLY_CONFETTI.map((s, si) => (
                           <div key={`confetti-${si}`} style={{
