@@ -43,6 +43,7 @@ import { type AwardPhase } from "@/lib/awardPhase";
 import { getFlagUrl } from "@/lib/flags";
 import { formatGc, getWealthLevel } from "@/lib/levels";
 import { getMaxAmount, makePresets } from "@/lib/forum/ratingCap";
+import { needsTranslation } from "@/lib/languages";
 import { MILESTONES, PER_INVITE_GC } from "@/lib/inviteMilestones";
 import MobileInstallPrompt from "@/components/mobile/MobileInstallPrompt";
 import MobileScheduleDetails from "@/components/mobile/MobileScheduleDetails";
@@ -2053,12 +2054,17 @@ function ForumView({
     if (!isLoggedIn && !canPersistActions) return;
 
     let active = true;
+    const targetLang = getForumTargetLang(locale);
     void Promise.all(posts.map(async (post) => {
+      // Skip titles already in the target language (e.g. English titles on the
+      // English site) — saves the per-user daily translate quota and avoids a
+      // pointless round-trip that just echoes the original back.
+      if (!needsTranslation(post.title, targetLang)) return null;
       try {
         const response = await fetch(getForumTranslateEndpoint(), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: "post_title", id: post.id, target_lang: getForumTargetLang(locale) }),
+          body: JSON.stringify({ type: "post_title", id: post.id, target_lang: targetLang }),
         });
         if (!response.ok) return null;
         const data = await response.json();
@@ -2367,6 +2373,13 @@ function ForumThreadDetail({
   const statusLabel = forumSignedIn
     ? (locale === "zh" ? "移动端已登录" : "Signed in")
     : (locale === "zh" ? "未登录" : "Signed out");
+  // Only auto-translate + show the translate toggle when the post is actually in
+  // a different language than the UI (mirrors the desktop TranslatedContent).
+  // An English post on the English site shows no toggle and burns no quota.
+  const forumTargetLang = getForumTargetLang(locale);
+  const needsForumTranslation =
+    needsTranslation(post.title, forumTargetLang) ||
+    needsTranslation(post.content, forumTargetLang);
 
   useEffect(() => {
     setReplies(post.replies);
@@ -2386,9 +2399,9 @@ function ForumThreadDetail({
   }, [post.id, post.replies]);
 
   useEffect(() => {
-    if (!forumSignedIn) return;
+    if (!forumSignedIn || !needsForumTranslation) return;
     void loadPostTranslation(true);
-  }, [forumSignedIn, locale, post.id]);
+  }, [forumSignedIn, needsForumTranslation, locale, post.id]);
 
   function requireForumAction() {
     if (canPersistActions) return true;
@@ -2641,15 +2654,17 @@ function ForumThreadDetail({
           <ForumHtml html={contentHtml || (locale === "zh" ? "暂无正文" : "No content yet")} className="mobile-forum-content text-[15px] leading-6 text-slate-200" />
         </div>
         <div className="mt-2 flex flex-wrap gap-1">
-          <MobileForumActionButton
-            icon={translating ? Loader2 : Languages}
-            label={translated ? (locale === "zh" ? "原文" : "Original") : (locale === "zh" ? "翻译" : "Translate")}
-            onClick={translatePost}
-            active={translated}
-            primary
-            compact
-            loading={translating}
-          />
+          {needsForumTranslation && (
+            <MobileForumActionButton
+              icon={translating ? Loader2 : Languages}
+              label={translated ? (locale === "zh" ? "原贴" : "Original") : (locale === "zh" ? "翻译" : "Translate")}
+              onClick={translatePost}
+              active={translated}
+              primary
+              compact
+              loading={translating}
+            />
+          )}
           <MobileForumActionButton icon={Share2} label={locale === "zh" ? "分享" : "Share"} onClick={copyMobileLink} compact />
           <MobileForumActionButton
             icon={Bookmark}
@@ -2798,6 +2813,9 @@ function ForumReplyRow({
   const [likes, setLikes] = useState(reply.likeCount);
   const [loading, setLoading] = useState(false);
   const translationRequestRef = useRef<string | null>(null);
+  // Mirror the post-level gate: only foreign-language replies get auto-translated
+  // and show the translate toggle.
+  const needsReplyTranslation = needsTranslation(reply.content, getForumTargetLang(locale));
 
   useEffect(() => {
     setContentHtml(reply.content);
@@ -2809,9 +2827,9 @@ function ForumReplyRow({
   }, [reply.id, reply.content, reply.isLiked, reply.likeCount]);
 
   useEffect(() => {
-    if (!isLoggedIn && !canPersistActions) return;
+    if ((!isLoggedIn && !canPersistActions) || !needsReplyTranslation) return;
     void loadReplyTranslation(true);
-  }, [canPersistActions, isLoggedIn, locale, reply.id]);
+  }, [canPersistActions, isLoggedIn, needsReplyTranslation, locale, reply.id]);
 
   function requireReplyAction() {
     if (canPersistActions) return true;
@@ -2901,14 +2919,16 @@ function ForumReplyRow({
       </div>
       <ForumHtml html={contentHtml} className="mobile-forum-content text-[14px] leading-5 text-slate-300" />
       <div className="mt-2 flex flex-wrap gap-1">
-        <MobileForumActionButton
-          icon={translating ? Loader2 : Languages}
-          label={translated ? (locale === "zh" ? "原文" : "Original") : (locale === "zh" ? "翻译" : "Translate")}
-          onClick={translateReply}
-          active={translated}
-          compact
-          loading={translating}
-        />
+        {needsReplyTranslation && (
+          <MobileForumActionButton
+            icon={translating ? Loader2 : Languages}
+            label={translated ? (locale === "zh" ? "原贴" : "Original") : (locale === "zh" ? "翻译" : "Translate")}
+            onClick={translateReply}
+            active={translated}
+            compact
+            loading={translating}
+          />
+        )}
         <MobileForumActionButton icon={Reply} label={locale === "zh" ? "回复" : "Reply"} onClick={onReply} compact />
         <MobileForumActionButton
           icon={Coins}
