@@ -112,7 +112,6 @@ export default function MobileScheduleDetails({ locale, match, isLoggedIn, canPe
 
   return (
     <div className="grid gap-1.5 border-t border-[#FFD700]/20 bg-[#102f2a] p-1.5">
-      <SupportAndShare locale={locale} match={match} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} initialData={data} onVoteSaved={(vote) => { window.dispatchEvent(new CustomEvent("match-vote-changed", { detail: { matchId: match.id, vote } })); }} />
       <WinBet locale={locale} match={match} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} existingBet={data?.existingBet ?? null} detailLoading={loading} />
       <ScoreBet locale={locale} match={match} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} initialBets={data?.scoreBets ?? []} />
       <FoldRow
@@ -131,7 +130,8 @@ export default function MobileScheduleDetails({ locale, match, isLoggedIn, canPe
           zh={locale === "zh"}
           loggedIn={isLoggedIn || canPersistActions}
           canPersistProps={canPersistActions}
-          hideVote
+          initialVotes={data?.voteCounts}
+          userVote={data?.myVote}
           showCurrentUserMarker
           mobileAudioUnlock
         />
