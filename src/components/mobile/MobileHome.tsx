@@ -3421,14 +3421,32 @@ function MobileTopupView({
   // Paddle.js readiness (mirrors the desktop topup page). Card payments go through
   // Paddle — the same gateway the desktop site uses — not Stripe.
   const paddleReady = useRef(false);
+  // Paddle client token + sandbox flag resolved at runtime (build-time value as
+  // fallback). NEXT_PUBLIC_* is inlined into the bundle at build time, so a token
+  // added to Vercel afterwards is invisible here — /api/topup/paddle-config reads
+  // the live value from the server env on every request.
+  const paddleTokenRef   = useRef(PADDLE_CLIENT_TOKEN);
+  const paddleSandboxRef = useRef(process.env.NEXT_PUBLIC_PADDLE_SANDBOX === "true");
+  const paddleConfigRef  = useRef<Promise<void> | null>(null);
+  function loadPaddleConfig(): Promise<void> {
+    if (paddleConfigRef.current) return paddleConfigRef.current;
+    paddleConfigRef.current = fetch("/api/topup/paddle-config")
+      .then((r) => r.json())
+      .then((d: { token?: string; sandbox?: boolean }) => {
+        if (typeof d?.token === "string" && d.token) paddleTokenRef.current = d.token;
+        if (typeof d?.sandbox === "boolean") paddleSandboxRef.current = d.sandbox;
+      })
+      .catch(() => { /* keep build-time fallback */ });
+    return paddleConfigRef.current;
+  }
   function initPaddle() {
     if (paddleReady.current || typeof window === "undefined" || !window.Paddle) return;
-    if (!PADDLE_CLIENT_TOKEN) return; // surfaced as an error when the user taps Pay
-    if (process.env.NEXT_PUBLIC_PADDLE_SANDBOX === "true" && window.Paddle.Environment) {
+    if (!paddleTokenRef.current) return; // surfaced as an error when the user taps Pay
+    if (paddleSandboxRef.current && window.Paddle.Environment) {
       window.Paddle.Environment.set("sandbox");
     }
     window.Paddle.Initialize({
-      token: PADDLE_CLIENT_TOKEN,
+      token: paddleTokenRef.current,
       // GC is credited by the Paddle webhook (source of truth); this callback only
       // refreshes the UI once the overlay reports completion.
       eventCallback: (event) => {
@@ -3440,6 +3458,9 @@ function MobileTopupView({
     });
     paddleReady.current = true;
   }
+
+  // Prefetch the Paddle token so initPaddle (Script onLoad) can initialise early.
+  useEffect(() => { void loadPaddleConfig(); }, []);
 
   useEffect(() => {
     setPayErr(null);
@@ -3527,6 +3548,14 @@ function MobileTopupView({
     if (!selected || paying || !requireRealLogin()) return;
     setPaying(true);
     setPayErr(null);
+    // Resolve the Paddle client token at runtime so card payment works even when
+    // the token was added to Vercel after this bundle was built.
+    await loadPaddleConfig();
+    if (!paddleTokenRef.current) {
+      setPayErr(zh ? "银行卡支付暂未开放，请选择其他方式。" : "Card payment is unavailable, please use another method.");
+      setPaying(false);
+      return;
+    }
     // Paddle.js loads async (afterInteractive); a fast tap can beat it. Wait briefly.
     const ready = await waitForPaddle();
     initPaddle();
