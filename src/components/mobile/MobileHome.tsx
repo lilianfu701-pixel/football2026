@@ -5270,7 +5270,98 @@ function MineReplyList({
   );
 }
 
+// ── Install-only page copy (12 locales) ──────────────────────────────────────
+// Kept separate from the main `copy` object so we can support all locales
+// without duplicating the entire app translation table.
+const installOnlyCopy: Record<string, { title: string; subtitle: string; iconPreview: string; openFromIcon: string; browserLimited: string }> = {
+  zh: {
+    title: "先把 Football2026 添加到桌面",
+    subtitle: "浏览器模式只用于安装。添加后像 App 一样从桌面图标打开，才能使用完整预测、签到和消息功能。",
+    iconPreview: "桌面图标预览",
+    openFromIcon: "安装后从这个图标进入",
+    browserLimited: "当前网页版功能已精简，请优先添加桌面快捷方式。",
+  },
+  en: {
+    title: "Add Football2026 to your Home Screen first",
+    subtitle: "Browser mode is only for installation. Open from the phone icon to use predictions, check-ins, and messages.",
+    iconPreview: "Home icon preview",
+    openFromIcon: "Open from this icon after install",
+    browserLimited: "The browser version is intentionally limited. Add the shortcut for the full experience.",
+  },
+  es: {
+    title: "Primero añade Football2026 a tu pantalla de inicio",
+    subtitle: "El modo navegador es solo para instalación. Abre desde el icono del teléfono para predicciones, check-ins y mensajes.",
+    iconPreview: "Vista previa del icono",
+    openFromIcon: "Abre desde este icono tras instalar",
+    browserLimited: "La versión del navegador está limitada. Añade el acceso directo para la experiencia completa.",
+  },
+  fr: {
+    title: "Ajoute d'abord Football2026 à ton écran d'accueil",
+    subtitle: "Le mode navigateur est uniquement pour l'installation. Ouvre depuis l'icône du téléphone pour les pronostics, check-ins et messages.",
+    iconPreview: "Aperçu de l'icône",
+    openFromIcon: "Ouvre depuis cette icône après l'installation",
+    browserLimited: "La version navigateur est volontairement limitée. Ajoute le raccourci pour l'expérience complète.",
+  },
+  de: {
+    title: "Füge Football2026 zuerst zum Home-Bildschirm hinzu",
+    subtitle: "Der Browser-Modus dient nur zur Installation. Öffne über das Telefon-Icon für Prognosen, Check-ins und Nachrichten.",
+    iconPreview: "Icon-Vorschau",
+    openFromIcon: "Nach der Installation über dieses Icon öffnen",
+    browserLimited: "Die Browserversion ist bewusst eingeschränkt. Füge die Verknüpfung für das vollständige Erlebnis hinzu.",
+  },
+  pt: {
+    title: "Adicione Football2026 à tela inicial primeiro",
+    subtitle: "O modo navegador é apenas para instalação. Abra pelo ícone do celular para previsões, check-ins e mensagens.",
+    iconPreview: "Prévia do ícone",
+    openFromIcon: "Abra por este ícone após instalar",
+    browserLimited: "A versão do navegador é intencionalmente limitada. Adicione o atalho para a experiência completa.",
+  },
+  ru: {
+    title: "Сначала добавь Football2026 на главный экран",
+    subtitle: "Режим браузера предназначен только для установки. Открывай через иконку телефона для прогнозов, чекинов и сообщений.",
+    iconPreview: "Предпросмотр иконки",
+    openFromIcon: "Открывай через эту иконку после установки",
+    browserLimited: "Версия браузера намеренно ограничена. Добавь ярлык для полного опыта.",
+  },
+  ar: {
+    title: "أضف Football2026 إلى شاشتك الرئيسية أولاً",
+    subtitle: "وضع المتصفح مخصص للتثبيت فقط. افتح من أيقونة الهاتف للتوقعات وتسجيل الحضور والرسائل.",
+    iconPreview: "معاينة الأيقونة",
+    openFromIcon: "افتح من هذه الأيقونة بعد التثبيت",
+    browserLimited: "نسخة المتصفح محدودة عمداً. أضف الاختصار للتجربة الكاملة.",
+  },
+  ja: {
+    title: "まずFootball2026をホーム画面に追加してください",
+    subtitle: "ブラウザモードはインストール専用です。予測・チェックイン・メッセージはスマホのアイコンから開いてください。",
+    iconPreview: "アイコンプレビュー",
+    openFromIcon: "インストール後はこのアイコンから開いてください",
+    browserLimited: "ブラウザ版は機能が制限されています。ショートカットを追加して全機能をご利用ください。",
+  },
+  ko: {
+    title: "먼저 Football2026을 홈 화면에 추가하세요",
+    subtitle: "브라우저 모드는 설치 전용입니다. 예측, 체크인, 메시지는 폰 아이콘에서 여세요.",
+    iconPreview: "아이콘 미리보기",
+    openFromIcon: "설치 후 이 아이콘에서 여세요",
+    browserLimited: "브라우저 버전은 의도적으로 제한되어 있습니다. 바로가기를 추가하고 모든 기능을 이용하세요.",
+  },
+  vi: {
+    title: "Trước tiên hãy thêm Football2026 vào màn hình chính",
+    subtitle: "Chế độ trình duyệt chỉ dùng để cài đặt. Mở từ biểu tượng điện thoại để dự đoán, điểm danh và nhắn tin.",
+    iconPreview: "Xem trước biểu tượng",
+    openFromIcon: "Mở từ biểu tượng này sau khi cài đặt",
+    browserLimited: "Phiên bản trình duyệt bị giới hạn có chủ đích. Thêm lối tắt để trải nghiệm đầy đủ.",
+  },
+  id: {
+    title: "Tambahkan Football2026 ke Layar Utama dulu",
+    subtitle: "Mode browser hanya untuk instalasi. Buka dari ikon ponsel untuk prediksi, check-in, dan pesan.",
+    iconPreview: "Pratinjau ikon",
+    openFromIcon: "Buka dari ikon ini setelah instal",
+    browserLimited: "Versi browser sengaja dibatasi. Tambahkan pintasan untuk pengalaman lengkap.",
+  },
+};
+
 function InstallOnlyHome({ locale, t }: { locale: string; t: MobileCopy }) {
+  const ic = installOnlyCopy[locale] ?? installOnlyCopy.en;
   return (
     <main className="-mt-16 min-h-screen bg-[#081120] px-4 pb-8 pt-4 text-white">
       <section className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-md flex-col">
@@ -5285,11 +5376,11 @@ function InstallOnlyHome({ locale, t }: { locale: string; t: MobileCopy }) {
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-[linear-gradient(145deg,#0b1a2d_0%,#10345b_58%,#14533b_100%)] p-4 shadow-2xl shadow-black/30">
-          <h1 className="text-2xl font-black leading-tight">{t.installOnlyTitle}</h1>
-          <p className="mt-2 text-[15px] leading-5 text-slate-300">{t.installOnlySubtitle}</p>
+          <h1 className="text-2xl font-black leading-tight">{ic.title}</h1>
+          <p className="mt-2 text-[15px] leading-5 text-slate-300">{ic.subtitle}</p>
 
           <div className="mt-4 rounded-xl border border-white/10 bg-[#081120]/70 p-3">
-            <p className="mb-3 text-[13px] font-black uppercase tracking-[0.14em] text-[#FFD700]">{t.iconPreview}</p>
+            <p className="mb-3 text-[13px] font-black uppercase tracking-[0.14em] text-[#FFD700]">{ic.iconPreview}</p>
             <div className="flex items-center gap-3">
               <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl bg-black/25 p-1.5 shadow-lg shadow-black/20">
                 <div className="relative h-11 w-11 overflow-hidden rounded-xl">
@@ -5299,7 +5390,7 @@ function InstallOnlyHome({ locale, t }: { locale: string; t: MobileCopy }) {
               </div>
               <div className="min-w-0">
                 <p className="text-[15px] font-black text-white">Football2026</p>
-                <p className="mt-1 text-[15px] leading-5 text-slate-300">{t.openFromIcon}</p>
+                <p className="mt-1 text-[15px] leading-5 text-slate-300">{ic.openFromIcon}</p>
               </div>
             </div>
           </div>
@@ -5310,7 +5401,7 @@ function InstallOnlyHome({ locale, t }: { locale: string; t: MobileCopy }) {
         </div>
 
         <p className="mt-4 rounded-lg border border-red-400/20 bg-red-400/10 px-3 py-2 text-center text-[13px] leading-4 text-red-100">
-          {t.browserLimited}
+          {ic.browserLimited}
         </p>
 
         <div className="mt-auto pt-5 text-center text-[13px] text-slate-600">

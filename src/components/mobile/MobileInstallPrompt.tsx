@@ -294,12 +294,15 @@ const copy: Record<string, CopyShape> = {
   },
 };
 
-const stepImages = [
-  "/mobile-install/safari.jpg",
-  "/mobile-install/share.jpg",
-  "/mobile-install/add-to-home.jpg",
-  "/mobile-install/confirm-add.jpg",
-];
+function getStepImages(locale: string): [string, string, string, string] {
+  const zh = locale === "zh";
+  return [
+    "/mobile-install/safari.jpg",
+    zh ? "/mobile-install/share.jpg"       : "/mobile-install/share-en.png",
+    zh ? "/mobile-install/add-to-home.jpg" : "/mobile-install/add-to-home-en.png",
+    zh ? "/mobile-install/confirm-add.jpg" : "/mobile-install/confirm-add-en.png",
+  ];
+}
 
 function getCopy(locale: string): CopyShape {
   return copy[locale] ?? copy.en;
@@ -453,7 +456,7 @@ export default function MobileInstallPrompt({
                 <p className="text-[14px] font-bold leading-5 text-white">{step}</p>
               </div>
               <img
-                src={stepImages[index]}
+                src={getStepImages(locale)[index]}
                 alt={step}
                 className={index === 0 ? "mx-auto block h-20 w-20 bg-white object-contain" : "block h-auto w-full bg-white object-contain"}
               />
