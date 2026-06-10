@@ -17,7 +17,19 @@ const LOCALES = [
 ];
 
 function localePath(code: string): string {
-  return code === "en" ? "/m" : `/${code}/m`;
+  const base = code === "en" ? "/m" : `/${code}/m`;
+  if (typeof window === "undefined") return base;
+  // Carry the current query (view / source) into the new locale so the same
+  // app-mode screen is preserved. When running as an installed PWA, force
+  // source=pwa so the destination renders the app UI instead of the
+  // browser-style layout even before the standalone media query settles.
+  const params = new URLSearchParams(window.location.search);
+  const isStandalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  if (isStandalone && !params.get("source")) params.set("source", "pwa");
+  const qs = params.toString();
+  return qs ? `${base}?${qs}` : base;
 }
 
 // Persist the explicit language choice so proxy.ts getPreferredLocale() honours

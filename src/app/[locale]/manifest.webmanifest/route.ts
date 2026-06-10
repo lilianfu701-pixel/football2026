@@ -46,7 +46,13 @@ export async function GET(
     description: t.description,
     lang: locale,
     start_url: `${mobilePath}?source=pwa`,
-    scope: `${basePath}/`,
+    // Scope MUST cover every locale's mobile path so switching language inside the
+    // installed PWA stays in standalone mode. With `as-needed` prefixes the paths
+    // are "/m" (English), "/zh/m", "/es/m", … whose only common ancestor is "/".
+    // A locale-scoped value like "/zh/" made tapping English (→ "/m") fall outside
+    // scope, which kicked the app back into a plain browser tab (address bar +
+    // browser nav buttons) and lost the app-style layout.
+    scope: "/",
     display: "standalone",
     display_override: ["standalone", "minimal-ui", "browser"],
     orientation: "portrait",
