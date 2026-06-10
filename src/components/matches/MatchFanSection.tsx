@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ComposableMap, Geographies, Geography, Marker, type GeoFeature } from "react-simple-maps";
@@ -681,6 +681,7 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
   const effectiveUserVote = userVote ?? clientVote;
 
   const locationWatchRef = useRef<number | null>(null);
+  const currentVoteRef  = useRef<"home" | "neutral" | "away" | null>(null);
   const channelRef    = useRef<RealtimeChannel | null>(null);
   const lastLaunchRef = useRef<number>(0);
   const [channelReady,  setChannelReady]  = useState(false);
@@ -748,6 +749,8 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
 
   // Keep soundOnRef in sync
   useEffect(() => { soundOnRef.current = soundOn; }, [soundOn]);
+  // Keep currentVoteRef in sync so geolocation callbacks never use a stale vote
+  useEffect(() => { currentVoteRef.current = clientVote; }, [clientVote]);
 
   // Fetch fan votes (extracted so a fresh vote elsewhere can trigger a reload)
   const loadCountryVotes = useCallback(() => {
@@ -808,6 +811,7 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
     if (oldVote !== vote) newVoteData[vote]++;
     setVoteData(newVoteData);
     setClientVote(vote);
+    currentVoteRef.current = vote; // sync immediately before async geolocation callback
 
     try {
       const res = await fetch("/api/match-vote", {
@@ -819,6 +823,7 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
         // Revert optimistic update
         setVoteData(voteData);
         setClientVote(oldVote);
+        currentVoteRef.current = oldVote;
         return;
       }
       // Let the map reload (picked up by the match-vote-changed listener below)
@@ -829,11 +834,14 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
           typeof navigator !== "undefined" && navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           async ({ coords }) => {
-            // Store precise lat/lng alongside the already-saved vote
+            // Use currentVoteRef to avoid overwriting a vote the user just changed.
+            // The closure `vote` is stale if the user switched teams before geolocation resolved.
+            const liveVote = currentVoteRef.current;
+            if (!liveVote || liveVote === "neutral") return;
             await fetch("/api/match-vote", {
               method:  "POST",
               headers: { "Content-Type": "application/json" },
-              body:    JSON.stringify({ match_id: matchId, vote, lat: coords.latitude, lng: coords.longitude }),
+              body:    JSON.stringify({ match_id: matchId, vote: liveVote, lat: coords.latitude, lng: coords.longitude }),
             });
             loadCountryVotes(); // refresh map to show the precise dot immediately
           },
@@ -844,6 +852,7 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
     } catch {
       setVoteData(voteData);
       setClientVote(oldVote);
+      currentVoteRef.current = oldVote;
     } finally {
       setVoting(false);
     }
