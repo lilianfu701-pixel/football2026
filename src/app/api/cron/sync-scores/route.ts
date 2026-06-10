@@ -208,6 +208,23 @@ export async function GET(req: Request) {
   }
 
   try {
+    // ── Guard: only call the external API when matches are active ─────────────
+    // "Active" = live/paused now, OR upcoming within 15 min (for countdown)
+    // This prevents wasting the 10 req/min quota during off-hours.
+    const supabaseGuard = createServiceClient();
+    const now15 = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    const { count } = await supabaseGuard
+      .from("matches")
+      .select("id", { count: "exact", head: true })
+      .or(
+        `status.in.(live,paused),and(status.eq.upcoming,kickoff_time.lte.${now15})`,
+      );
+
+    if (!count) {
+      return NextResponse.json({ ok: true, skipped: true, reason: "no active matches" });
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     // Fetch matches for yesterday → +2 days (live matches are in this window)
     const today = new Date();
     const from  = new Date(today); from.setDate(today.getDate() - 1);
