@@ -22,7 +22,24 @@ interface MobileInstallPromptProps {
   allowDismiss?: boolean;
 }
 
-const copy = {
+type CopyShape = {
+  title: string;
+  subtitle: string;
+  installed: string;
+  install: string;
+  later: string;
+  scanTitle: string;
+  scanHint: string;
+  iosTitle: string;
+  androidTitle: string;
+  androidManual: string;
+  otherTitle: string;
+  otherManual: string;
+  footer: string;
+  steps: [string, string, string, string];
+};
+
+const copy: Record<string, CopyShape> = {
   zh: {
     title: "添加 Football2026 到桌面",
     subtitle: "添加完成后，下次直接点击手机桌面图标进入助威。",
@@ -33,15 +50,15 @@ const copy = {
     scanHint: "使用手机相机扫描二维码，或在 Safari 中输入网址。",
     iosTitle: "iPhone 添加步骤",
     androidTitle: "Android 快捷安装",
-    androidManual: "如果没有弹出安装窗口，请点击浏览器菜单，再选择“安装应用”或“添加到主屏幕”。",
+    androidManual: "如果没有弹出安装窗口，请点击浏览器菜单，再选择”安装应用”或”添加到主屏幕”。",
     otherTitle: "添加快捷方式",
-    otherManual: "请在浏览器菜单中选择“安装应用”或“添加到主屏幕”。",
+    otherManual: "请在浏览器菜单中选择”安装应用”或”添加到主屏幕”。",
     footer: "网页版本功能已精简，请优先添加桌面快捷方式。",
     steps: [
       "使用 Safari 浏览器打开网址",
       "点击屏幕底部的分享按钮",
-      "在菜单中选择“添加到主屏幕”",
-      "点击右上角“添加”，桌面将出现图标",
+      "在菜单中选择”添加到主屏幕”",
+      "点击右上角”添加”，桌面将出现图标",
     ],
   },
   en: {
@@ -65,6 +82,216 @@ const copy = {
       "Tap Add. The icon will appear on your Home Screen",
     ],
   },
+  es: {
+    title: "Añade Football2026 a la pantalla de inicio",
+    subtitle: "La próxima vez accede directamente desde el icono en tu teléfono.",
+    installed: "Abierto desde tu acceso directo",
+    install: "Instalar",
+    later: "Después",
+    scanTitle: "Escanear para abrir",
+    scanHint: "Escanea este código QR con la cámara de tu teléfono, o escribe la URL en Safari.",
+    iosTitle: "Configuración en iPhone",
+    androidTitle: "Instalación rápida en Android",
+    androidManual: "Si no aparece la ventana de instalación, abre el menú del navegador y elige Instalar app o Añadir a pantalla de inicio.",
+    otherTitle: "Crear acceso directo",
+    otherManual: "Usa el menú del navegador y elige Instalar app o Añadir a pantalla de inicio.",
+    footer: "La versión del navegador es simplificada. Añade el acceso directo para la experiencia completa.",
+    steps: [
+      "Abre la URL en Safari",
+      "Toca el botón Compartir en la parte inferior",
+      "Elige Añadir a pantalla de inicio",
+      "Toca Añadir. El icono aparecerá en tu pantalla de inicio",
+    ],
+  },
+  fr: {
+    title: "Ajouter Football2026 à l'écran d'accueil",
+    subtitle: "Accède directement aux pronostics depuis l'icône sur ton téléphone.",
+    installed: "Ouvert depuis ton raccourci",
+    install: "Installer",
+    later: "Plus tard",
+    scanTitle: "Scanner pour ouvrir",
+    scanHint: "Scanne ce code QR avec l'appareil photo de ton téléphone, ou entre l'URL dans Safari.",
+    iosTitle: "Configuration sur iPhone",
+    androidTitle: "Installation rapide Android",
+    androidManual: "Si aucune fenêtre d'installation n'apparaît, ouvre le menu du navigateur et choisis Installer l'application ou Ajouter à l'écran d'accueil.",
+    otherTitle: "Créer un raccourci",
+    otherManual: "Utilise le menu du navigateur et choisis Installer l'application ou Ajouter à l'écran d'accueil.",
+    footer: "La version navigateur est simplifiée. Ajoute le raccourci pour une expérience complète.",
+    steps: [
+      "Ouvre l'URL dans Safari",
+      "Appuie sur le bouton Partager en bas",
+      "Choisis Ajouter à l'écran d'accueil",
+      "Appuie sur Ajouter. L'icône apparaîtra sur ton écran d'accueil",
+    ],
+  },
+  de: {
+    title: "Football2026 zum Home-Bildschirm hinzufügen",
+    subtitle: "Öffne Prognosen direkt über das Icon auf deinem Telefon.",
+    installed: "Über deine Verknüpfung geöffnet",
+    install: "Installieren",
+    later: "Später",
+    scanTitle: "Zum Öffnen scannen",
+    scanHint: "Scanne diesen QR-Code mit deiner Handykamera oder gib die URL in Safari ein.",
+    iosTitle: "iPhone-Einrichtung",
+    androidTitle: "Schnellinstallation Android",
+    androidManual: "Falls kein Installfenster erscheint, öffne das Browsermenü und wähle App installieren oder Zum Startbildschirm hinzufügen.",
+    otherTitle: "Verknüpfung erstellen",
+    otherManual: "Nutze das Browsermenü und wähle App installieren oder Zum Startbildschirm hinzufügen.",
+    footer: "Die Browserversion ist vereinfacht. Füge die Verknüpfung für das vollständige Erlebnis hinzu.",
+    steps: [
+      "Öffne die URL in Safari",
+      "Tippe auf den Teilen-Button unten",
+      "Wähle Zum Home-Bildschirm hinzufügen",
+      "Tippe auf Hinzufügen. Das Icon erscheint auf deinem Home-Bildschirm",
+    ],
+  },
+  pt: {
+    title: "Adicionar Football2026 à tela inicial",
+    subtitle: "Acesse as previsões direto pelo ícone no seu celular na próxima vez.",
+    installed: "Aberto pelo seu atalho",
+    install: "Instalar",
+    later: "Depois",
+    scanTitle: "Escanear para abrir",
+    scanHint: "Escaneie este QR code com a câmera do seu celular ou acesse a URL no Safari.",
+    iosTitle: "Configuração no iPhone",
+    androidTitle: "Instalação rápida Android",
+    androidManual: "Se a janela de instalação não aparecer, abra o menu do navegador e escolha Instalar app ou Adicionar à tela inicial.",
+    otherTitle: "Criar atalho",
+    otherManual: "Use o menu do navegador e escolha Instalar app ou Adicionar à tela inicial.",
+    footer: "A versão do navegador é simplificada. Adicione o atalho para a experiência completa.",
+    steps: [
+      "Abra a URL no Safari",
+      "Toque no botão Compartilhar na parte inferior",
+      "Escolha Adicionar à Tela de Início",
+      "Toque em Adicionar. O ícone aparecerá na sua tela inicial",
+    ],
+  },
+  ru: {
+    title: "Добавить Football2026 на главный экран",
+    subtitle: "В следующий раз открывай прогнозы прямо с иконки на телефоне.",
+    installed: "Открыто через ярлык",
+    install: "Установить",
+    later: "Позже",
+    scanTitle: "Сканировать для открытия",
+    scanHint: "Отсканируй QR-код камерой телефона или введи адрес в Safari.",
+    iosTitle: "Настройка на iPhone",
+    androidTitle: "Быстрая установка Android",
+    androidManual: "Если окно установки не появилось, открой меню браузера и выбери Установить приложение или Добавить на главный экран.",
+    otherTitle: "Создать ярлык",
+    otherManual: "Открой меню браузера и выбери Установить приложение или Добавить на главный экран.",
+    footer: "Браузерная версия упрощена. Добавь ярлык для полного опыта.",
+    steps: [
+      "Открой URL в Safari",
+      "Нажми кнопку «Поделиться» внизу экрана",
+      "Выбери «Добавить на экран «Домой»»",
+      "Нажми «Добавить». Иконка появится на главном экране",
+    ],
+  },
+  ar: {
+    title: "أضف Football2026 إلى الشاشة الرئيسية",
+    subtitle: "افتح التوقعات مباشرةً من أيقونة هاتفك في المرة القادمة.",
+    installed: "تم الفتح من اختصارك",
+    install: "تثبيت",
+    later: "لاحقاً",
+    scanTitle: "امسح للفتح",
+    scanHint: "امسح رمز QR هذا بكاميرا هاتفك، أو أدخل الرابط في Safari.",
+    iosTitle: "إعداد iPhone",
+    androidTitle: "تثبيت سريع على Android",
+    androidManual: "إذا لم تظهر نافذة التثبيت، افتح قائمة المتصفح واختر تثبيت التطبيق أو إضافة إلى الشاشة الرئيسية.",
+    otherTitle: "إنشاء اختصار",
+    otherManual: "استخدم قائمة المتصفح واختر تثبيت التطبيق أو إضافة إلى الشاشة الرئيسية.",
+    footer: "إصدار المتصفح مبسّط. أضف الاختصار للتجربة الكاملة.",
+    steps: [
+      "افتح الرابط في Safari",
+      "اضغط على زر المشاركة في الأسفل",
+      "اختر إضافة إلى الشاشة الرئيسية",
+      "اضغط إضافة. ستظهر الأيقونة على شاشتك الرئيسية",
+    ],
+  },
+  ja: {
+    title: "Football2026をホーム画面に追加",
+    subtitle: "次回からはスマホのアイコンから直接アクセスできます。",
+    installed: "ショートカットから開いています",
+    install: "インストール",
+    later: "あとで",
+    scanTitle: "スキャンして開く",
+    scanHint: "スマホのカメラでQRコードをスキャンするか、SafariにURLを入力してください。",
+    iosTitle: "iPhoneの設定手順",
+    androidTitle: "Androidクイックインストール",
+    androidManual: "インストール画面が表示されない場合は、ブラウザのメニューを開き「アプリをインストール」または「ホーム画面に追加」を選択してください。",
+    otherTitle: "ショートカットを作成",
+    otherManual: "ブラウザのメニューから「アプリをインストール」または「ホーム画面に追加」を選択してください。",
+    footer: "ブラウザ版は機能が制限されています。ショートカットを追加して全機能をご利用ください。",
+    steps: [
+      "SafariでURLを開く",
+      "画面下部の共有ボタンをタップ",
+      "「ホーム画面に追加」を選択",
+      "「追加」をタップ。アイコンがホーム画面に表示されます",
+    ],
+  },
+  ko: {
+    title: "Football2026을 홈 화면에 추가",
+    subtitle: "다음부터 폰 아이콘에서 바로 예측을 열 수 있어요.",
+    installed: "바로가기에서 열었습니다",
+    install: "설치",
+    later: "나중에",
+    scanTitle: "스캔해서 열기",
+    scanHint: "폰 카메라로 QR 코드를 스캔하거나 Safari에 URL을 입력하세요.",
+    iosTitle: "iPhone 설정 방법",
+    androidTitle: "Android 빠른 설치",
+    androidManual: "설치 창이 뜨지 않으면 브라우저 메뉴를 열고 앱 설치 또는 홈 화면에 추가를 선택하세요.",
+    otherTitle: "바로가기 만들기",
+    otherManual: "브라우저 메뉴에서 앱 설치 또는 홈 화면에 추가를 선택하세요.",
+    footer: "브라우저 버전은 기능이 제한되어 있습니다. 바로가기를 추가하고 모든 기능을 이용하세요.",
+    steps: [
+      "Safari에서 URL 열기",
+      "화면 하단의 공유 버튼 탭",
+      "홈 화면에 추가 선택",
+      "추가 탭. 아이콘이 홈 화면에 나타납니다",
+    ],
+  },
+  vi: {
+    title: "Thêm Football2026 vào màn hình chính",
+    subtitle: "Lần sau mở thẳng từ biểu tượng trên điện thoại của bạn.",
+    installed: "Đã mở từ lối tắt của bạn",
+    install: "Cài đặt",
+    later: "Để sau",
+    scanTitle: "Quét để mở",
+    scanHint: "Quét mã QR này bằng camera điện thoại, hoặc nhập URL vào Safari.",
+    iosTitle: "Cài đặt trên iPhone",
+    androidTitle: "Cài nhanh Android",
+    androidManual: "Nếu không thấy cửa sổ cài đặt, mở menu trình duyệt và chọn Cài đặt ứng dụng hoặc Thêm vào màn hình chính.",
+    otherTitle: "Tạo lối tắt",
+    otherManual: "Dùng menu trình duyệt và chọn Cài đặt ứng dụng hoặc Thêm vào màn hình chính.",
+    footer: "Phiên bản trình duyệt bị giới hạn tính năng. Thêm lối tắt để trải nghiệm đầy đủ.",
+    steps: [
+      "Mở URL trong Safari",
+      "Nhấn nút Chia sẻ ở cuối màn hình",
+      "Chọn Thêm vào màn hình chính",
+      "Nhấn Thêm. Biểu tượng sẽ xuất hiện trên màn hình chính",
+    ],
+  },
+  id: {
+    title: "Tambahkan Football2026 ke Layar Utama",
+    subtitle: "Buka prediksi langsung dari ikon di ponselmu lain kali.",
+    installed: "Dibuka dari pintasan kamu",
+    install: "Instal",
+    later: "Nanti",
+    scanTitle: "Pindai untuk membuka",
+    scanHint: "Pindai kode QR ini dengan kamera ponselmu, atau masukkan URL di Safari.",
+    iosTitle: "Panduan iPhone",
+    androidTitle: "Instal cepat Android",
+    androidManual: "Jika jendela instalasi tidak muncul, buka menu browser dan pilih Instal aplikasi atau Tambahkan ke layar utama.",
+    otherTitle: "Buat pintasan",
+    otherManual: "Gunakan menu browser dan pilih Instal aplikasi atau Tambahkan ke layar utama.",
+    footer: "Versi browser memiliki fitur terbatas. Tambahkan pintasan untuk pengalaman lengkap.",
+    steps: [
+      "Buka URL di Safari",
+      "Ketuk tombol Bagikan di bagian bawah",
+      "Pilih Tambahkan ke Layar Utama",
+      "Ketuk Tambahkan. Ikon akan muncul di layar utamamu",
+    ],
+  },
 };
 
 const stepImages = [
@@ -74,8 +301,8 @@ const stepImages = [
   "/mobile-install/confirm-add.jpg",
 ];
 
-function getCopy(locale: string) {
-  return locale === "zh" ? copy.zh : copy.en;
+function getCopy(locale: string): CopyShape {
+  return copy[locale] ?? copy.en;
 }
 
 function getMobileUrl(locale: string) {
