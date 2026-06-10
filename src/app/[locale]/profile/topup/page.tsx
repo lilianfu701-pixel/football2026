@@ -64,9 +64,14 @@ function formatGcBig(n: number): string {
 
 type PayMethod = "paddle" | "paypal" | "usdt";
 
-// Inlined at build time. Empty if the env var wasn't set when the bundle was built
-// (locally: restart `next dev`; on Vercel: add the var then redeploy).
-const PADDLE_TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? "";
+// Build-time fallback only. NEXT_PUBLIC_* is inlined when the bundle is built,
+// so if the Vercel env var is added/changed AFTER the last build this value is
+// stale (usually empty) and the card checkout wrongly reports "unavailable".
+// The component therefore also fetches the token at runtime from
+// /api/topup/paddle-config (see loadPaddleConfig), which reads process.env on
+// every request — no rebuild needed.
+const BUILD_PADDLE_TOKEN   = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? "";
+const BUILD_PADDLE_SANDBOX = process.env.NEXT_PUBLIC_PADDLE_SANDBOX === "true";
 
 // Wait up to `tries * stepMs` for the async Paddle.js script to appear on window.
 function waitForPaddle(tries = 20, stepMs = 150): Promise<boolean> {
@@ -105,11 +110,27 @@ function TopupContent() {
 
   // Paddle.js readiness
   const paddleReady = useRef(false);
+  // Paddle client token + sandbox flag, resolved at runtime (with the build-time
+  // value as fallback) so a token added to Vercel after the last build still works.
+  const paddleTokenRef   = useRef(BUILD_PADDLE_TOKEN);
+  const paddleSandboxRef = useRef(BUILD_PADDLE_SANDBOX);
+  const paddleConfigRef  = useRef<Promise<void> | null>(null);
+  function loadPaddleConfig(): Promise<void> {
+    if (paddleConfigRef.current) return paddleConfigRef.current;
+    paddleConfigRef.current = fetch("/api/topup/paddle-config")
+      .then((r) => r.json())
+      .then((d: { token?: string; sandbox?: boolean }) => {
+        if (typeof d?.token === "string" && d.token) paddleTokenRef.current = d.token;
+        if (typeof d?.sandbox === "boolean") paddleSandboxRef.current = d.sandbox;
+      })
+      .catch(() => { /* keep build-time fallback */ });
+    return paddleConfigRef.current;
+  }
   function initPaddle() {
     if (paddleReady.current || !window.Paddle) return;
-    const token = PADDLE_TOKEN;
+    const token = paddleTokenRef.current;
     if (!token) return; // surfaced as an error when the user tries to pay
-    if (process.env.NEXT_PUBLIC_PADDLE_SANDBOX === "true" && window.Paddle.Environment) {
+    if (paddleSandboxRef.current && window.Paddle.Environment) {
       window.Paddle.Environment.set("sandbox");
     }
     window.Paddle.Initialize({
@@ -123,6 +144,10 @@ function TopupContent() {
     });
     paddleReady.current = true;
   }
+
+  // Prefetch the Paddle client token at runtime so initPaddle (Script onLoad)
+  // can initialise with a valid token even before the user clicks pay.
+  useEffect(() => { void loadPaddleConfig(); }, []);
 
   // Toast if user cancelled out of Stripe
   const cancelled = searchParams.get("cancelled") === "1";
@@ -217,15 +242,17 @@ function TopupContent() {
   async function handlePaddle() {
     if (!selected || paying) return;
     setPayErr(null);
+    setPaying(true);
 
-    // Token must be baked into the build. If empty, configuration is the problem,
-    // not a transient state — tell the user clearly and stop.
-    if (!PADDLE_TOKEN) {
+    // Resolve the Paddle client token at runtime (server route) so card payment
+    // works even when the token was added to Vercel after the bundle was built.
+    // Only if it is still empty after that do we treat it as a real config error.
+    await loadPaddleConfig();
+    if (!paddleTokenRef.current) {
       setPayErr(lc(locale, "银行卡支付暂未开放，请选择其他方式", "Card payment is unavailable, please use another method"));
+      setPaying(false);
       return;
     }
-
-    setPaying(true);
 
     // Paddle.js loads async (afterInteractive); a fast click can beat it. Wait briefly.
     const ready = await waitForPaddle();
