@@ -1,7 +1,7 @@
 # Football2026 — CLAUDE.md
 
 > 项目说明文档，供 Claude Code 或新接手的开发者快速上手。
-> 最后更新：2026-06-10（移动端多语言本地化方法 + 西班牙语完成；Paddle 运行时 token；PWA scope 修复）
+> 最后更新：2026-06-10（移动端多语言本地化方法 + 西班牙语完成；Paddle 运行时 token；PWA scope 修复；getCopy 双语系统记录）
 >
 > **👉 接手移动端多语言开发的人：直接看 [§十五 移动端多语言本地化方法](#十五移动端多语言本地化方法sop)。**
 >
@@ -614,19 +614,58 @@ node scripts/mobile-i18n-gaps.mjs src/components/mobile/MobileScheduleDetails.ts
 - **模板字符串/相对时间**：`\`${x}分钟前\` : \`${x}m ago\`` 这类**不会**被 codemod 转（key 是动态的），目前对非 zh 显示英文紧凑写法（"5m ago"），属已知小遗留，要做需手写 per-locale 分支或用 `Intl.RelativeTimeFormat`（注意 §十二 的 small-icu：客户端可用、服务端只英文）。
 - **验证三件套**：`tsc` + `pnpm build` + gaps `missing=0`。改用户面文件后务必本地 `pnpm build` 过了再推（构建挂了 Vercel 不会部署）。
 
+### ⚠️ 第二套文案系统：`getCopy()` / `copy` 对象（底部导航等）
+
+`MobileHome.tsx` 里存在**两套**文案系统，互不干涉：
+
+**系统 1 — `lc(locale, 中, 英)`**（主体）：211 处三元已全部转换，查 `content/<locale>.json` 字典，多语言按字典翻译。
+
+**系统 2 — `getCopy(locale)` / `copy` 对象**（约 47 个字段）：走独立的静态 `copy = { zh: {...}, en: {...} }` 对象，`getCopy` 函数只判断 zh/en，其他所有语言一律返回英文：
+
+```typescript
+function getCopy(locale: string) {
+  return locale === "zh" ? copy.zh : copy.en;  // 非中文一律英文
+}
+```
+
+受影响的字段（全部显示英文，不走字典）：
+
+| 字段 | 英文值 | 显示位置 |
+|---|---|---|
+| `bottomHome/Matches/Predict/Forum/Mine` | Home / Matches / Predict / Forum / Me | **底部导航** |
+| `badge` | "World Cup kickoff in" | 首页倒计时标签 |
+| `checkin` / `checking` / `checked` | Daily Check-in / Claiming / Claimed | 签到按钮 |
+| `register` / `predict` / `login` | Claim 100K GC / Predict Now / Login | 首页按钮 |
+| `homeWin` / `draw` / `awayWin` | Home / Draw / Away | 预测选项 |
+| `forumHot` | "Hot discussions" | 论坛热门标题 |
+| `account` / `appStatus` | Account / Shortcut status | 设置页 |
+| 其余约 35 个字段 | 见 `copy.en` | 分散在各 view |
+
+**修复方案**（待做）：将 `getCopy` 改为对非 zh/en locale 也查 `content/<locale>.json`：
+```typescript
+function getCopy(locale: string): MobileCopy {
+  if (locale === "zh") return copy.zh;
+  if (locale === "en") return copy.en;
+  return Object.fromEntries(
+    Object.entries(copy.en).map(([k, v]) => [k, lc(locale, copy.zh[k as keyof typeof copy.zh], String(v))])
+  ) as MobileCopy;
+}
+```
+改完后，还需在 `content/<locale>.json` 里补 `copy.en` 中尚缺的 key（如 "Home"、"Matches"、"Predict"、"Forum"、"Me"、"Daily Check-in" 等）。
+
 ### 完成度速查
 
-| 文件 | 已转 lc() | 说明 |
-|---|---|---|
-| `MobileHome.tsx` | ✅ 164 处 | 移动端主体（所有 view） |
-| `MobileScheduleDetails.tsx` | ✅ 47 处 | 赛事详情 |
-| `m/login`、`m/register` | ❌ 未转 | 独立登录/注册页，仍是 zh/en，多语言要另做 |
+| 文件 | 已转 lc() | getCopy 系统 | 说明 |
+|---|---|---|---|
+| `MobileHome.tsx` | ✅ 164 处 | ❌ 仍是 zh/en 二元 | 底部导航等 47 字段待修 |
+| `MobileScheduleDetails.tsx` | ✅ 47 处 | — | 无独立 copy 对象 |
+| `m/login`、`m/register` | ❌ 未转 | — | 独立登录/注册页，仍是 zh/en，多语言要另做 |
 
-| 语言 | 移动端文案 |
-|---|---|
-| es 西语 | ✅ 完成（本轮，`content/es.json` 1080 条）|
-| fr/de/pt/ru/ar/ja/ko/vi/id | ⏳ 待补（桌面词典已有部分覆盖，移动端缺口用 gaps 脚本逐个补）|
+| 语言 | 移动端 lc() 文案 | getCopy 底部导航等 |
+|---|---|---|
+| es 西语 | ✅ 完成（`content/es.json` 1080 条）| ❌ 英文（待修 getCopy）|
+| fr/de/pt/ru/ar/ja/ko/vi/id | ✅ 完成（本轮各补 90 条）| ❌ 英文（待修 getCopy）|
 
 ---
 
-*此文件由 Claude Code 维护，反映截至 2026-06-10 的项目真实状态（移动端多语言本地化方法落地 + 西班牙语移动端完成；Paddle 运行时 token 修复；PWA scope 修复；en/zh/de/pt/ru/ar/ja/ko/vi/id/es 共 11 语言桌面覆盖，移动端 zh/en/es 完成、余者待补）。*
+*此文件由 Claude Code 维护，反映截至 2026-06-10 的项目真实状态（移动端多语言本地化方法落地；Paddle 运行时 token 修复 + `m.football2026.net` 域名已加入 Paddle 审批；PWA scope 修复；en/zh/de/pt/ru/ar/ja/ko/vi/id/es 共 11 语言桌面覆盖；移动端 lc() 文案 zh/en/es 完成、fr/de/pt/ru/ar/ja/ko/vi/id 本轮补全；移动端 getCopy 系统（底部导航等 47 字段）仍显示英文，待修）。*
