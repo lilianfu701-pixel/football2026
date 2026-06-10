@@ -149,6 +149,8 @@ interface Props {
   userVote?:  "home" | "neutral" | "away" | null;
   showCurrentUserMarker?: boolean;
   mobileAudioUnlock?: boolean;
+  /** When true, hides the vote buttons section (map + share only) */
+  hideVote?: boolean;
   /** Server-rendered initial vote counts — seeds the vote buttons before the first API reload */
   initialVotes?: { home: number; neutral: number; away: number };
 }
@@ -654,7 +656,7 @@ function hexOp(hex: string, alpha: number): string {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColors, awayColors, zh, loggedIn, canPersistProps = true, userVote, showCurrentUserMarker = false, mobileAudioUnlock = false, initialVotes }: Props) {
+export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColors, awayColors, zh, loggedIn, canPersistProps = true, userVote, showCurrentUserMarker = false, mobileAudioUnlock = false, hideVote = false, initialVotes }: Props) {
   const locale = useLocale();
   const [dots,      setDots]      = useState<VoterDot[]>([]);
   const [totals,    setTotals]    = useState({ home: 0, neutral: 0, away: 0 });
@@ -1061,7 +1063,7 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
       <div className="px-5 pt-4 pb-5">
 
         {/* ── Fan Support Vote ──────────────────────────────────────────────── */}
-        <div className="mb-4 pb-4 border-b border-[#1E3A5F]/60">
+        {!hideVote && <div className="mb-4 pb-4 border-b border-[#1E3A5F]/60">
           <p className="text-xs font-bold text-gray-400 mb-2.5 text-center">
             {zh
               ? `⚡ 你支持谁？${voteTotal > 0 ? ` · ${voteTotal} 人投票` : ""}`
@@ -1145,7 +1147,7 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
               {lc(locale, "登录后参与投票", "Login to vote")}
             </p>
           )}
-        </div>
+        </div>}
 
         {/* Header */}
         <div className="flex items-center justify-between mb-2">

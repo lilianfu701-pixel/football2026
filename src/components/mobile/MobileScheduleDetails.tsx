@@ -130,6 +130,7 @@ export default function MobileScheduleDetails({ locale, match, isLoggedIn, canPe
           zh={locale === "zh"}
           loggedIn={isLoggedIn || canPersistActions}
           canPersistProps={canPersistActions}
+          hideVote
           showCurrentUserMarker
           mobileAudioUnlock
         />
