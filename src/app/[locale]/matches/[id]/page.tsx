@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createStaticClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
@@ -48,6 +49,97 @@ const STAGE_LABELS: Record<string, { en: string; zh: string }> = {
   final:   { en: "Final",         zh: "决赛" },
 };
 
+// ── Per-match SEO metadata ─────────────────────────────────────────────────────
+export async function generateMetadata({ params }: MatchPageProps): Promise<Metadata> {
+  const { locale, id } = await params;
+
+  const supabase = createStaticClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
+  const { data: match } = await supabase
+    .from("matches")
+    .select("id, home_team, away_team, kickoff_time, status, home_score, away_score, stage, group_name")
+    .eq("id", id)
+    .single();
+
+  if (!match) return { title: "Match | Football2026" };
+
+  const zh    = locale === "zh";
+  const home  = getTeamDisplayName(match.home_team as string, locale);
+  const away  = getTeamDisplayName(match.away_team as string, locale);
+
+  const stageKey   = (match.stage ?? "") as string;
+  const stageLabel = STAGE_LABELS[stageKey]?.[zh ? "zh" : "en"] ?? stageKey;
+  const groupName  = (match.group_name ?? "") as string;
+  const stageStr   = groupName ? `Group ${groupName}` : stageLabel;
+
+  const isFinished = match.status === "finished";
+  const score      = isFinished ? `${match.home_score ?? 0}–${match.away_score ?? 0}` : "";
+
+  const matchDate = match.kickoff_time
+    ? new Date(match.kickoff_time as string).toLocaleDateString("en-US", {
+        month: "short", day: "numeric", year: "numeric",
+      })
+    : "";
+
+  let title: string;
+  let description: string;
+
+  if (zh) {
+    title = isFinished
+      ? `${home} ${score} ${away} — ${stageStr} | 世界杯2026 | Football2026`
+      : `${home} vs ${away} 预测 — ${stageStr} | 世界杯2026 | Football2026`;
+    description = isFinished
+      ? `${home} ${score} ${away}，2026年世界杯${stageStr}。查看球迷支持统计、AI预测和赛事分析。Football2026世界杯预测平台。`
+      : `预测${home} vs ${away} 世界杯2026${stageStr}结果。为你的队伍投票，赢取GoalCoin，登上排行榜。比赛时间：${matchDate}。`;
+  } else {
+    title = isFinished
+      ? `${home} ${score} ${away} — ${stageStr} | World Cup 2026 | Football2026`
+      : `${home} vs ${away} Prediction — ${stageStr} | World Cup 2026 | Football2026`;
+    description = isFinished
+      ? `${home} ${score} ${away} — ${stageStr}, FIFA World Cup 2026. Fan votes, AI predictions and match analysis on Football2026.`
+      : `Predict ${home} vs ${away} — ${stageStr}, FIFA World Cup 2026. Vote for your team, earn GoalCoins, climb the leaderboard. Match date: ${matchDate}.`;
+  }
+
+  const canonicalPath = locale === "en" ? `/matches/${id}` : `/${locale}/matches/${id}`;
+  const LOCALES       = ["en", "zh", "es", "fr", "de", "pt", "ru", "ar", "ja", "ko", "vi", "id"] as const;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `https://football2026.net${canonicalPath}`,
+      languages: Object.fromEntries(
+        LOCALES.map((l) => [
+          l,
+          `https://football2026.net${l === "en" ? "" : `/${l}`}/matches/${id}`,
+        ]),
+      ),
+    },
+    openGraph: {
+      title,
+      description,
+      url:      `https://football2026.net${canonicalPath}`,
+      siteName: "Football2026",
+      type:     "website",
+      images: [
+        {
+          url:    `https://football2026.net/api/og?locale=${locale}`,
+          width:  1200,
+          height: 630,
+          alt:    title,
+        },
+      ],
+    },
+    twitter: {
+      card:        "summary_large_image",
+      title,
+      description,
+      images:      [`https://football2026.net/api/og?locale=${locale}`],
+    },
+  };
+}
 
 export default async function MatchPage({ params }: MatchPageProps) {
   const { locale, id } = await params;
