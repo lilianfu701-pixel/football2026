@@ -104,6 +104,13 @@ export async function GET(
   return new Response(JSON.stringify(manifest), {
     headers: {
       "Content-Type": "application/manifest+json; charset=utf-8",
+      // Revalidate every time so an already-installed PWA picks up manifest
+      // changes (e.g. the scope fix) on its next launch instead of serving a
+      // stale cached copy with the old locale-scoped value.
+      "Cache-Control": "no-cache, max-age=0, must-revalidate",
     },
   });
 }
+
+// Read fresh each request so manifest edits propagate to installed apps quickly.
+export const dynamic = "force-dynamic";
