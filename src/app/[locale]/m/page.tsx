@@ -1,4 +1,4 @@
-import MobileHome, {
+﻿import MobileHome, {
   type MobileForumCategory,
   type MobileForumPost,
   type MobileForumTag,
@@ -12,10 +12,35 @@ import MobileHome, {
   type MobileTopScorer,
 } from "@/components/mobile/MobileHome";
 import { unstable_cache } from "next/cache";
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getBetPhase } from "@/lib/awardPhase";
 import sanitizeHtml from "sanitize-html";
+
+export const revalidate = 30;
+const ALL_LOCALES = ["en","zh","es","fr","de","pt","ru","ar","ja","ko","vi","id"] as const;
+export async function generateStaticParams() {
+  return ALL_LOCALES.map((locale) => ({ locale }));
+}
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const TITLES: Record<string, string> = {
+    zh: "Football2026 - 世界杯球迷社区",
+    en: "Football2026 - FIFA World Cup Fan Hub",
+    es: "Football2026 - Copa Mundial FIFA 2026",
+    fr: "Football2026 - Coupe du Monde FIFA",
+    de: "Football2026 - FIFA Weltmeisterschaft 2026",
+    pt: "Football2026 - Copa do Mundo FIFA 2026",
+    ru: "Football2026 - ЧМ по футболу 2026",
+    ar: "Football2026 - كأس العالم FIFA 2026",
+    ja: "Football2026 - FIFAワールドカップ2026",
+    ko: "Football2026 - FIFA 월드컵 2026",
+    vi: "Football2026 - World Cup FIFA 2026",
+    id: "Football2026 - Piala Dunia FIFA 2026",
+  };
+  return { title: TITLES[locale] ?? TITLES.en };
+}
 
 interface MobileHomePageProps {
   params: Promise<{ locale: string }>;
