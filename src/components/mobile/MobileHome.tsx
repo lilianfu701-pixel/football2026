@@ -44,6 +44,7 @@ import { getFlagUrl } from "@/lib/flags";
 import { formatGc, getWealthLevel } from "@/lib/levels";
 import { getMaxAmount, makePresets } from "@/lib/forum/ratingCap";
 import { needsTranslation } from "@/lib/languages";
+import { lc } from "@/i18n/content";
 import { MILESTONES, PER_INVITE_GC } from "@/lib/inviteMilestones";
 import MobileInstallPrompt from "@/components/mobile/MobileInstallPrompt";
 import MobileScheduleDetails from "@/components/mobile/MobileScheduleDetails";
@@ -522,7 +523,7 @@ function formatForumTime(dateStr: string, locale: string) {
   const minutes = Math.floor(diff / 60_000);
   const hours = Math.floor(diff / 3_600_000);
   const days = Math.floor(diff / 86_400_000);
-  if (minutes < 1) return locale === "zh" ? "刚刚" : "just now";
+  if (minutes < 1) return lc(locale, "刚刚", "just now");
   if (minutes < 60) return locale === "zh" ? `${minutes}分钟前` : `${minutes}m ago`;
   if (hours < 24) return locale === "zh" ? `${hours}小时前` : `${hours}h ago`;
   if (days < 30) return locale === "zh" ? `${days}天前` : `${days}d ago`;
@@ -545,7 +546,7 @@ function getMatchTeams(locale: string, match: MobileMatch) {
 
 function getStageLabel(match: MobileMatch, locale: string) {
   if (match.stage === "group") {
-    return locale === "zh" ? `${match.groupName ?? "-"}组` : `Group ${match.groupName ?? "-"}`;
+    return locale === "zh" ? `${match.groupName ?? "-"}组` : `${lc(locale, "组", "Group")} ${match.groupName ?? "-"}`;
   }
   return match.stage ?? "-";
 }
@@ -567,7 +568,7 @@ function formatKickoff(kickoffTime: string, locale: string) {
 
 function formatCountdown(kickoffTime: string, locale: string) {
   const diffMs = new Date(kickoffTime).getTime() - Date.now();
-  if (diffMs <= 0) return locale === "zh" ? "即将开赛" : "Soon";
+  if (diffMs <= 0) return lc(locale, "即将开赛", "Soon");
   const days = Math.floor(diffMs / 86_400_000);
   const hours = Math.floor(diffMs / 3_600_000);
   if (days >= 1) return locale === "zh" ? `${days} 天` : `${days}d`;
@@ -1036,7 +1037,7 @@ function HomeView({
       <HomeScheduleSection
         locale={locale}
         t={t}
-        title={locale === "zh" ? "焦点对决" : "Featured Matches"}
+        title={lc(locale, "焦点对决", "Featured Matches")}
         matches={featuredMatches}
         isLoggedIn={isLoggedIn}
         canPersistActions={canPersistActions}
@@ -1106,13 +1107,13 @@ function HomeScheduleSection({
 function TopScorersSection({ locale, scorers }: { locale: string; scorers: MobileTopScorer[] }) {
   return (
     <section className="rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
-      <h2 className="mb-2 text-[15px] font-black text-white">{locale === "zh" ? "射手榜 Top 5" : "Top Scorers"}</h2>
+      <h2 className="mb-2 text-[15px] font-black text-white">{lc(locale, "射手榜 Top 5", "Top Scorers")}</h2>
       {scorers.length === 0 ? (
-        <p className="rounded-lg border border-white/10 bg-white/[0.035] p-3 text-[15px] text-slate-400">{locale === "zh" ? "暂无射手榜数据" : "No scorer data"}</p>
+        <p className="rounded-lg border border-white/10 bg-white/[0.035] p-3 text-[15px] text-slate-400">{lc(locale, "暂无射手榜数据", "No scorer data")}</p>
       ) : (
         <div className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.035]">
           <div className="grid grid-cols-[1.5rem_1fr_2.4rem_2.4rem] gap-1 border-b border-white/10 px-2 py-1 text-[11px] font-bold text-slate-500">
-            <span>#</span><span>{locale === "zh" ? "球员" : "Player"}</span><span className="text-center">{locale === "zh" ? "进球" : "G"}</span><span className="text-center">{locale === "zh" ? "助攻" : "A"}</span>
+            <span>#</span><span>{lc(locale, "球员", "Player")}</span><span className="text-center">{lc(locale, "进球", "G")}</span><span className="text-center">{lc(locale, "助攻", "A")}</span>
           </div>
           {scorers.map((scorer, index) => (
             <div key={scorer.id} className="grid grid-cols-[1.5rem_1fr_2.4rem_2.4rem] items-center gap-1 border-b border-white/5 px-2 py-1.5 text-[12px] last:border-b-0">
@@ -1198,7 +1199,7 @@ function MatchesView({
 
   const groups = useMemo(() => Array.from(new Set(matches.map((match) => match.groupName).filter((group): group is string => Boolean(group)))).sort(), [matches]);
   const teams = useMemo(() => Array.from(new Set(matches.flatMap((match) => [match.homeTeam, match.awayTeam]).filter((team) => Boolean(TEAM_ZH[team])))).sort((a, b) => getTeamName(a, locale).localeCompare(getTeamName(b, locale))), [locale, matches]);
-  const selectedTeamNames = teamFilters.map((team) => getTeamName(team, locale)).join(locale === "zh" ? "、" : ", ");
+  const selectedTeamNames = teamFilters.map((team) => getTeamName(team, locale)).join(lc(locale, "、", ", "));
   const filteredMatches = useMemo(() => {
     const filtered = matches.filter((match) => {
       const groupOk = groupFilter === "all" || match.groupName === groupFilter;
@@ -1242,28 +1243,28 @@ function MatchesView({
         <div className="grid grid-cols-[0.72fr_minmax(0,1.28fr)_3.2rem] gap-1.5">
           <div className="relative min-w-0">
             <button type="button" onClick={() => { setGroupPanelOpen((open) => !open); setTeamPanelOpen(false); }} className="flex h-8 w-full items-center justify-between gap-1 rounded-md border border-white/10 bg-[#0d1a2b] px-1.5 text-left text-[13px] font-black text-white">
-              <span className="truncate">{groupFilter === "all" ? (locale === "zh" ? "全部组别" : "All groups") : (locale === "zh" ? `${groupFilter}组` : `Group ${groupFilter}`)}</span>
+              <span className="truncate">{groupFilter === "all" ? (lc(locale, "全部组别", "All groups")) : (locale === "zh" ? `${groupFilter}组` : `${lc(locale, "组", "Group")} ${groupFilter}`)}</span>
               <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition ${groupPanelOpen ? "rotate-180" : ""}`} />
             </button>
             {groupPanelOpen && (
               <div className="absolute left-0 right-0 top-9 z-40 rounded-lg border border-white/10 bg-[#0b1626] p-2 shadow-xl shadow-black/40">
-                <button type="button" onClick={() => applyGroupFilter("all")} className="mb-1.5 h-7 w-full rounded-md border border-white/10 bg-white/[0.035] px-2 text-left text-[13px] font-black text-slate-300">{locale === "zh" ? "全部组别" : "All groups"}</button>
+                <button type="button" onClick={() => applyGroupFilter("all")} className="mb-1.5 h-7 w-full rounded-md border border-white/10 bg-white/[0.035] px-2 text-left text-[13px] font-black text-slate-300">{lc(locale, "全部组别", "All groups")}</button>
                 <div className="grid grid-cols-2 gap-1.5">
-                  {groups.map((group) => <button key={group} type="button" onClick={() => applyGroupFilter(group)} className="h-8 rounded-md border border-white/10 bg-white/[0.035] px-2 text-left text-[13px] font-black text-slate-300">{locale === "zh" ? `${group}组` : `Group ${group}`}</button>)}
+                  {groups.map((group) => <button key={group} type="button" onClick={() => applyGroupFilter(group)} className="h-8 rounded-md border border-white/10 bg-white/[0.035] px-2 text-left text-[13px] font-black text-slate-300">{locale === "zh" ? `${group}组` : `${lc(locale, "组", "Group")} ${group}`}</button>)}
                 </div>
               </div>
             )}
           </div>
           <div className="relative min-w-0">
             <button type="button" onClick={() => { setTeamPanelOpen((open) => !open); setGroupPanelOpen(false); }} className="flex h-8 w-full items-center justify-between gap-1 rounded-md border border-white/10 bg-[#0d1a2b] px-1.5 text-left text-[13px] font-black text-white">
-              <span className="truncate">{teamFilters.length === 0 ? (locale === "zh" ? "全部球队" : "All teams") : selectedTeamNames}</span>
+              <span className="truncate">{teamFilters.length === 0 ? (lc(locale, "全部球队", "All teams")) : selectedTeamNames}</span>
               <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition ${teamPanelOpen ? "rotate-180" : ""}`} />
             </button>
             {teamPanelOpen && (
               <div className="absolute left-0 right-0 top-9 z-40 max-h-56 overflow-y-auto rounded-lg border border-white/10 bg-[#0b1626] p-2 shadow-xl shadow-black/40">
                 <div className="mb-1.5 grid grid-cols-2 gap-1.5">
-                  <button type="button" onClick={() => { setTeamFilters([]); setTeamPanelOpen(false); }} className="h-7 rounded-md border border-white/10 bg-white/[0.035] px-2 text-left text-[13px] font-black text-slate-300">{locale === "zh" ? "全部球队" : "All teams"}</button>
-                  <button type="button" onClick={() => setTeamPanelOpen(false)} className="h-7 rounded-md bg-[#FFD700] px-2 text-[13px] font-black text-[#081120]">{locale === "zh" ? "完成" : "Done"}</button>
+                  <button type="button" onClick={() => { setTeamFilters([]); setTeamPanelOpen(false); }} className="h-7 rounded-md border border-white/10 bg-white/[0.035] px-2 text-left text-[13px] font-black text-slate-300">{lc(locale, "全部球队", "All teams")}</button>
+                  <button type="button" onClick={() => setTeamPanelOpen(false)} className="h-7 rounded-md bg-[#FFD700] px-2 text-[13px] font-black text-[#081120]">{lc(locale, "完成", "Done")}</button>
                 </div>
                 <div className="grid grid-cols-2 gap-1.5">
                   {teams.map((team) => <button key={team} type="button" onClick={() => toggleTeamFilter(team)} className={`h-8 min-w-0 truncate rounded-md border px-1.5 text-left text-[13px] font-black ${teamFilters.includes(team) ? "border-[#FFD700]/60 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-white/[0.035] text-slate-300"}`}>{getTeamName(team, locale)}</button>)}
@@ -1271,7 +1272,7 @@ function MatchesView({
               </div>
             )}
           </div>
-          <button type="button" onClick={sortByTime} className={`h-8 rounded-md border px-1 text-[13px] font-black ${timeSort ? "border-[#FFD700]/60 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-[#0d1a2b] text-slate-300"}`}>{locale === "zh" ? "时间" : "Time"}</button>
+          <button type="button" onClick={sortByTime} className={`h-8 rounded-md border px-1 text-[13px] font-black ${timeSort ? "border-[#FFD700]/60 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-[#0d1a2b] text-slate-300"}`}>{lc(locale, "时间", "Time")}</button>
         </div>
       </section>
       {filteredMatches.length === 0 ? (
@@ -1349,7 +1350,7 @@ function MobileFollowButton({ locale, match, isLoggedIn, canPersistActions }: { 
     }
   }
 
-  return <button type="button" onClick={toggleFollow} onKeyDown={(event) => event.stopPropagation()} disabled={loading} title={!isLoggedIn ? (locale === "zh" ? "请先完成登录" : "Please sign in") : undefined} className="ml-auto h-5 shrink-0 rounded-full border border-[#FFD700]/60 bg-transparent px-2 text-[12px] font-black leading-none text-[#FFD700] disabled:opacity-50">{following ? (locale === "zh" ? "已关注比赛" : "Following") : (locale === "zh" ? "关注比赛" : "Follow match")}</button>;
+  return <button type="button" onClick={toggleFollow} onKeyDown={(event) => event.stopPropagation()} disabled={loading} title={!isLoggedIn ? (lc(locale, "请先完成登录", "Please sign in")) : undefined} className="ml-auto h-5 shrink-0 rounded-full border border-[#FFD700]/60 bg-transparent px-2 text-[12px] font-black leading-none text-[#FFD700] disabled:opacity-50">{following ? (lc(locale, "已关注比赛", "Following")) : (lc(locale, "关注比赛", "Follow match"))}</button>;
 }
 
 function PredictView({
@@ -1412,9 +1413,9 @@ function PredictView({
       <section className="sticky top-0 z-30 -mx-3 border-b border-white/10 bg-[#081120]/96 px-3 py-2 backdrop-blur">
         <div className="mx-auto grid max-w-md grid-cols-3 gap-1.5">
           {[
-            { key: "events" as const, label: locale === "zh" ? "赛事预测" : "Matches" },
-            { key: "awards" as const, label: locale === "zh" ? "大奖预测" : "Awards" },
-            { key: "follow" as const, label: locale === "zh" ? "我的关注" : "Following" },
+            { key: "events" as const, label: lc(locale, "赛事预测", "Matches") },
+            { key: "awards" as const, label: lc(locale, "大奖预测", "Awards") },
+            { key: "follow" as const, label: lc(locale, "我的关注", "Following") },
           ].map((item) => (
             <button
               key={item.key}
@@ -1436,9 +1437,9 @@ function PredictView({
 
           <PredictListSection
             locale={locale}
-            title={locale === "zh" ? "输赢预测" : "Win Predictions"}
+            title={lc(locale, "输赢预测", "Win Predictions")}
             predictions={winPredictions}
-            emptyLabel={locale === "zh" ? "还没有输赢预测" : "No win predictions yet"}
+            emptyLabel={lc(locale, "还没有输赢预测", "No win predictions yet")}
             onOpenMatchId={(matchId) => {
               const match = matches.find((item) => item.id === matchId);
               if (match) openMatch(match);
@@ -1447,9 +1448,9 @@ function PredictView({
 
           <PredictListSection
             locale={locale}
-            title={locale === "zh" ? "比分预测" : "Score Predictions"}
+            title={lc(locale, "比分预测", "Score Predictions")}
             predictions={scorePredictions}
-            emptyLabel={locale === "zh" ? "还没有比分预测" : "No score predictions yet"}
+            emptyLabel={lc(locale, "还没有比分预测", "No score predictions yet")}
             onOpenMatchId={(matchId) => {
               const match = matches.find((item) => item.id === matchId);
               if (match) openMatch(match);
@@ -1475,11 +1476,11 @@ function PredictView({
 
       {activeTab === "follow" && (
         <section className="rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
-          <ForumSectionHeader title={locale === "zh" ? "我的关注比赛" : "Followed Matches"} meta={`${followedMatches.length}`} />
+          <ForumSectionHeader title={lc(locale, "我的关注比赛", "Followed Matches")} meta={`${followedMatches.length}`} />
           <MineFollowedMatchList
             locale={locale}
             matches={followedMatches}
-            emptyLabel={locale === "zh" ? "还没有关注比赛" : "No followed matches yet"}
+            emptyLabel={lc(locale, "还没有关注比赛", "No followed matches yet")}
             onOpenMatch={openMatch}
           />
         </section>
@@ -1500,9 +1501,9 @@ function PredictSummaryBar({
   followCount: number;
 }) {
   const items = [
-    { label: locale === "zh" ? "输赢" : "Win", value: winCount },
-    { label: locale === "zh" ? "比分" : "Score", value: scoreCount },
-    { label: locale === "zh" ? "关注" : "Follow", value: followCount },
+    { label: lc(locale, "输赢", "Win"), value: winCount },
+    { label: lc(locale, "比分", "Score"), value: scoreCount },
+    { label: lc(locale, "关注", "Follow"), value: followCount },
   ];
 
   return (
@@ -1572,7 +1573,7 @@ function PredictRecordRow({
           <span className="min-w-0 truncate text-[13px] font-black text-white">{getTeamName(item.awayTeam, locale)}</span>
         </span>
         <span className="shrink-0 rounded-full border border-[#FFD700]/30 bg-[#FFD700]/10 px-2 py-0.5 text-[11px] font-black text-[#FFD700]">
-          {item.kind === "win" ? (locale === "zh" ? "输赢" : "Win") : (locale === "zh" ? "比分" : "Score")}
+          {item.kind === "win" ? (lc(locale, "输赢", "Win")) : (lc(locale, "比分", "Score"))}
         </span>
       </span>
       <span className="flex min-w-0 items-center justify-between gap-2 text-[12px] font-bold text-slate-400">
@@ -1602,10 +1603,10 @@ function PredictSuggestedMatches({
 
   return (
     <section className="rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
-      <ForumSectionHeader title={locale === "zh" ? "可继续预测" : "Continue Predicting"} meta={`${list.length}`} />
+      <ForumSectionHeader title={lc(locale, "可继续预测", "Continue Predicting")} meta={`${list.length}`} />
       {list.length === 0 ? (
         <div className="rounded-lg border border-white/10 bg-white/[0.035] px-3 py-5 text-center text-[13px] font-bold text-slate-500">
-          {locale === "zh" ? "暂无可预测比赛" : "No matches available"}
+          {lc(locale, "暂无可预测比赛", "No matches available")}
         </div>
       ) : (
         <div className="grid gap-1.5">
@@ -1622,7 +1623,7 @@ function PredictSuggestedMatches({
               <span className="flex min-w-0 items-center justify-between gap-2 text-[12px] leading-4 text-slate-500">
                 <span className="min-w-0 truncate">{formatKickoff(match.kickoffTime, locale)} · {getLocation(match, locale)}</span>
                 <span className="shrink-0 rounded-full bg-[#FFD700] px-2 py-0.5 text-[11px] font-black text-[#081120]">
-                  {locale === "zh" ? "去预测" : "Predict"}
+                  {lc(locale, "去预测", "Predict")}
                 </span>
               </span>
             </button>
@@ -2125,36 +2126,36 @@ function ForumView({
         <div className="mb-2 flex items-end justify-between gap-3">
           <div>
             <p className="text-[13px] font-black uppercase tracking-[0.14em] text-[#FFD700]">{t.forumHot}</p>
-            <h1 className="mt-1 text-xl font-black leading-tight text-white">{locale === "zh" ? "本周热帖" : "Hot This Week"}</h1>
+            <h1 className="mt-1 text-xl font-black leading-tight text-white">{lc(locale, "本周热帖", "Hot This Week")}</h1>
           </div>
           <p className="shrink-0 text-[13px] font-bold text-slate-500">
             {categories.length > 0
               ? locale === "zh" ? `${categories.length} 板块` : `${categories.length} boards`
-              : locale === "zh" ? "社区" : "Community"}
+              : lc(locale, "社区", "Community")}
           </p>
         </div>
-        <ForumPostList locale={locale} posts={hotPosts} translatedTitles={translatedTitles} emptyLabel={locale === "zh" ? "暂无热门帖子" : "No hot posts"} onOpenPost={openPost} ranked />
+        <ForumPostList locale={locale} posts={hotPosts} translatedTitles={translatedTitles} emptyLabel={lc(locale, "暂无热门帖子", "No hot posts")} onOpenPost={openPost} ranked />
       </section>
 
       <section className="rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
         <ForumSectionHeader
-          title={locale === "zh" ? "我的帖子" : "My Posts"}
-          meta={isLoggedIn ? `${myPosts.length}` : (locale === "zh" ? "未登录" : "Signed out")}
+          title={lc(locale, "我的帖子", "My Posts")}
+          meta={isLoggedIn ? `${myPosts.length}` : (lc(locale, "未登录", "Signed out"))}
         />
-        <ForumPostList locale={locale} posts={myPosts} translatedTitles={translatedTitles} emptyLabel={isLoggedIn ? (locale === "zh" ? "还没有发帖" : "No posts yet") : (locale === "zh" ? "登录后显示我的帖子" : "Sign in to see your posts")} onOpenPost={openPost} />
+        <ForumPostList locale={locale} posts={myPosts} translatedTitles={translatedTitles} emptyLabel={isLoggedIn ? (lc(locale, "还没有发帖", "No posts yet")) : (lc(locale, "登录后显示我的帖子", "Sign in to see your posts"))} onOpenPost={openPost} />
       </section>
 
       <section className="rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
         <ForumSectionHeader
-          title={locale === "zh" ? "我的回复" : "My Replies"}
-          meta={isLoggedIn ? `${myReplies.length}` : (locale === "zh" ? "未登录" : "Signed out")}
+          title={lc(locale, "我的回复", "My Replies")}
+          meta={isLoggedIn ? `${myReplies.length}` : (lc(locale, "未登录", "Signed out"))}
         />
-        <ForumReplyList locale={locale} replies={myReplies} translatedTitles={translatedTitles} emptyLabel={isLoggedIn ? (locale === "zh" ? "还没有回复" : "No replies yet") : (locale === "zh" ? "登录后显示我的回复" : "Sign in to see your replies")} onOpenPost={openPost} />
+        <ForumReplyList locale={locale} replies={myReplies} translatedTitles={translatedTitles} emptyLabel={isLoggedIn ? (lc(locale, "还没有回复", "No replies yet")) : (lc(locale, "登录后显示我的回复", "Sign in to see your replies"))} onOpenPost={openPost} />
       </section>
 
       <section className="rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
         <ForumSectionHeader
-          title={locale === "zh" ? "全部论坛" : "All Forums"}
+          title={lc(locale, "全部论坛", "All Forums")}
           meta={locale === "zh" ? `${categories.length} 个` : `${categories.length}`}
         />
         <ForumCategoryGrid locale={locale} categories={categories} />
@@ -2239,7 +2240,7 @@ function ForumReplyList({
             <span className="shrink-0 text-[11px] font-bold text-slate-500">{formatForumTime(reply.createdAt, locale)}</span>
           </span>
           <ForumHtml html={reply.content} className="mobile-forum-content line-clamp-2 text-[13px] leading-5 text-slate-400" />
-          <span className="text-[11px] font-bold text-slate-600">{locale === "zh" ? "赞" : "Like"} {formatCompactCount(reply.likeCount)}</span>
+          <span className="text-[11px] font-bold text-slate-600">{lc(locale, "赞", "Like")} {formatCompactCount(reply.likeCount)}</span>
         </button>
       ))}
     </div>
@@ -2287,8 +2288,8 @@ function ForumPostRow({
         </span>
       </span>
       <span className="shrink-0 text-right text-[12px] font-bold leading-4 text-slate-500">
-        <span className="block">{locale === "zh" ? "赞" : "Like"} {formatCompactCount(post.likeCount)}</span>
-        <span className="block">{locale === "zh" ? "回" : "Reply"} {formatCompactCount(post.replyCount)}</span>
+        <span className="block">{lc(locale, "赞", "Like")} {formatCompactCount(post.likeCount)}</span>
+        <span className="block">{lc(locale, "回", "Reply")} {formatCompactCount(post.replyCount)}</span>
       </span>
     </button>
   );
@@ -2371,8 +2372,8 @@ function ForumThreadDetail({
   const [reportTarget, setReportTarget] = useState<ForumReportTarget | null>(null);
   const translationRequestRef = useRef<string | null>(null);
   const statusLabel = forumSignedIn
-    ? (locale === "zh" ? "移动端已登录" : "Signed in")
-    : (locale === "zh" ? "未登录" : "Signed out");
+    ? (lc(locale, "移动端已登录", "Signed in"))
+    : (lc(locale, "未登录", "Signed out"));
   // Only auto-translate + show the translate toggle when the post is actually in
   // a different language than the UI (mirrors the desktop TranslatedContent).
   // An English post on the English site shows no toggle and burns no quota.
@@ -2409,7 +2410,7 @@ function ForumThreadDetail({
       redirectToMobileLogin(locale);
       return false;
     }
-    setActionMessage(locale === "zh" ? "线上登录后可操作" : "Sign in online to use this action.");
+    setActionMessage(lc(locale, "线上登录后可操作", "Sign in online to use this action."));
     return false;
   }
 
@@ -2451,11 +2452,11 @@ function ForumThreadDetail({
       setContentHtml(sanitizeClientForumHtml(String(contentData.translated ?? post.content)));
       setTranslated(true);
       if (!automatic) {
-        setActionMessage(locale === "zh" ? "已翻译为本地语言" : "Translated");
+        setActionMessage(lc(locale, "已翻译为本地语言", "Translated"));
       }
     } catch (error) {
       if (!automatic) {
-        setActionMessage(error instanceof Error ? error.message : (locale === "zh" ? "翻译失败" : "Translation failed"));
+        setActionMessage(error instanceof Error ? error.message : (lc(locale, "翻译失败", "Translation failed")));
       }
     } finally {
       translationRequestRef.current = null;
@@ -2492,7 +2493,7 @@ function ForumThreadDetail({
     } catch (error) {
       setLiked(!next);
       setLikes((current) => Math.max(0, current + (next ? -1 : 1)));
-      setActionMessage(error instanceof Error ? error.message : (locale === "zh" ? "推荐失败" : "Recommend failed"));
+      setActionMessage(error instanceof Error ? error.message : (lc(locale, "推荐失败", "Recommend failed")));
     } finally {
       setActionLoading(null);
     }
@@ -2513,7 +2514,7 @@ function ForumThreadDetail({
       if (!response.ok) throw new Error(await readForumApiError(response));
     } catch (error) {
       setBookmarked(!next);
-      setActionMessage(error instanceof Error ? error.message : (locale === "zh" ? "收藏失败" : "Bookmark failed"));
+      setActionMessage(error instanceof Error ? error.message : (lc(locale, "收藏失败", "Bookmark failed")));
     } finally {
       setActionLoading(null);
     }
@@ -2534,7 +2535,7 @@ function ForumThreadDetail({
       if (!response.ok) throw new Error(await readForumApiError(response));
     } catch (error) {
       setFollowing(!next);
-      setActionMessage(error instanceof Error ? error.message : (locale === "zh" ? "关注失败" : "Follow failed"));
+      setActionMessage(error instanceof Error ? error.message : (lc(locale, "关注失败", "Follow failed")));
     } finally {
       setActionLoading(null);
     }
@@ -2552,7 +2553,7 @@ function ForumThreadDetail({
         return;
       }
       await navigator.clipboard.writeText(url);
-      setShareMessage(locale === "zh" ? "移动端链接已复制" : "Mobile link copied");
+      setShareMessage(lc(locale, "移动端链接已复制", "Mobile link copied"));
     } catch {
       setShareMessage(url);
     }
@@ -2563,7 +2564,7 @@ function ForumThreadDetail({
       <div className="sticky top-0 z-10 border-b border-white/10 bg-[#0e1f2e]/95 p-2.5 backdrop-blur">
         <div className="flex items-center justify-between gap-2">
           <button type="button" onClick={onClose} className="h-8 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 text-[13px] font-black text-slate-300">
-            {locale === "zh" ? "返回社区" : "Back"}
+            {lc(locale, "返回社区", "Back")}
           </button>
           <span className={`rounded-full border px-2 py-1 text-[12px] font-black ${
             forumSignedIn ? "border-[#FFD700]/40 bg-[#FFD700]/10 text-[#FFD700]" : "border-white/10 bg-white/[0.04] text-slate-400"
@@ -2583,48 +2584,48 @@ function ForumThreadDetail({
           <span>·</span>
           <span>{formatForumTime(post.lastActivityAt, locale)}</span>
           <span>·</span>
-          <span>{locale === "zh" ? "浏览" : "Views"} {formatCompactCount(post.viewCount + 1)}</span>
+          <span>{lc(locale, "浏览", "Views")} {formatCompactCount(post.viewCount + 1)}</span>
           <span>·</span>
-          <span>{locale === "zh" ? "推荐" : "Recommend"} {formatCompactCount(likes)}</span>
+          <span>{lc(locale, "推荐", "Recommend")} {formatCompactCount(likes)}</span>
           <span>·</span>
-          <span>{locale === "zh" ? "回复" : "Replies"} {formatCompactCount(post.replyCount)}</span>
+          <span>{lc(locale, "回复", "Replies")} {formatCompactCount(post.replyCount)}</span>
         </div>
 
         <div className="hidden">
           <MobileForumActionButton
             icon={translating ? Loader2 : Languages}
-            label={translated ? (locale === "zh" ? "原文" : "Original") : (locale === "zh" ? "翻译" : "Translate")}
+            label={translated ? (lc(locale, "原文", "Original")) : (lc(locale, "翻译", "Translate"))}
             onClick={translatePost}
             active={translated}
             primary
             loading={translating}
           />
-          <MobileForumActionButton icon={Share2} label={locale === "zh" ? "分享" : "Share"} onClick={copyMobileLink} />
+          <MobileForumActionButton icon={Share2} label={lc(locale, "分享", "Share")} onClick={copyMobileLink} />
           <MobileForumActionButton
             icon={Bookmark}
-            label={bookmarked ? (locale === "zh" ? "已收藏" : "Saved") : (locale === "zh" ? "收藏" : "Save")}
+            label={bookmarked ? (lc(locale, "已收藏", "Saved")) : (lc(locale, "收藏", "Save"))}
             onClick={toggleBookmark}
             active={bookmarked}
             loading={actionLoading === "bookmark"}
           />
           <MobileForumActionButton
             icon={Bell}
-            label={following ? (locale === "zh" ? "已关注" : "Following") : (locale === "zh" ? "关注" : "Follow")}
+            label={following ? (lc(locale, "已关注", "Following")) : (lc(locale, "关注", "Follow"))}
             onClick={toggleFollow}
             active={following}
             loading={actionLoading === "follow"}
           />
           <MobileForumActionButton
             icon={ThumbsUp}
-            label={`${locale === "zh" ? "推荐" : "Recommend"} ${formatCompactCount(likes)}`}
+            label={`${lc(locale, "推荐", "Recommend")} ${formatCompactCount(likes)}`}
             onClick={togglePostLike}
             active={liked}
             loading={actionLoading === "like"}
           />
-          <MobileForumActionButton icon={Reply} label={locale === "zh" ? "回复" : "Reply"} onClick={scrollToReplyBox} />
+          <MobileForumActionButton icon={Reply} label={lc(locale, "回复", "Reply")} onClick={scrollToReplyBox} />
           <MobileForumActionButton
             icon={Coins}
-            label={locale === "zh" ? "打赏" : "Tip"}
+            label={lc(locale, "打赏", "Tip")}
             onClick={() => {
               if (!forumSignedIn) {
                 redirectToMobileLogin(locale);
@@ -2636,7 +2637,7 @@ function ForumThreadDetail({
           />
           <MobileForumActionButton
             icon={Flag}
-            label={locale === "zh" ? "举报" : "Report"}
+            label={lc(locale, "举报", "Report")}
             onClick={() => {
               if (!forumSignedIn) {
                 redirectToMobileLogin(locale);
@@ -2651,13 +2652,13 @@ function ForumThreadDetail({
         )}
 
         <div className="mt-3 rounded-lg border border-white/10 bg-[#081120]/75 p-3">
-          <ForumHtml html={contentHtml || (locale === "zh" ? "暂无正文" : "No content yet")} className="mobile-forum-content text-[15px] leading-6 text-slate-200" />
+          <ForumHtml html={contentHtml || (lc(locale, "暂无正文", "No content yet"))} className="mobile-forum-content text-[15px] leading-6 text-slate-200" />
         </div>
         <div className="mt-2 flex flex-wrap gap-1">
           {needsForumTranslation && (
             <MobileForumActionButton
               icon={translating ? Loader2 : Languages}
-              label={translated ? (locale === "zh" ? "原贴" : "Original") : (locale === "zh" ? "翻译" : "Translate")}
+              label={translated ? (lc(locale, "原贴", "Original")) : (lc(locale, "翻译", "Translate"))}
               onClick={translatePost}
               active={translated}
               primary
@@ -2665,10 +2666,10 @@ function ForumThreadDetail({
               loading={translating}
             />
           )}
-          <MobileForumActionButton icon={Share2} label={locale === "zh" ? "分享" : "Share"} onClick={copyMobileLink} compact />
+          <MobileForumActionButton icon={Share2} label={lc(locale, "分享", "Share")} onClick={copyMobileLink} compact />
           <MobileForumActionButton
             icon={Bookmark}
-            label={bookmarked ? (locale === "zh" ? "已收藏" : "Saved") : (locale === "zh" ? "收藏" : "Save")}
+            label={bookmarked ? (lc(locale, "已收藏", "Saved")) : (lc(locale, "收藏", "Save"))}
             onClick={toggleBookmark}
             active={bookmarked}
             compact
@@ -2676,7 +2677,7 @@ function ForumThreadDetail({
           />
           <MobileForumActionButton
             icon={Bell}
-            label={following ? (locale === "zh" ? "已关注" : "Following") : (locale === "zh" ? "关注" : "Follow")}
+            label={following ? (lc(locale, "已关注", "Following")) : (lc(locale, "关注", "Follow"))}
             onClick={toggleFollow}
             active={following}
             compact
@@ -2684,16 +2685,16 @@ function ForumThreadDetail({
           />
           <MobileForumActionButton
             icon={ThumbsUp}
-            label={`${locale === "zh" ? "推荐" : "Like"} ${formatCompactCount(likes)}`}
+            label={`${lc(locale, "推荐", "Like")} ${formatCompactCount(likes)}`}
             onClick={togglePostLike}
             active={liked}
             compact
             loading={actionLoading === "like"}
           />
-          <MobileForumActionButton icon={Reply} label={locale === "zh" ? "回复" : "Reply"} onClick={scrollToReplyBox} compact />
+          <MobileForumActionButton icon={Reply} label={lc(locale, "回复", "Reply")} onClick={scrollToReplyBox} compact />
           <MobileForumActionButton
             icon={Coins}
-            label={locale === "zh" ? "打赏" : "Tip"}
+            label={lc(locale, "打赏", "Tip")}
             onClick={() => {
               if (!forumSignedIn) {
                 redirectToMobileLogin(locale);
@@ -2706,7 +2707,7 @@ function ForumThreadDetail({
           />
           <MobileForumActionButton
             icon={Flag}
-            label={locale === "zh" ? "举报" : "Report"}
+            label={lc(locale, "举报", "Report")}
             onClick={() => {
               if (!forumSignedIn) {
                 redirectToMobileLogin(locale);
@@ -2721,8 +2722,8 @@ function ForumThreadDetail({
 
       <div className="border-t border-white/10 p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h2 className="text-[15px] font-black text-white">{locale === "zh" ? "全部回复" : "Replies"}</h2>
-          <span className="text-[12px] font-bold text-slate-500">{formatCompactCount(post.replyCount)} {locale === "zh" ? "条" : ""}</span>
+          <h2 className="text-[15px] font-black text-white">{lc(locale, "全部回复", "Replies")}</h2>
+          <span className="text-[12px] font-bold text-slate-500">{formatCompactCount(post.replyCount)} {lc(locale, "条", "")}</span>
         </div>
         {replies.length > 0 ? (
           <div className="grid gap-1.5">
@@ -2744,7 +2745,7 @@ function ForumThreadDetail({
           </div>
         ) : (
           <div className="rounded-lg border border-white/10 bg-white/[0.035] px-3 py-5 text-center text-[13px] font-bold text-slate-500">
-            {locale === "zh" ? "还没有回复" : "No replies yet"}
+            {lc(locale, "还没有回复", "No replies yet")}
           </div>
         )}
       </div>
@@ -2763,7 +2764,7 @@ function ForumThreadDetail({
           onClose={() => setRewardTarget(null)}
           onDone={() => {
             setRewardTarget(null);
-            setActionMessage(locale === "zh" ? "打赏成功" : "Tip sent");
+            setActionMessage(lc(locale, "打赏成功", "Tip sent"));
           }}
         />
       )}
@@ -2775,7 +2776,7 @@ function ForumThreadDetail({
           onClose={() => setReportTarget(null)}
           onDone={() => {
             setReportTarget(null);
-            setActionMessage(locale === "zh" ? "举报已提交" : "Report submitted");
+            setActionMessage(lc(locale, "举报已提交", "Report submitted"));
           }}
         />
       )}
@@ -2837,7 +2838,7 @@ function ForumReplyRow({
       redirectToMobileLogin(locale);
       return false;
     }
-    onNeedActionMessage(locale === "zh" ? "线上登录后可操作" : "Sign in online to use this action.");
+    onNeedActionMessage(lc(locale, "线上登录后可操作", "Sign in online to use this action."));
     return false;
   }
 
@@ -2867,11 +2868,11 @@ function ForumReplyRow({
       setContentHtml(sanitizeClientForumHtml(String(data.translated ?? reply.content)));
       setTranslated(true);
       if (!automatic) {
-        onNeedActionMessage(locale === "zh" ? "回复已翻译" : "Reply translated");
+        onNeedActionMessage(lc(locale, "回复已翻译", "Reply translated"));
       }
     } catch (error) {
       if (!automatic) {
-        onNeedActionMessage(error instanceof Error ? error.message : (locale === "zh" ? "翻译失败" : "Translation failed"));
+        onNeedActionMessage(error instanceof Error ? error.message : (lc(locale, "翻译失败", "Translation failed")));
       }
     } finally {
       translationRequestRef.current = null;
@@ -2905,7 +2906,7 @@ function ForumReplyRow({
     } catch (error) {
       setLiked(!next);
       setLikes((current) => Math.max(0, current + (next ? -1 : 1)));
-      onNeedActionMessage(error instanceof Error ? error.message : (locale === "zh" ? "点赞失败" : "Like failed"));
+      onNeedActionMessage(error instanceof Error ? error.message : (lc(locale, "点赞失败", "Like failed")));
     } finally {
       setLoading(false);
     }
@@ -2922,17 +2923,17 @@ function ForumReplyRow({
         {needsReplyTranslation && (
           <MobileForumActionButton
             icon={translating ? Loader2 : Languages}
-            label={translated ? (locale === "zh" ? "原贴" : "Original") : (locale === "zh" ? "翻译" : "Translate")}
+            label={translated ? (lc(locale, "原贴", "Original")) : (lc(locale, "翻译", "Translate"))}
             onClick={translateReply}
             active={translated}
             compact
             loading={translating}
           />
         )}
-        <MobileForumActionButton icon={Reply} label={locale === "zh" ? "回复" : "Reply"} onClick={onReply} compact />
+        <MobileForumActionButton icon={Reply} label={lc(locale, "回复", "Reply")} onClick={onReply} compact />
         <MobileForumActionButton
           icon={Coins}
-          label={locale === "zh" ? "打赏" : "Tip"}
+          label={lc(locale, "打赏", "Tip")}
           onClick={() => {
             if (!isLoggedIn && !canPersistActions) {
               redirectToMobileLogin(locale);
@@ -2953,7 +2954,7 @@ function ForumReplyRow({
         />
         <MobileForumActionButton
           icon={Flag}
-          label={locale === "zh" ? "举报" : "Report"}
+          label={lc(locale, "举报", "Report")}
           onClick={() => {
             if (!isLoggedIn && !canPersistActions) {
               redirectToMobileLogin(locale);
@@ -2975,7 +2976,7 @@ function ForumReplyRow({
         }}
         className="hidden"
       >
-        {locale === "zh" ? "举报此回复" : "Report reply"}
+        {lc(locale, "举报此回复", "Report reply")}
       </button>
     </div>
   );
@@ -3054,11 +3055,11 @@ function MobileForumRewardModal({
   async function submit() {
     if (loading) return;
     if (!canPersistActions) {
-      setMessage(locale === "zh" ? "线上登录后可操作" : "Sign in online to use this action.");
+      setMessage(lc(locale, "线上登录后可操作", "Sign in online to use this action."));
       return;
     }
     if (amount <= 0) {
-      setMessage(locale === "zh" ? "请输入有效 GC 数量" : "Enter a valid GC amount");
+      setMessage(lc(locale, "请输入有效 GC 数量", "Enter a valid GC amount"));
       return;
     }
     setLoading(true);
@@ -3077,7 +3078,7 @@ function MobileForumRewardModal({
       if (!response.ok) throw new Error(await readForumApiError(response));
       onDone();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : (locale === "zh" ? "打赏失败" : "Tip failed"));
+      setMessage(error instanceof Error ? error.message : (lc(locale, "打赏失败", "Tip failed")));
     } finally {
       setLoading(false);
     }
@@ -3088,7 +3089,7 @@ function MobileForumRewardModal({
       <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#FFD700]/25 bg-[#0d1a2b] shadow-2xl shadow-black/50">
         <div className="flex items-center justify-between border-b border-white/10 p-3">
           <div className="min-w-0">
-            <p className="text-[13px] font-black text-[#FFD700]">{locale === "zh" ? "打赏 GC" : "Tip GC"}</p>
+            <p className="text-[13px] font-black text-[#FFD700]">{lc(locale, "打赏 GC", "Tip GC")}</p>
             <p className="mt-0.5 truncate text-[15px] font-black text-white">@{target.authorName}</p>
           </div>
           <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-slate-400">
@@ -3119,7 +3120,7 @@ function MobileForumRewardModal({
             <input
               value={customAmount}
               onChange={(event) => setCustomAmount(event.target.value)}
-              placeholder={locale === "zh" ? "自定义金额，例如 10K" : "Custom, e.g. 10K"}
+              placeholder={lc(locale, "自定义金额，例如 10K", "Custom, e.g. 10K")}
               className="h-9 min-w-0 rounded-lg border border-white/10 bg-[#081120] px-3 text-[13px] font-bold text-white outline-none placeholder:text-slate-600"
             />
             <span className="flex h-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.035] text-[12px] font-black text-slate-400">
@@ -3129,7 +3130,7 @@ function MobileForumRewardModal({
           <input
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            placeholder={locale === "zh" ? "留言，可不填" : "Message, optional"}
+            placeholder={lc(locale, "留言，可不填", "Message, optional")}
             className="h-9 rounded-lg border border-white/10 bg-[#081120] px-3 text-[13px] font-bold text-white outline-none placeholder:text-slate-600"
           />
           {message && <p className="text-[12px] font-bold text-red-300">{message}</p>}
@@ -3139,7 +3140,7 @@ function MobileForumRewardModal({
             disabled={loading || amount <= 0}
             className="h-10 rounded-lg bg-[#FFD700] text-[14px] font-black text-[#081120] disabled:bg-slate-700 disabled:text-slate-500"
           >
-            {loading ? (locale === "zh" ? "提交中" : "Sending") : (locale === "zh" ? "确认打赏" : "Send Tip")}
+            {loading ? (lc(locale, "提交中", "Sending")) : (lc(locale, "确认打赏", "Send Tip"))}
           </button>
         </div>
       </div>
@@ -3175,7 +3176,7 @@ function MobileForumReportModal({
   async function submit() {
     if (loading) return;
     if (!canPersistActions) {
-      setMessage(locale === "zh" ? "线上登录后可操作" : "Sign in online to use this action.");
+      setMessage(lc(locale, "线上登录后可操作", "Sign in online to use this action."));
       return;
     }
     setLoading(true);
@@ -3194,7 +3195,7 @@ function MobileForumReportModal({
       if (!response.ok) throw new Error(await readForumApiError(response));
       onDone();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : (locale === "zh" ? "举报失败" : "Report failed"));
+      setMessage(error instanceof Error ? error.message : (lc(locale, "举报失败", "Report failed")));
     } finally {
       setLoading(false);
     }
@@ -3205,7 +3206,7 @@ function MobileForumReportModal({
       <div className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-[#0d1a2b] shadow-2xl shadow-black/50">
         <div className="flex items-center justify-between border-b border-white/10 p-3">
           <div className="min-w-0">
-            <p className="text-[13px] font-black text-red-300">{locale === "zh" ? "举报内容" : "Report"}</p>
+            <p className="text-[13px] font-black text-red-300">{lc(locale, "举报内容", "Report")}</p>
             <p className="mt-0.5 truncate text-[15px] font-black text-white">{target.label}</p>
           </div>
           <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-slate-400">
@@ -3231,7 +3232,7 @@ function MobileForumReportModal({
             value={detail}
             onChange={(event) => setDetail(event.target.value)}
             rows={3}
-            placeholder={locale === "zh" ? "补充说明，可不填" : "Details, optional"}
+            placeholder={lc(locale, "补充说明，可不填", "Details, optional")}
             className="min-h-20 resize-none rounded-lg border border-white/10 bg-[#081120] px-3 py-2 text-[13px] font-bold text-white outline-none placeholder:text-slate-600"
           />
           {message && <p className="text-[12px] font-bold text-red-300">{message}</p>}
@@ -3241,7 +3242,7 @@ function MobileForumReportModal({
             disabled={loading}
             className="h-10 rounded-lg bg-red-300 text-[14px] font-black text-[#081120] disabled:bg-slate-700 disabled:text-slate-500"
           >
-            {loading ? (locale === "zh" ? "提交中" : "Submitting") : (locale === "zh" ? "提交举报" : "Submit Report")}
+            {loading ? (lc(locale, "提交中", "Submitting")) : (lc(locale, "提交举报", "Submit Report"))}
           </button>
         </div>
       </div>
@@ -3267,7 +3268,7 @@ function ForumReplyComposer({
   async function submit() {
     if (!value.trim() || loading) return;
     if (!canPersistActions) {
-      setMessage(locale === "zh" ? "当前是移动端预览，线上登录后可回复" : "Preview mode. Sign in online to reply.");
+      setMessage(lc(locale, "当前是移动端预览，线上登录后可回复", "Preview mode. Sign in online to reply."));
       return;
     }
 
@@ -3288,14 +3289,14 @@ function ForumReplyComposer({
         likeCount: 0,
         isLiked: false,
         createdAt: new Date().toISOString(),
-        authorName: locale === "zh" ? "我" : "Me",
+        authorName: lc(locale, "我", "Me"),
         authorAvatarUrl: null,
         authorBalance: 0,
       });
       setValue("");
-      setMessage(locale === "zh" ? "回复成功" : "Reply posted");
+      setMessage(lc(locale, "回复成功", "Reply posted"));
     } catch {
-      setMessage(locale === "zh" ? "回复失败" : "Reply failed");
+      setMessage(lc(locale, "回复失败", "Reply failed"));
     } finally {
       setLoading(false);
     }
@@ -3306,13 +3307,13 @@ function ForumReplyComposer({
       <textarea
         value={value}
         onChange={(event) => setValue(event.target.value)}
-        placeholder={locale === "zh" ? "写下你的回复" : "Write a reply"}
+        placeholder={lc(locale, "写下你的回复", "Write a reply")}
         rows={3}
         className="min-h-20 w-full resize-none rounded-lg border border-white/10 bg-[#0d1a2b] px-3 py-2 text-[15px] leading-5 text-white outline-none placeholder:text-slate-600"
       />
       <div className="mt-1.5 grid grid-cols-[1fr_4.25rem] gap-1.5">
         <p className="min-w-0 truncate text-[12px] font-bold text-slate-500">
-          {message || (locale === "zh" ? "移动端内联回复" : "Mobile inline reply")}
+          {message || (lc(locale, "移动端内联回复", "Mobile inline reply"))}
         </p>
         <button
           type="button"
@@ -3320,7 +3321,7 @@ function ForumReplyComposer({
           disabled={!value.trim() || loading}
           className="h-8 rounded-lg bg-[#FFD700] text-[13px] font-black text-[#081120] disabled:bg-slate-700 disabled:text-slate-500"
         >
-          {locale === "zh" ? "发布" : "Post"}
+          {lc(locale, "发布", "Post")}
         </button>
       </div>
     </div>
@@ -3353,7 +3354,7 @@ function ForumCategoryGrid({ locale, categories }: { locale: string; categories:
   if (categories.length === 0) {
     return (
       <div className="rounded-lg border border-white/10 bg-white/[0.035] px-3 py-6 text-center text-[15px] font-bold text-slate-500">
-        {locale === "zh" ? "暂无板块" : "No boards"}
+        {lc(locale, "暂无板块", "No boards")}
       </div>
     );
   }
@@ -3372,7 +3373,7 @@ function ForumCategoryGrid({ locale, categories }: { locale: string; categories:
               <span className="min-w-0">
                 <span className="block truncate text-[15px] font-black leading-4 text-white">{getForumCategoryName(category, locale)}</span>
                 <span className="mt-0.5 block text-[12px] font-bold leading-4 text-slate-500">
-                  {formatCompactCount(category.postCount)} {locale === "zh" ? "帖" : "posts"}
+                  {formatCompactCount(category.postCount)} {lc(locale, "帖", "posts")}
                 </span>
               </span>
             </span>
@@ -4386,16 +4387,16 @@ function MineView({
 }) {
   const [activeTab, setActiveTab] = useState<"predict" | "posts" | "replies" | "saved" | "follow">("predict");
   const [quickNotice, setQuickNotice] = useState<string | null>(null);
-  const displayName = userDisplayName ?? userEmail?.split("@")[0] ?? (locale === "zh" ? "未登录用户" : "Guest");
+  const displayName = userDisplayName ?? userEmail?.split("@")[0] ?? (lc(locale, "未登录用户", "Guest"));
   const handle = userEmail ?? "m.football2026.net";
   const initials = displayName.trim().slice(0, 1).toUpperCase() || "F";
   const predictionCount = minePredictions.length;
   const stats = [
-    { key: "predict" as const, label: locale === "zh" ? "预测" : "Predict", value: predictionCount },
-    { key: "posts" as const, label: locale === "zh" ? "帖子" : "Posts", value: myPosts.length },
-    { key: "replies" as const, label: locale === "zh" ? "回复" : "Replies", value: myReplies.length },
-    { key: "saved" as const, label: locale === "zh" ? "收藏" : "Saved", value: 0 },
-    { key: "follow" as const, label: locale === "zh" ? "关注" : "Follow", value: followedMatchCount },
+    { key: "predict" as const, label: lc(locale, "预测", "Predict"), value: predictionCount },
+    { key: "posts" as const, label: lc(locale, "帖子", "Posts"), value: myPosts.length },
+    { key: "replies" as const, label: lc(locale, "回复", "Replies"), value: myReplies.length },
+    { key: "saved" as const, label: lc(locale, "收藏", "Saved"), value: 0 },
+    { key: "follow" as const, label: lc(locale, "关注", "Follow"), value: followedMatchCount },
   ];
 
   function openForumThread(postId: number) {
@@ -4474,7 +4475,7 @@ function MineView({
               <p className="mt-0.5 truncate text-2xl font-black leading-7 text-white">{isLoggedIn ? `${formatBalance(balance)} GC` : "100M GC"}</p>
             </div>
             <span className="rounded-full border border-white/10 bg-white/[0.06] px-2 py-1 text-[11px] font-black text-slate-300">
-              {canPersistActions ? t.loggedIn : isLoggedIn ? (locale === "zh" ? "预览" : "Preview") : (locale === "zh" ? "未登录" : "Signed out")}
+              {canPersistActions ? t.loggedIn : isLoggedIn ? (lc(locale, "预览", "Preview")) : (lc(locale, "未登录", "Signed out"))}
             </span>
           </div>
 
@@ -4497,23 +4498,23 @@ function MineView({
       <section className="grid grid-cols-5 gap-1.5">
         <button type="button" onClick={() => onOpenView("profile")} className="grid min-h-14 place-items-center rounded-lg border border-white/10 bg-white/[0.035] px-1 text-center">
           <UserRound className="h-4 w-4 text-[#FFD700]" />
-          <span className="text-[11px] font-black text-white">{locale === "zh" ? "个人中心" : "Profile"}</span>
+          <span className="text-[11px] font-black text-white">{lc(locale, "个人中心", "Profile")}</span>
         </button>
         <button type="button" onClick={() => onOpenView("checkin")} className="grid min-h-14 place-items-center rounded-lg border border-white/10 bg-white/[0.035] px-1.5 text-center">
           <CheckCircle2 className="h-4 w-4 text-[#FFD700]" />
-          <span className="text-[12px] font-black text-white">{locale === "zh" ? "签到" : "Check in"}</span>
+          <span className="text-[12px] font-black text-white">{lc(locale, "签到", "Check in")}</span>
         </button>
         <button type="button" onClick={() => onOpenView("topup")} className="grid min-h-14 place-items-center rounded-lg border border-white/10 bg-white/[0.035] px-1.5 text-center">
           <CircleDollarSign className="h-4 w-4 text-[#FFD700]" />
-          <span className="text-[12px] font-black text-white">{locale === "zh" ? "充值" : "Top up"}</span>
+          <span className="text-[12px] font-black text-white">{lc(locale, "充值", "Top up")}</span>
         </button>
         <button type="button" onClick={() => onOpenView("invite")} className="grid min-h-14 place-items-center rounded-lg border border-white/10 bg-white/[0.035] px-1.5 text-center">
           <Gift className="h-4 w-4 text-[#FFD700]" />
-          <span className="text-[12px] font-black text-white">{locale === "zh" ? "邀请" : "Invite"}</span>
+          <span className="text-[12px] font-black text-white">{lc(locale, "邀请", "Invite")}</span>
         </button>
         <button type="button" onClick={() => onOpenView("settings")} className="grid min-h-14 place-items-center rounded-lg border border-white/10 bg-white/[0.035] px-1.5 text-center">
           <Settings className="h-4 w-4 text-[#FFD700]" />
-          <span className="text-[12px] font-black text-white">{locale === "zh" ? "设置" : "Settings"}</span>
+          <span className="text-[12px] font-black text-white">{lc(locale, "设置", "Settings")}</span>
         </button>
       </section>
       {quickNotice && (
@@ -4543,19 +4544,19 @@ function MineView({
             <MinePredictionList locale={locale} predictions={minePredictions} onOpenPredict={openPredict} />
           )}
           {activeTab === "posts" && (
-            <MinePostList locale={locale} posts={myPosts} emptyLabel={locale === "zh" ? "还没有发布帖子" : "No posts yet"} onOpenPost={openForumThread} />
+            <MinePostList locale={locale} posts={myPosts} emptyLabel={lc(locale, "还没有发布帖子", "No posts yet")} onOpenPost={openForumThread} />
           )}
           {activeTab === "replies" && (
-            <MineReplyList locale={locale} replies={myReplies} emptyLabel={locale === "zh" ? "还没有回复" : "No replies yet"} onOpenPost={openForumThread} />
+            <MineReplyList locale={locale} replies={myReplies} emptyLabel={lc(locale, "还没有回复", "No replies yet")} onOpenPost={openForumThread} />
           )}
           {activeTab === "saved" && (
-            <MineEmptyState title={locale === "zh" ? "我的收藏" : "Saved"} body={locale === "zh" ? "收藏的帖子和赛事稍后会集中在这里。" : "Saved posts and matches will appear here."} />
+            <MineEmptyState title={lc(locale, "我的收藏", "Saved")} body={lc(locale, "收藏的帖子和赛事稍后会集中在这里。", "Saved posts and matches will appear here.")} />
           )}
           {activeTab === "follow" && (
             <MineFollowedMatchList
               locale={locale}
               matches={followedMatches}
-              emptyLabel={locale === "zh" ? "还没有关注比赛" : "No followed matches yet"}
+              emptyLabel={lc(locale, "还没有关注比赛", "No followed matches yet")}
               onOpenMatch={(match) => onOpenView("matches", getMatchTeams(locale, match))}
             />
           )}
@@ -4565,11 +4566,11 @@ function MineView({
       {isLoggedIn && (
         <div className="flex items-center justify-center gap-4 py-2 text-[11px] font-bold text-slate-600">
           <button type="button" onClick={() => signOutAndGo("home")} className="active:text-slate-300">
-            {locale === "zh" ? "退出登录" : "Log out"}
+            {lc(locale, "退出登录", "Log out")}
           </button>
           <span className="h-3 w-px bg-white/10" />
           <button type="button" onClick={() => signOutAndGo("login")} className="active:text-slate-300">
-            {locale === "zh" ? "更改用户" : "Switch user"}
+            {lc(locale, "更改用户", "Switch user")}
           </button>
         </div>
       )}
@@ -4707,7 +4708,7 @@ function MobileSettingsView({
       </section>
 
       <section className="grid gap-1.5 rounded-xl border border-white/10 bg-[#0d1a2b] p-2">
-        <MobileMenuButton icon={Languages} label={zh ? "语言" : "Language"} value={zh ? "切换到 English" : "Switch to 中文"} onClick={() => { const target = locale === "zh" ? "en" : "zh"; document.cookie = `NEXT_LOCALE=${target}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`; window.location.href = `/${target}/m?preview=app&view=settings`; }} />
+        <MobileMenuButton icon={Languages} label={zh ? "语言" : "Language"} value={zh ? "切换到 English" : "Switch to 中文"} onClick={() => { const target = lc(locale, "en", "zh"); document.cookie = `NEXT_LOCALE=${target}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`; window.location.href = `/${target}/m?preview=app&view=settings`; }} />
         <MobileMenuButton icon={Home} label={zh ? "返回首页" : "Home"} value="Football2026" onClick={() => onOpenView("home")} />
         <MobileMenuButton icon={Gift} label={zh ? "邀请" : "Invite"} value={zh ? "邀请链接和排行榜" : "Link and board"} onClick={() => onOpenView("invite")} />
       </section>
@@ -4978,7 +4979,7 @@ function MobileSubHeader({ locale, title, onBack }: { locale: string; title: str
     <div className="sticky top-0 z-30 -mx-3 flex h-11 items-center justify-between border-b border-white/10 bg-[#081120]/96 px-3 backdrop-blur">
       <button type="button" onClick={onBack} className="flex h-8 items-center gap-1 rounded-lg border border-white/10 bg-white/[0.035] px-2 text-[12px] font-black text-slate-300">
         <ChevronRight className="h-3.5 w-3.5 rotate-180" />
-        {locale === "zh" ? "返回" : "Back"}
+        {lc(locale, "返回", "Back")}
       </button>
       <p className="text-[15px] font-black text-white">{title}</p>
       <span className="h-8 w-12" />
@@ -5036,7 +5037,7 @@ function LegacyMineView({
       <section className="rounded-xl border border-white/10 bg-[#0d1a2b] p-3">
         {isLoggedIn && userEmail && (
           <div className="mb-3 rounded-lg border border-[#FFD700]/20 bg-[#FFD700]/10 px-3 py-2">
-            <p className="text-[13px] font-black text-[#FFD700]">{canPersistActions ? t.loggedIn : (locale === "zh" ? "数据预览" : "Data preview")}</p>
+            <p className="text-[13px] font-black text-[#FFD700]">{canPersistActions ? t.loggedIn : (lc(locale, "数据预览", "Data preview"))}</p>
             <p className="mt-1 truncate text-[15px] font-bold text-white">{userEmail}</p>
           </div>
         )}
@@ -5115,21 +5116,21 @@ function getMinePredictionLabel(item: MobileMinePrediction, locale: string) {
   const away = getTeamName(item.awayTeam, locale);
   if (item.kind === "score") {
     const scoreLabel = item.scoreHome === 99 && item.scoreAway === 99
-      ? (locale === "zh" ? "其他比分" : "Other score")
+      ? (lc(locale, "其他比分", "Other score"))
       : `${item.scoreHome}:${item.scoreAway}`;
     return scoreLabel;
   }
-  if (item.prediction === "draw") return locale === "zh" ? "平局" : "Draw";
+  if (item.prediction === "draw") return lc(locale, "平局", "Draw");
   if (item.prediction === "away") return locale === "zh" ? `${away} 胜` : `${away} win`;
   return locale === "zh" ? `${home} 胜` : `${home} win`;
 }
 
 function getMinePredictionStatus(status: string, locale: string) {
   const normalized = status.toLowerCase();
-  if (normalized === "won") return locale === "zh" ? "已中" : "Won";
-  if (normalized === "lost") return locale === "zh" ? "未中" : "Lost";
-  if (normalized === "refunded") return locale === "zh" ? "已退回" : "Refunded";
-  return locale === "zh" ? "待开奖" : "Pending";
+  if (normalized === "won") return lc(locale, "已中", "Won");
+  if (normalized === "lost") return lc(locale, "未中", "Lost");
+  if (normalized === "refunded") return lc(locale, "已退回", "Refunded");
+  return lc(locale, "待开奖", "Pending");
 }
 
 function MinePredictionList({
@@ -5144,9 +5145,9 @@ function MinePredictionList({
   if (predictions.length === 0) {
     return (
       <MineEmptyState
-        title={locale === "zh" ? "我的预测" : "My Predictions"}
-        body={locale === "zh" ? "这里会显示你参加过的输赢预测和比分预测。" : "Your match and score predictions will appear here."}
-        actionLabel={locale === "zh" ? "去预测" : "Predict"}
+        title={lc(locale, "我的预测", "My Predictions")}
+        body={lc(locale, "这里会显示你参加过的输赢预测和比分预测。", "Your match and score predictions will appear here.")}
+        actionLabel={lc(locale, "去预测", "Predict")}
         onAction={onOpenPredict}
       />
     );
@@ -5170,7 +5171,7 @@ function MinePredictionList({
               <span className="min-w-0 truncate text-[13px] font-black text-white">{getTeamName(item.awayTeam, locale)}</span>
             </span>
             <span className="shrink-0 rounded-full border border-[#FFD700]/30 bg-[#FFD700]/10 px-2 py-0.5 text-[11px] font-black text-[#FFD700]">
-              {item.kind === "win" ? (locale === "zh" ? "输赢" : "Win") : (locale === "zh" ? "比分" : "Score")}
+              {item.kind === "win" ? (lc(locale, "输赢", "Win")) : (lc(locale, "比分", "Score"))}
             </span>
           </span>
           <span className="flex min-w-0 items-center justify-between gap-2 text-[12px] font-bold text-slate-400">
@@ -5202,7 +5203,7 @@ function MineFollowedMatchList({
     return (
       <MineEmptyState
         title={emptyLabel}
-        body={locale === "zh" ? "关注比赛后会显示在这里。" : "Followed matches will appear here."}
+        body={lc(locale, "关注比赛后会显示在这里。", "Followed matches will appear here.")}
       />
     );
   }
@@ -5245,7 +5246,7 @@ function MinePostList({
     return (
       <MineEmptyState
         title={emptyLabel}
-        body={locale === "zh" ? "发布后的内容会像作品列表一样显示在这里。" : "Published content will appear here."}
+        body={lc(locale, "发布后的内容会像作品列表一样显示在这里。", "Published content will appear here.")}
       />
     );
   }
@@ -5269,8 +5270,8 @@ function MinePostList({
             </span>
           </span>
           <span className="text-right text-[11px] font-bold leading-4 text-slate-500">
-            <span className="block">{locale === "zh" ? "赞" : "Like"} {formatCompactCount(post.likeCount)}</span>
-            <span className="block">{locale === "zh" ? "回" : "Reply"} {formatCompactCount(post.replyCount)}</span>
+            <span className="block">{lc(locale, "赞", "Like")} {formatCompactCount(post.likeCount)}</span>
+            <span className="block">{lc(locale, "回", "Reply")} {formatCompactCount(post.replyCount)}</span>
           </span>
         </button>
       ))}
@@ -5293,7 +5294,7 @@ function MineReplyList({
     return (
       <MineEmptyState
         title={emptyLabel}
-        body={locale === "zh" ? "你参与讨论后的回复会显示在这里。" : "Your replies will appear here."}
+        body={lc(locale, "你参与讨论后的回复会显示在这里。", "Your replies will appear here.")}
       />
     );
   }
@@ -5312,7 +5313,7 @@ function MineReplyList({
             <span className="shrink-0 text-[11px] font-bold text-slate-500">{formatForumTime(reply.createdAt, locale)}</span>
           </span>
           <ForumHtml html={reply.content} className="mobile-forum-content line-clamp-2 text-[12px] leading-5 text-slate-400" />
-          <span className="text-[11px] font-bold text-slate-600">{locale === "zh" ? "赞" : "Like"} {formatCompactCount(reply.likeCount)}</span>
+          <span className="text-[11px] font-bold text-slate-600">{lc(locale, "赞", "Like")} {formatCompactCount(reply.likeCount)}</span>
         </button>
       ))}
     </div>
