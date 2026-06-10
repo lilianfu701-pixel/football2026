@@ -224,6 +224,21 @@ function getDesktopOAuthCodeResponse(request: NextRequest) {
   return NextResponse.redirect(callbackUrl);
 }
 
+// When a desktop user visits the bare root URL ("/"), redirect them to their
+// previously-saved locale (stored in the NEXT_LOCALE cookie when they click the
+// language switcher). This makes the language preference persist across sessions
+// and also fixes post-login redirects: after signing in the app redirects to
+// "/{locale}", next-intl normalises "/en" → "/", and then this function sends
+// them straight to "/zh" (or whichever locale they last chose).
+function getRootLocaleRedirectResponse(request: NextRequest) {
+  if (request.nextUrl.pathname !== "/") return null;
+  const locale = getSupportedLocale(request.cookies.get("NEXT_LOCALE")?.value);
+  if (!locale || locale === routing.defaultLocale) return null;
+  const redirectUrl = request.nextUrl.clone();
+  redirectUrl.pathname = `/${locale}`;
+  return NextResponse.redirect(redirectUrl);
+}
+
 function mergeSupabaseCookies(response: NextResponse, supabaseResponse: NextResponse) {
   supabaseResponse.cookies.getAll().forEach((cookie) => {
     response.cookies.set(cookie.name, cookie.value, cookie);
@@ -309,6 +324,13 @@ export async function proxy(request: NextRequest) {
       clearStaleMobileAuthResponseCookies(request, deviceResponse);
     }
     return deviceResponse;
+  }
+
+  // Redirect root "/" to saved locale preference (set by language switcher cookie)
+  const rootLocaleRedirect = getRootLocaleRedirectResponse(request);
+  if (rootLocaleRedirect) {
+    mergeSupabaseCookies(rootLocaleRedirect, supabaseResponse);
+    return rootLocaleRedirect;
   }
 
   // Run intl middleware
