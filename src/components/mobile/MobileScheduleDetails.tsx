@@ -131,7 +131,6 @@ export default function MobileScheduleDetails({ locale, match, isLoggedIn, canPe
           loggedIn={isLoggedIn || canPersistActions}
           canPersistProps={canPersistActions}
           initialVotes={data?.voteCounts}
-          userVote={data?.myVote}
           showCurrentUserMarker
           mobileAudioUnlock
         />
