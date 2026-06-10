@@ -40,7 +40,7 @@ import { useGcBalance } from "@/context/GcBalance";
 import { PLAYERS, AWARD_META, awardKeyToDb, dbToAwardKey, getPlayersByAward, type AwardKey, type Player } from "@/data/players";
 import { cancelAwardBet, placeAwardBet } from "@/app/[locale]/awards/actions";
 import { type AwardPhase } from "@/lib/awardPhase";
-import { getFlagUrl } from "@/lib/flags";
+import { getFlagUrl, getTeamDisplayName } from "@/lib/flags";
 import { formatGc, getWealthLevel } from "@/lib/levels";
 import { getMaxAmount, makePresets } from "@/lib/forum/ratingCap";
 import { needsTranslation } from "@/lib/languages";
@@ -537,7 +537,7 @@ function formatMobileWeekday(date: Date, locale: string) {
 }
 
 function getTeamName(team: string, locale: string) {
-  return locale === "zh" ? TEAM_ZH[team] ?? team : team;
+  return getTeamDisplayName(team, locale);
 }
 
 function getMatchTeams(locale: string, match: MobileMatch) {
