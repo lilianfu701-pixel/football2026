@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   CalendarDays,
@@ -5556,10 +5556,10 @@ function BottomNav({
 }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#081120]/95 px-3 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur">
-      <div className="mx-auto grid max-w-md grid-cols-5 items-end gap-1">
+      <div className="mx-auto grid max-w-md grid-cols-5 items-center gap-1">
         <BottomItem view="home" icon={Home} label={t.bottomHome} active={activeView === "home"} onChange={onChange} />
         <BottomItem view="matches" icon={CalendarDays} label={t.bottomMatches} active={activeView === "matches"} onChange={onChange} />
-        <BottomItem view="predict" icon={CheckCircle2} label={t.bottomPredict} active={activeView === "predict"} onChange={onChange} primary />
+        <BottomItem view="predict" icon={CheckCircle2} label={t.bottomPredict} active={activeView === "predict"} onChange={onChange} />
         <BottomItem view="forum" icon={MessageCircle} label={t.bottomForum} active={activeView === "forum"} onChange={onChange} />
         <BottomItem view="mine" icon={UserRound} label={t.bottomMine} active={activeView === "mine"} onChange={onChange} />
       </div>
@@ -5572,40 +5572,24 @@ function BottomItem({
   icon: Icon,
   label,
   active = false,
-  primary = false,
   onChange,
 }: {
   view: MobileView;
   icon: LucideIcon;
   label: string;
   active?: boolean;
-  primary?: boolean;
   onChange: (view: MobileView) => void;
 }) {
-  if (primary) {
-    return (
-      <button type="button" onClick={() => onChange(view)} className="flex flex-col items-center gap-0.5 text-[12px] font-black text-[#FFD700]">
-        <span className={`-mt-6 flex h-14 w-14 items-center justify-center rounded-2xl border shadow-xl ${
-          active
-            ? "border-[#FFD700] bg-[#FFD700] text-[#081120] shadow-[#FFD700]/25"
-            : "border-[#FFD700]/45 bg-[#FFD700]/15 text-[#FFD700]"
-        }`}>
-          <Icon className="h-6 w-6" />
-        </span>
-        <span>{label}</span>
-      </button>
-    );
-  }
-
   return (
     <button
       type="button"
       onClick={() => onChange(view)}
-      className={`flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1 text-[12px] font-bold ${
-        active ? "text-[#FFD700]" : "text-slate-500"
+      className={`flex flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 text-[12px] font-semibold transition-colors ${
+        active ? "text-white bg-white/5" : "text-slate-500"
       }`}
+      style={{ minHeight: "48px" }}
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="h-5 w-5" />
       <span>{label}</span>
     </button>
   );
