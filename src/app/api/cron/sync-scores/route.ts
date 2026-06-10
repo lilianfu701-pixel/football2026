@@ -120,6 +120,39 @@ function detectEvents(
   return events;
 }
 
+// ── Notification content builder ─────────────────────────────────────────────
+// Produces a plain-text summary for the legacy `content` NOT NULL column.
+
+function buildContent(event: MatchEvent): string {
+  const d = event.detail as Record<string, unknown>;
+  const home = d.home_team as string ?? "";
+  const away = d.away_team as string ?? "";
+  const hf   = d.home_flag as string ?? "";
+  const af   = d.away_flag as string ?? "";
+  const match = `${hf}${home} vs ${af}${away}`;
+
+  switch (event.type) {
+    case "match_countdown": return `⏰ Starting in 10 min · ${match}`;
+    case "match_kickoff":   return `🟢 Kick off · ${match}`;
+    case "match_goal": {
+      const sh = d.score_home as number ?? 0;
+      const sa = d.score_away as number ?? 0;
+      const team = d.team === "home" ? `${hf}${home}` : `${af}${away}`;
+      return `⚽ Goal — ${team} · ${sh}–${sa} · ${match}`;
+    }
+    case "match_red_card": {
+      const team = d.team === "home" ? `${hf}${home}` : `${af}${away}`;
+      return `🟥 Red card · ${team} · ${match}`;
+    }
+    case "match_final": {
+      const hs = d.home_score as number ?? 0;
+      const as_ = d.away_score as number ?? 0;
+      return `🏁 Full time · ${match} · ${hs}–${as_}`;
+    }
+    default: return match;
+  }
+}
+
 // ── Notification delivery ─────────────────────────────────────────────────────
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
@@ -150,11 +183,14 @@ async function fireNotifications(
     if (dedupErr) continue; // Already sent — unique violation
 
     // Bulk-insert one notification row per follower
+    // content is required by an older NOT NULL constraint on the table
+    const content = buildContent(event);
     const rows = follows.map((f: { user_id: string }) => ({
       user_id:      f.user_id,
       type:         event.type,
       match_id:     matchId,
       event_detail: event.detail,
+      content,
       is_read:      false,
     }));
 
