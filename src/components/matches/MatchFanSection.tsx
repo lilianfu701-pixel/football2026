@@ -534,8 +534,15 @@ const PROP_SOUND_URLS: Record<PropType, string> = {
 // ── Web Audio engine ──────────────────────────────────────────────────────────
 // AudioContext is created synchronously inside the user-gesture handler (getAC),
 // so it starts in "running" state on Chrome/Safari/Firefox.
-// playPropSound is self-contained: fetch → decode → play, with a module-level
-// cache so every call after the first is zero-latency.
+//
+// Mobile (iOS Safari) notes:
+//  - WAV files are large (750 KB–1.2 MB). On slow connections, fetch + decode
+//    takes 2–5 s, by which time iOS may have auto-suspended the context.
+//    Fix: pre-fetch raw bytes on mount (_rawCache) so only decodeAudioData
+//    (~50 ms) remains at tap time.
+//  - On older iOS, source.start() on a suspended AudioContext may not register
+//    as a user-gesture audio interaction. Fix: double-unlock pattern — play the
+//    silent buffer both immediately AND after ctx.resume() resolves.
 
 let _ac: AudioContext | null = null;
 let _audioUnlockPromise: Promise<void> | null = null;
@@ -552,31 +559,59 @@ function getAC(): AudioContext | null {
   } catch { return null; }
 }
 
+/** Play a 1-sample silent buffer — the minimal iOS Safari audio-unlock gesture. */
+function _playSilence(ctx: AudioContext): void {
+  try {
+    const src = ctx.createBufferSource();
+    src.buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+    src.connect(ctx.destination);
+    src.start(0);
+    src.onended = () => src.disconnect();
+  } catch { /* ignore */ }
+}
+
 function unlockPropAudio(): void {
   const ctx = getAC();
   if (!ctx) return;
 
-  const resumePromise = ctx.state === "suspended" ? ctx.resume() : Promise.resolve();
-  const source = ctx.createBufferSource();
-  source.buffer = ctx.createBuffer(1, Math.max(1, Math.round(ctx.sampleRate * 0.12)), ctx.sampleRate);
-  source.connect(ctx.destination);
-  source.start(0);
-  source.onended = () => source.disconnect();
-
-  _audioUnlockPromise = resumePromise
-    .then(() => undefined)
-    .catch((error) => {
-      console.warn("[sound] unlock failed:", error);
-    });
+  if (ctx.state === "running") {
+    // Context already running — one silent buffer is enough.
+    _playSilence(ctx);
+    _audioUnlockPromise = Promise.resolve();
+  } else {
+    // Suspended (older iOS or first gesture): double-unlock pattern.
+    // Call both resume() and start() synchronously within the gesture so iOS
+    // registers the interaction regardless of which signal it needs.
+    _playSilence(ctx);                    // attempt 1 — on suspended ctx (some iOS accept it)
+    const p = ctx.resume().then(() => {
+      _playSilence(ctx);                  // attempt 2 — after confirmed running
+    }).catch(() => undefined);
+    _audioUnlockPromise = p.then(() => undefined);
+  }
 }
 
-// Module-level cache survives re-renders
+// Module-level decoded-audio cache (survives re-renders / remounts)
 const _audioCache = new Map<PropType, AudioBuffer>();
+// Module-level raw-bytes cache (pre-fetched on mobile mount, freed after decode)
+const _rawCache   = new Map<PropType, ArrayBuffer>();
+
+/** Pre-fetch WAV bytes on mobile mount so the first tap only needs decodeAudioData. */
+async function prefetchPropAudio(): Promise<void> {
+  for (const [propType, url] of Object.entries(PROP_SOUND_URLS) as [PropType, string][]) {
+    if (_audioCache.has(propType) || _rawCache.has(propType)) continue;
+    try {
+      const res = await fetch(url, { cache: "force-cache" });
+      if (!res.ok) continue;
+      _rawCache.set(propType, await res.arrayBuffer());
+    } catch { /* non-critical — will fetch on-demand if this fails */ }
+  }
+}
 
 /**
  * Play a prop sound. Self-contained:
- *  - uses existing AudioContext created synchronously during the gesture
- *  - fetches & decodes the WAV on first call, caches forever after
+ *  - waits for the AudioContext unlock to complete
+ *  - uses pre-fetched raw bytes (_rawCache) on mobile; falls back to fetch
+ *  - decoded AudioBuffer is cached forever after first use
  */
 async function playPropSound(type: PropType, volume = 0.85): Promise<void> {
   try {
@@ -586,10 +621,16 @@ async function playPropSound(type: PropType, volume = 0.85): Promise<void> {
     if (ctx.state === "suspended") await ctx.resume();
 
     if (!_audioCache.has(type)) {
-      const url = PROP_SOUND_URLS[type];
-      const res = await fetch(url);
-      if (!res.ok) { console.warn("[sound] fetch failed:", url, res.status); return; }
-      const arr = await res.arrayBuffer();
+      // Fast path: use pre-fetched bytes; slow path: fetch now
+      let arr: ArrayBuffer;
+      if (_rawCache.has(type)) {
+        arr = _rawCache.get(type)!;
+        _rawCache.delete(type);           // free after decode
+      } else {
+        const res = await fetch(PROP_SOUND_URLS[type]);
+        if (!res.ok) { console.warn("[sound] fetch failed:", PROP_SOUND_URLS[type], res.status); return; }
+        arr = await res.arrayBuffer();
+      }
       const buf = await ctx.decodeAudioData(arr);
       _audioCache.set(type, buf);
     }
@@ -653,6 +694,13 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
 
   // Inject CSS once
   useEffect(() => { injectFireworkStyles(); }, []);
+
+  // Pre-fetch WAV bytes on mobile mount so first tap only needs decodeAudioData (~50 ms)
+  // instead of fetch + decode (potentially 2–5 s on slow connections).
+  useEffect(() => {
+    if (!mobileAudioUnlock) return;
+    void prefetchPropAudio();
+  }, [mobileAudioUnlock]);
 
   const requestUserLocation = useCallback(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
