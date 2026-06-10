@@ -1,7 +1,7 @@
 # Football2026 — CLAUDE.md
 
 > 项目说明文档，供 Claude Code 或新接手的开发者快速上手。
-> 最后更新：2026-06-08（越南语本地化完成）
+> 最后更新：2026-06-10（locale 持久化 + 登录后语言修复；移动端投票、票改 bug 修复）
 >
 > **维护约定**：用户说"更新md" → Claude 更新此文件并 `git push origin main`。
 
@@ -194,7 +194,12 @@ git push origin main   # Vercel 自动构建 + 部署，1–3 分钟上线
 - 英文（默认语言）：`/`、`/matches`（**无前缀**）
 - 其他语言：`/zh/`、`/es/`、`/fr/`、`/de/`、`/pt/`、`/ru/`、`/ar/`、`/ja/`、`/ko/`、`/vi/`、`/id/`
 
-**`localeDetection: false`**：locale 完全由 URL 决定，不读浏览器 `Accept-Language`。访问 `/` 的中文浏览器也获得英文页面。
+**`localeDetection: false`**：locale 完全由 URL 决定，不读浏览器 `Accept-Language`。
+
+**语言偏好持久化**（`NEXT_LOCALE` cookie）：
+- Navbar 语言切换器点击时写入 `NEXT_LOCALE=<locale>` cookie（1年，path=/）；切换回英文时清除
+- `proxy.ts` 的 `getRootLocaleRedirectResponse()` 在每次访问 `/` 根目录时检查此 cookie，若保存了非英文语言则 redirect 到 `/zh/`（或对应语言）
+- 登录后 `window.location.href="/en"` → next-intl 规范化 `/en` → `/` → proxy 读 cookie → 跳转 `/zh/` ✓
 
 **移动端跳转**（`src/proxy.ts` 中 `getDeviceResponse`）：
 - 检测到 Mobile UA → 302 redirect 到 `m.football2026.net/[locale]/m`
@@ -207,8 +212,9 @@ git push origin main   # Vercel 自动构建 + 部署，1–3 分钟上线
    - 无移动信号时（桌面 OAuth）直接 return null，交给步骤 3 处理
 3. `getDesktopOAuthCodeResponse` — 桌面端 `?code=` 落在首页时容错转发到 `/auth/callback`
 4. Supabase session 刷新
-5. `getDeviceResponse` — Mobile UA redirect
-6. `intlMiddleware` — next-intl 路由处理
+5. `getDeviceResponse` — Mobile UA redirect（含 `getPreferredLocale` 读 NEXT_LOCALE cookie）
+6. `getRootLocaleRedirectResponse` — 桌面访问 `/` 时按 NEXT_LOCALE cookie 跳转语言首页
+7. `intlMiddleware` — next-intl 路由处理
 
 ---
 
@@ -355,17 +361,16 @@ lc(locale, "中文原文", "English string")
 ## 十一、当前进度 & 近期提交
 
 ```
-fc37694 fix: resolve country names client-side to fix pt/ru/ar localization  ← 最新
+b490477 fix: persist locale preference and redirect root URL to saved language  ← 最新
+e2e054e fix: prevent geolocation callback from reverting a subsequent vote change
+225aac6 fix: show vote buttons inside fan section on mobile match detail
+fc37694 fix: resolve country names client-side to fix pt/ru/ar localization
 423417d feat: add Indonesian (id) localization
 43a0c6e feat: add Vietnamese (vi) localization across all pages
 5eb4ce6 feat: add Korean (ko) localization across all pages
 c644a5a feat: dynamic OG image per locale, mobile checkout, UI fixes
-697da32 docs: update CLAUDE.md — Japanese localization complete
-5dfad19 feat: add Japanese (ja) localization
-76bdb58 feat: add Arabic (ar) full localization
-bce5317 feat: add Russian (ru) localization across all pages
-07787ea feat: add Portuguese (pt) localization across all pages
 63df9ce fix: stop desktop OAuth logins being hijacked to mobile site
+704245b fix: repair desktop login/logout auth flow and header sync
 ```
 
 ### 未提交的工作（用户维护部分）
@@ -439,6 +444,17 @@ matcher: "/((?!api|auth/callback|_next|_vercel|.*\\..*).*)"
 - 桌面 Google/Facebook 登录的 `?code=` 回落到 www 首页时，由 `getDesktopOAuthCodeResponse` 处理
 - 根治方案：在 Supabase 后台配置 Redirect URLs 白名单（见待办 #1）
 
+**9. 投票后更改球队方向的 stale closure 问题（已修复）**
+- `MatchFanSection` 第一次投票触发 `getCurrentPosition`（最长 10 秒）
+- 若在等待定位期间用户改变了支持的球队，geolocation callback 里的闭包会用旧的 `vote` 值发 POST，导致 DB 回滚
+- 修复：使用 `currentVoteRef = useRef<...>(null)` 在异步 callback 中始终读取最新投票值
+- 修复文件：`src/components/matches/MatchFanSection.tsx`
+
+**10. 语言切换 / 登录后语言丢失（已修复）**
+- 登录成功后 `window.location.href = "/${locale}"` → next-intl 将 `/en` 规范化为 `/` → 原来直接显示英文
+- 修复：Navbar 语言切换器写入 `NEXT_LOCALE` cookie；proxy 在 `/` 请求时读取该 cookie 并 redirect 到对应语言
+- 修复文件：`src/components/Navbar.tsx`、`src/proxy.ts`（`getRootLocaleRedirectResponse`）
+
 ---
 
 ## 十三、移动端架构说明
@@ -495,4 +511,4 @@ XUNHUPAY_APP_SECRET=
 
 ---
 
-*此文件由 Claude Code 维护，反映截至 2026-06-08 的项目真实状态（印尼语本地化完成，国家名客户端渲染修复；en/zh/de/pt/ru/ar/ja/ko/vi/id 共 10 语言全覆盖）。*
+*此文件由 Claude Code 维护，反映截至 2026-06-10 的项目真实状态（locale 持久化 + 登录后语言修复，移动端投票 bug 修复；en/zh/de/pt/ru/ar/ja/ko/vi/id 共 10 语言全覆盖）。*
