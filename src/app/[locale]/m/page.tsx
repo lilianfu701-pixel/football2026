@@ -17,6 +17,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getBetPhase } from "@/lib/awardPhase";
 import sanitizeHtml from "sanitize-html";
+import MobileLocaleSwitcher from "@/components/locale-switcher/MobileLocaleSwitcher";
 
 export const revalidate = 30;
 const ALL_LOCALES = ["en","zh","es","fr","de","pt","ru","ar","ja","ko","vi","id"] as const;
@@ -700,6 +701,7 @@ export default async function MobileHomePage({ params, searchParams }: MobileHom
   const { phase: awardPhase, odds: awardOdds, goldenBootClosed } = getBetPhase();
 
   return (
+    <>
     <MobileHome
       locale={locale}
       isLoggedIn={Boolean(userEmail)}
@@ -733,5 +735,7 @@ export default async function MobileHomePage({ params, searchParams }: MobileHom
       inviteLeaderboard={inviteLeaderboard}
       inviteSiteUrl={process.env.NEXT_PUBLIC_SITE_URL ?? "https://football2026.net"}
     />
+    <MobileLocaleSwitcher locale={locale} />
+    </>
   );
 }
