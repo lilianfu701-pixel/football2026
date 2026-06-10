@@ -4,17 +4,37 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { lc } from "@/i18n/content";
 
+type NotifType =
+  | "rating" | "reply" | "mention" | "follow"
+  | "match_countdown" | "match_kickoff" | "match_goal"
+  | "match_red_card" | "match_final";
+
+interface MatchEventDetail {
+  home_team:    string;
+  away_team:    string;
+  home_flag:    string;
+  away_flag:    string;
+  team?:        "home" | "away";
+  score_home?:  number;
+  score_away?:  number;
+  home_score?:  number;
+  away_score?:  number;
+  kickoff_time?: string;
+}
+
 interface NotifItem {
-  id:         number;
-  type:       "rating" | "reply";
-  is_read:    boolean;
-  gc_amount:  number | null;
-  reason:     string | null;
-  created_at: string;
-  post_id:    number | null;
-  reply_id:   number | null;
-  actor:      { nickname: string; avatar_url: string | null } | null;
-  post_title: string | null;
+  id:           number;
+  type:         NotifType;
+  is_read:      boolean;
+  gc_amount:    number | null;
+  reason:       string | null;
+  created_at:   string;
+  post_id:      number | null;
+  reply_id:     number | null;
+  match_id:     number | null;
+  event_detail: MatchEventDetail | null;
+  actor:        { nickname: string; avatar_url: string | null } | null;
+  post_title:   string | null;
 }
 
 interface Props {
@@ -34,11 +54,95 @@ function timeAgo(dateStr: string, zh: boolean, locale: string): string {
 }
 
 function NotifIcon({ type, gc_amount }: { type: string; gc_amount: number | null }) {
-  if (type === "rating") return gc_amount && gc_amount > 0 ? <span>🎁</span> : <span>🔨</span>;
+  if (type === "rating")         return gc_amount && gc_amount > 0 ? <span>🎁</span> : <span>🔨</span>;
+  if (type === "match_countdown") return <span>⏰</span>;
+  if (type === "match_kickoff")   return <span>🟢</span>;
+  if (type === "match_goal")      return <span>⚽</span>;
+  if (type === "match_red_card")  return <span>🟥</span>;
+  if (type === "match_final")     return <span>🏁</span>;
   return <span>💬</span>;
 }
 
+function MatchNotifText({ n, zh }: { n: NotifItem; zh: boolean }) {
+  const d = n.event_detail;
+  if (!d) return <span>{lc("zh", "比赛通知", "Match notification")}</span>;
+
+  const matchLabel = (
+    <span className="font-medium text-white">
+      {d.home_flag} {d.home_team} vs {d.away_flag} {d.away_team}
+    </span>
+  );
+
+  if (n.type === "match_countdown") {
+    return (
+      <span>
+        {zh ? "⏰ 即将开赛 · " : "⏰ Starting soon · "}
+        {matchLabel}
+        {zh ? " · 10分钟后开赛" : " · kicks off in 10 min"}
+      </span>
+    );
+  }
+
+  if (n.type === "match_kickoff") {
+    return (
+      <span>
+        {zh ? "🟢 开赛 · " : "🟢 Kick off · "}
+        {matchLabel}
+      </span>
+    );
+  }
+
+  if (n.type === "match_goal") {
+    const scoredBy = d.team === "home" ? d.home_flag : d.away_flag;
+    const scoredTeam = d.team === "home" ? d.home_team : d.away_team;
+    const score = `${d.score_home ?? 0}–${d.score_away ?? 0}`;
+    return (
+      <span>
+        {"⚽ "}
+        <strong className="text-white">{scoredBy} {scoredTeam}</strong>
+        {" · "}
+        <span className="text-[#FFD700] font-bold">{score}</span>
+        {" · "}
+        {matchLabel}
+      </span>
+    );
+  }
+
+  if (n.type === "match_red_card") {
+    const team = d.team === "home" ? d.home_team : d.away_team;
+    return (
+      <span>
+        {"🟥 "}
+        {zh ? "红牌 · " : "Red card · "}
+        <strong className="text-white">{team}</strong>
+        {" · "}
+        {matchLabel}
+      </span>
+    );
+  }
+
+  if (n.type === "match_final") {
+    const score = `${d.home_score ?? 0}–${d.away_score ?? 0}`;
+    return (
+      <span>
+        {"🏁 "}
+        {zh ? "比赛结束 · " : "Full time · "}
+        {matchLabel}
+        {" · "}
+        <span className="text-[#FFD700] font-bold">{score}</span>
+      </span>
+    );
+  }
+
+  return <span>{matchLabel}</span>;
+}
+
 function NotifText({ n, zh, locale }: { n: NotifItem; zh: boolean; locale: string }) {
+  // Match event notifications
+  if (n.type.startsWith("match_")) {
+    return <MatchNotifText n={n} zh={zh} />;
+  }
+
   const actor = n.actor?.nickname ?? (lc(locale, "某用户", "Someone"));
   const title = n.post_title
     ? `「${n.post_title.slice(0, 20)}${n.post_title.length > 20 ? "…" : ""}」`
@@ -69,7 +173,7 @@ function NotifText({ n, zh, locale }: { n: NotifItem; zh: boolean; locale: strin
     );
   }
 
-  // reply
+  // reply / mention / follow / other
   if (zh) {
     return (
       <span>
@@ -147,6 +251,9 @@ export default function NotificationBell({ locale }: Props) {
   }
 
   function notifHref(n: NotifItem) {
+    if (n.type.startsWith("match_") && n.match_id) {
+      return `/${locale}/matches/${n.match_id}`;
+    }
     if (!n.post_id) return `/${locale}/forum`;
     return `/${locale}/forum/thread/${n.post_id}`;
   }
@@ -219,6 +326,9 @@ export default function NotificationBell({ locale }: Props) {
                   <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-base mt-0.5 ${
                     n.type === "rating" && (n.gc_amount ?? 0) > 0 ? "bg-[#FFD700]/15" :
                     n.type === "rating"                           ? "bg-red-500/15"    :
+                    n.type === "match_goal"                       ? "bg-green-500/15"  :
+                    n.type === "match_red_card"                   ? "bg-red-500/15"    :
+                    n.type.startsWith("match_")                   ? "bg-[#1E3A5F]/60"  :
                                                                     "bg-blue-500/15"
                   }`}>
                     <NotifIcon type={n.type} gc_amount={n.gc_amount} />

@@ -5,11 +5,11 @@ const FD_BASE = "https://api.football-data.org/v4";
 const COMPETITION_CODE = "WC";
 
 const TEAM_MAP: Record<string, string> = {
-  "Korea Republic":      "South Korea",
-  "United States":       "USA",
-  "Côte d'Ivoire":       "Ivory Coast",
-  "Türkiye":             "Turkey",
-  "Congo DR":            "DR Congo",
+  "Korea Republic": "South Korea",
+  "United States":  "USA",
+  "Côte d'Ivoire":  "Ivory Coast",
+  "Türkiye":        "Turkey",
+  "Congo DR":       "DR Congo",
 };
 
 function mapStatus(s: string): string {
@@ -24,8 +24,179 @@ function normTeam(name: string): string {
   return TEAM_MAP[name] ?? name;
 }
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface DbMatch {
+  id:              number;
+  home_team:       string;
+  away_team:       string;
+  home_flag:       string;
+  away_flag:       string;
+  status:          string;
+  home_score:      number | null;
+  away_score:      number | null;
+  red_cards_home:  number;
+  red_cards_away:  number;
+  kickoff_time:    string;
+}
+
+interface MatchEvent {
+  type:   string;
+  key:    string;
+  detail: Record<string, unknown>;
+}
+
+// ── Event detection ───────────────────────────────────────────────────────────
+
+function detectEvents(
+  db: DbMatch,
+  newStatus:  string,
+  newHomeSc:  number | null,
+  newAwaySc:  number | null,
+  newRedHome: number,
+  newRedAway: number,
+): MatchEvent[] {
+  const events: MatchEvent[] = [];
+  const base = {
+    home_team: db.home_team,
+    away_team: db.away_team,
+    home_flag: db.home_flag,
+    away_flag: db.away_flag,
+  };
+
+  const prevHome = db.home_score ?? 0;
+  const prevAway = db.away_score ?? 0;
+  const currHome = newHomeSc ?? prevHome;
+  const currAway = newAwaySc ?? prevAway;
+
+  // Kickoff: upcoming → live
+  if (db.status === "upcoming" && newStatus === "live") {
+    events.push({ type: "match_kickoff", key: "kickoff", detail: base });
+  }
+
+  // Goals (only when match is going live or already live)
+  if (newStatus === "live" || newStatus === "finished") {
+    for (let i = prevHome + 1; i <= currHome; i++) {
+      events.push({
+        type: "match_goal",
+        key:  `goal_home_${i}`,
+        detail: { ...base, team: "home", score_home: i, score_away: currAway },
+      });
+    }
+    for (let i = prevAway + 1; i <= currAway; i++) {
+      events.push({
+        type: "match_goal",
+        key:  `goal_away_${i}`,
+        detail: { ...base, team: "away", score_home: currHome, score_away: i },
+      });
+    }
+  }
+
+  // Red cards (only available if football-data.org provides bookings)
+  if (newRedHome > db.red_cards_home) {
+    events.push({
+      type: "match_red_card",
+      key:  `red_home_${newRedHome}`,
+      detail: { ...base, team: "home" },
+    });
+  }
+  if (newRedAway > db.red_cards_away) {
+    events.push({
+      type: "match_red_card",
+      key:  `red_away_${newRedAway}`,
+      detail: { ...base, team: "away" },
+    });
+  }
+
+  // Final score: live → finished
+  if (db.status === "live" && newStatus === "finished") {
+    events.push({
+      type: "match_final",
+      key:  "final",
+      detail: { ...base, home_score: currHome, away_score: currAway },
+    });
+  }
+
+  return events;
+}
+
+// ── Notification delivery ─────────────────────────────────────────────────────
+
+type ServiceClient = ReturnType<typeof createServiceClient>;
+
+async function fireNotifications(
+  supabase: ServiceClient,
+  matchId:  number,
+  events:   MatchEvent[],
+): Promise<void> {
+  if (events.length === 0) return;
+
+  // Load followers of this match
+  const { data: follows } = await supabase
+    .from("match_follows")
+    .select("user_id")
+    .eq("match_id", matchId);
+
+  if (!follows?.length) return;
+
+  for (const event of events) {
+    // Try to claim this event in the dedup table.
+    // Unique constraint (match_id, event_type, event_key) means only the first
+    // Cron run that detects this event will insert successfully.
+    const { error: dedupErr } = await supabase
+      .from("match_notifications_sent")
+      .insert({ match_id: matchId, event_type: event.type, event_key: event.key });
+
+    if (dedupErr) continue; // Already sent — unique violation
+
+    // Bulk-insert one notification row per follower
+    const rows = follows.map((f: { user_id: string }) => ({
+      user_id:      f.user_id,
+      type:         event.type,
+      match_id:     matchId,
+      event_detail: event.detail,
+      is_read:      false,
+    }));
+
+    await supabase.from("notifications").insert(rows);
+  }
+}
+
+// ── Countdown check ───────────────────────────────────────────────────────────
+// Finds upcoming matches that kick off within the next 10 minutes and
+// sends a one-time reminder to followers (dedup prevents duplicates).
+
+async function checkCountdowns(supabase: ServiceClient): Promise<void> {
+  const now     = new Date();
+  const in10min = new Date(now.getTime() + 10 * 60 * 1000);
+
+  const { data: upcoming } = await supabase
+    .from("matches")
+    .select("id, home_team, away_team, home_flag, away_flag, kickoff_time")
+    .eq("status", "upcoming")
+    .gte("kickoff_time", now.toISOString())
+    .lte("kickoff_time", in10min.toISOString());
+
+  if (!upcoming?.length) return;
+
+  for (const m of upcoming) {
+    await fireNotifications(supabase, m.id, [{
+      type: "match_countdown",
+      key:  "countdown_10min",
+      detail: {
+        home_team:    m.home_team,
+        away_team:    m.away_team,
+        home_flag:    m.home_flag,
+        away_flag:    m.away_flag,
+        kickoff_time: m.kickoff_time,
+      },
+    }]);
+  }
+}
+
+// ── Main handler ──────────────────────────────────────────────────────────────
+
 export async function GET(req: Request) {
-  // Vercel Cron 鉴权
   const authHeader = req.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -37,7 +208,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    // 只拉今天前后 2 天内的比赛，减少 API 用量
+    // Fetch matches for yesterday → +2 days (live matches are in this window)
     const today = new Date();
     const from  = new Date(today); from.setDate(today.getDate() - 1);
     const to    = new Date(today); to.setDate(today.getDate() + 2);
@@ -57,29 +228,73 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: `football-data API: ${fdRes.status} ${txt}` }, { status: 502 });
     }
 
-    const { matches: apiMatches } = await fdRes.json() as { matches: any[] };
+    const { matches: apiMatches } = await fdRes.json() as { matches: unknown[] };
 
     const supabase = createServiceClient();
     const { data: dbMatches } = await supabase
       .from("matches")
-      .select("id, home_team, away_team, status, home_score, away_score");
+      .select("id, home_team, away_team, home_flag, away_flag, status, home_score, away_score, red_cards_home, red_cards_away, kickoff_time");
 
     let updated = 0;
-    for (const m of apiMatches) {
-      const home   = normTeam(m.homeTeam?.name ?? "");
-      const away   = normTeam(m.awayTeam?.name ?? "");
-      const status = mapStatus(m.status);
-      const hs     = m.score?.fullTime?.home ?? null;
-      const as_    = m.score?.fullTime?.away ?? null;
 
-      const db = dbMatches?.find((d) => d.home_team === home && d.away_team === away);
+    for (const raw of apiMatches) {
+      const m = raw as Record<string, unknown>;
+      const score    = m.score    as Record<string, unknown> | undefined;
+      const fullTime = score?.fullTime as Record<string, number | null> | undefined;
+      const bookings = Array.isArray(m.bookings) ? m.bookings : [];
+
+      const homeTeam = m.homeTeam as Record<string, unknown> | undefined;
+      const awayTeam = m.awayTeam as Record<string, unknown> | undefined;
+
+      const home   = normTeam((homeTeam?.name as string) ?? "");
+      const away   = normTeam((awayTeam?.name as string) ?? "");
+      const status = mapStatus((m.status as string) ?? "");
+      const hs     = fullTime?.home ?? null;
+      const as_    = fullTime?.away ?? null;
+
+      // Count red cards from bookings if available (may be empty on free tier)
+      const homeTeamId = homeTeam?.id;
+      const awayTeamId = awayTeam?.id;
+      const redHome = bookings.filter((b: unknown) => {
+        const bk = b as Record<string, unknown>;
+        const bkTeam = bk.team as Record<string, unknown> | undefined;
+        return bkTeam?.id === homeTeamId &&
+          (bk.type === "RED_CARD" || bk.type === "YELLOW_RED_CARD");
+      }).length;
+      const redAway = bookings.filter((b: unknown) => {
+        const bk = b as Record<string, unknown>;
+        const bkTeam = bk.team as Record<string, unknown> | undefined;
+        return bkTeam?.id === awayTeamId &&
+          (bk.type === "RED_CARD" || bk.type === "YELLOW_RED_CARD");
+      }).length;
+
+      const db = (dbMatches as DbMatch[] | null)?.find(
+        (d) => d.home_team === home && d.away_team === away,
+      );
       if (!db) continue;
 
-      if (db.status === status && db.home_score === hs && db.away_score === as_) continue;
+      const noChange =
+        db.status         === status &&
+        db.home_score     === hs &&
+        db.away_score     === as_ &&
+        db.red_cards_home === redHome &&
+        db.red_cards_away === redAway;
+      if (noChange) continue;
 
-      await supabase.from("matches").update({ status, home_score: hs, away_score: as_ }).eq("id", db.id);
+      // Fire notifications for changed events (non-blocking on error)
+      const events = detectEvents(db, status, hs, as_, redHome, redAway);
+      await fireNotifications(supabase, db.id, events).catch(() => {});
+
+      await supabase
+        .from("matches")
+        .update({ status, home_score: hs, away_score: as_, red_cards_home: redHome, red_cards_away: redAway })
+        .eq("id", db.id);
+
       updated++;
     }
+
+    // Separate countdown check (uses current DB state, no API call needed)
+    await checkCountdowns(supabase).catch(() => {});
 
     return NextResponse.json({ ok: true, updated, total: apiMatches.length });
   } catch (err) {

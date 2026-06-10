@@ -12,7 +12,7 @@ export async function GET() {
   // 1. Raw notification rows
   const { data: rows, error } = await supabase
     .from("notifications")
-    .select("id, type, is_read, gc_amount, reason, created_at, post_id, reply_id, actor_id")
+    .select("id, type, is_read, gc_amount, reason, created_at, post_id, reply_id, actor_id, match_id, event_detail")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(20);
