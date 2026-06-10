@@ -20,6 +20,17 @@ function localePath(code: string): string {
   return code === "en" ? "/m" : `/${code}/m`;
 }
 
+// Persist the explicit language choice so proxy.ts getPreferredLocale() honours
+// it instead of falling back to the browser Accept-Language header. This is what
+// fixes "tap English but land back on /zh/m": English navigates to the
+// prefix-less "/m", and without this cookie a Chinese-browser visitor would be
+// redirected to /zh/m by the device middleware. We MUST write "en" explicitly
+// (not clear the cookie) so the default locale also wins over Accept-Language.
+function persistLocaleChoice(code: string): void {
+  const oneYear = 60 * 60 * 24 * 365;
+  document.cookie = `NEXT_LOCALE=${code}; path=/; max-age=${oneYear}; samesite=lax`;
+}
+
 export default function MobileLocaleSwitcher({ locale }: { locale: string }) {
   const [open, setOpen] = useState(false);
 
@@ -106,6 +117,7 @@ export default function MobileLocaleSwitcher({ locale }: { locale: string }) {
               <button
                 key={l.code}
                 onClick={() => {
+                  persistLocaleChoice(l.code);
                   window.location.href = localePath(l.code);
                 }}
                 style={{

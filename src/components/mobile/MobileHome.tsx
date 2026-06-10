@@ -4678,7 +4678,7 @@ function MobileSettingsView({
       </section>
 
       <section className="grid gap-1.5 rounded-xl border border-white/10 bg-[#0d1a2b] p-2">
-        <MobileMenuButton icon={Languages} label={zh ? "语言" : "Language"} value={zh ? "切换到 English" : "Switch to 中文"} onClick={() => { window.location.href = `/${locale === "zh" ? "en" : "zh"}/m?preview=app&view=settings`; }} />
+        <MobileMenuButton icon={Languages} label={zh ? "语言" : "Language"} value={zh ? "切换到 English" : "Switch to 中文"} onClick={() => { const target = locale === "zh" ? "en" : "zh"; document.cookie = `NEXT_LOCALE=${target}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`; window.location.href = `/${target}/m?preview=app&view=settings`; }} />
         <MobileMenuButton icon={Home} label={zh ? "返回首页" : "Home"} value="Football2026" onClick={() => onOpenView("home")} />
         <MobileMenuButton icon={Gift} label={zh ? "邀请" : "Invite"} value={zh ? "邀请链接和排行榜" : "Link and board"} onClick={() => onOpenView("invite")} />
       </section>
