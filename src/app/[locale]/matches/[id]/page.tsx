@@ -21,6 +21,8 @@ import { lc } from "@/i18n/content";
 // ── Static generation: pre-render all 104 match pages × 2 locales ──────────────
 export const revalidate = 60; // ISR: re-generate in background every 60 seconds
 
+const ALL_LOCALES = ["en", "zh", "es", "fr", "de", "pt", "ru", "ar", "ja", "ko", "vi", "id"] as const;
+
 export async function generateStaticParams() {
   try {
     const supabase = createStaticClient(
@@ -29,7 +31,7 @@ export async function generateStaticParams() {
     );
     const { data } = await supabase.from("matches").select("id");
     const ids = (data ?? []).map((m: { id: number }) => String(m.id));
-    return ["zh", "en"].flatMap((locale) => ids.map((id) => ({ locale, id })));
+    return ALL_LOCALES.flatMap((locale) => ids.map((id) => ({ locale, id })));
   } catch {
     return [];
   }
@@ -268,8 +270,53 @@ export default async function MatchPage({ params }: MatchPageProps) {
   const homeColors   = getTeamColor(match.home_team);
   const awayColors   = getTeamColor(match.away_team);
 
+  // ── Schema.org SportsEvent JSON-LD ────────────────────────────────────────
+  const homeEN    = getTeamDisplayName(match.home_team, "en");
+  const awayEN    = getTeamDisplayName(match.away_team, "en");
+  const stageEN   = STAGE_LABELS[(match.stage ?? "") as string]?.en ?? (match.stage ?? "");
+  const stageStrEN = match.group_name ? `Group ${match.group_name}` : stageEN;
+  const canonUrl  = `https://football2026.net${locale === "en" ? "" : `/${locale}`}/matches/${match.id}`;
+  const endDate   = match.kickoff_time
+    ? new Date(new Date(match.kickoff_time as string).getTime() + 2 * 3_600_000).toISOString()
+    : undefined;
+
+  const jsonLd = {
+    "@context":  "https://schema.org",
+    "@type":     "SportsEvent",
+    "name":      `${homeEN} vs ${awayEN} — ${stageStrEN} | FIFA World Cup 2026`,
+    "description": match.status === "finished"
+      ? `${homeEN} ${match.home_score ?? 0}–${match.away_score ?? 0} ${awayEN} — ${stageStrEN}, FIFA World Cup 2026.`
+      : `Predict ${homeEN} vs ${awayEN} — ${stageStrEN}, FIFA World Cup 2026. Free prediction game on Football2026.`,
+    "url":        canonUrl,
+    ...(match.kickoff_time && { "startDate": match.kickoff_time }),
+    ...(endDate            && { "endDate":   endDate }),
+    "eventStatus": "https://schema.org/EventScheduled",
+    "sport":      "Soccer",
+    "location": {
+      "@type": "Place",
+      "name":  "FIFA World Cup 2026",
+      "address": { "@type": "PostalAddress", "addressCountry": "US" },
+    },
+    "homeTeam":  { "@type": "SportsTeam", "name": homeEN },
+    "awayTeam":  { "@type": "SportsTeam", "name": awayEN },
+    "organizer": { "@type": "Organization", "name": "FIFA", "url": "https://www.fifa.com" },
+    "offers": {
+      "@type":         "Offer",
+      "url":           canonUrl,
+      "price":         "0",
+      "priceCurrency": "USD",
+      "availability":  "https://schema.org/InStock",
+      "name":          "Free Match Prediction",
+    },
+  };
+
   return (
-    <div className="min-h-screen bg-[#0A1628] text-white pb-20 pt-6 px-1">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <div className="min-h-screen bg-[#0A1628] text-white pb-20 pt-6 px-1">
 
         {/* ── Back + Group/Stage switcher ──────────────────────────────────── */}
         <div className="flex items-center gap-3 mb-4">
@@ -561,5 +608,6 @@ export default async function MatchPage({ params }: MatchPageProps) {
         />
 
     </div>
+    </>
   );
 }
