@@ -4,7 +4,7 @@ import { createClient as createStaticClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { getFlagUrl, isTBD, getTeamDisplayName } from "@/lib/flags";
+import { getFlagUrl, isTBD, getTeamDisplayName, getFlagCode } from "@/lib/flags";
 import { getTeamColor } from "@/lib/teamColors";
 import MatchUserSection from "./MatchUserSection";
 import MatchHero from "@/components/forum/MatchHero";
@@ -107,6 +107,24 @@ export async function generateMetadata({ params }: MatchPageProps): Promise<Meta
   const canonicalPath = locale === "en" ? `/matches/${id}` : `/${locale}/matches/${id}`;
   const LOCALES       = ["en", "zh", "es", "fr", "de", "pt", "ru", "ar", "ja", "ko", "vi", "id"] as const;
 
+  // Build a match-specific OG image with team flags and identity colors
+  const homeColors = getTeamColor(match.home_team as string);
+  const awayColors = getTeamColor(match.away_team as string);
+  const homeCode   = getFlagCode(match.home_team as string);
+  const awayCode   = getFlagCode(match.away_team as string);
+  const ogParams   = new URLSearchParams({
+    home:      home,
+    away:      away,
+    homeCode,
+    awayCode,
+    homePct:   "50",
+    awayPct:   "50",
+    homeColor: homeColors.primary.replace("#", ""),
+    awayColor: awayColors.primary.replace("#", ""),
+    locale,
+  });
+  const ogImageUrl = `https://football2026.net/api/og/fan-map?${ogParams.toString()}`;
+
   return {
     title,
     description,
@@ -127,7 +145,7 @@ export async function generateMetadata({ params }: MatchPageProps): Promise<Meta
       type:     "website",
       images: [
         {
-          url:    `https://football2026.net/api/og?locale=${locale}`,
+          url:    ogImageUrl,
           width:  1200,
           height: 630,
           alt:    title,
@@ -138,7 +156,7 @@ export async function generateMetadata({ params }: MatchPageProps): Promise<Meta
       card:        "summary_large_image",
       title,
       description,
-      images:      [`https://football2026.net/api/og?locale=${locale}`],
+      images:      [ogImageUrl],
     },
   };
 }

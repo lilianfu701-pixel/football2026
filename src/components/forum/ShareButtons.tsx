@@ -14,6 +14,7 @@ interface Props {
   zh?:              boolean;
   username?:        string | null;   // logged-in user's username → appended as ?ref=
   embedCode?:       string;          // when provided, share/copy this embed code instead of page URL
+  baseUrl?:         string;          // override the share URL (defaults to window.location.href)
 }
 
 // ── Platform definitions ──────────────────────────────────────────────────────
@@ -84,7 +85,7 @@ const PLATFORMS: PlatformDef[] = [
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function ShareButtons({ title, translatedTitle, locale, zh, username, embedCode }: Props) {
+export default function ShareButtons({ title, translatedTitle, locale, zh, username, embedCode, baseUrl }: Props) {
   const [copied,     setCopied]     = useState(false);
   const [canNative,  setCanNative]  = useState(false);
   const [showQr,     setShowQr]     = useState(false);
@@ -93,14 +94,15 @@ export default function ShareButtons({ title, translatedTitle, locale, zh, usern
   const [rewardDone, setRewardDone] = useState(false); // true once daily limit is known
   const { balance: gcBalance, setBalance: setGcBalance } = useGcBalance();
 
-  // Build share URL after hydration: current page + ?ref=username
+  // Build share URL after hydration: baseUrl (or current page) + ?ref=username
   useEffect(() => {
-    const url = new URL(window.location.href);
+    const raw = baseUrl ?? window.location.href;
+    const url = new URL(raw);
     url.searchParams.delete("ref");
     if (username) url.searchParams.set("ref", username);
     setShareUrl(url.toString());
     setCanNative(!!navigator.share);
-  }, [username]);
+  }, [username, baseUrl]);
 
   // ── Reward helper — call once per share action ────────────────────────────
   const triggerReward = useCallback(async (url: string) => {
