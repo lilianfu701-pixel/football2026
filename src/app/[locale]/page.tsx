@@ -7,6 +7,7 @@ import { getFlagUrl, getTeamDisplayName } from "@/lib/flags";
 import { computeGroupStandings } from "@/lib/groupStandings";
 import CountdownHero from "@/components/home/CountdownHero";
 import MobileAppBanner from "@/components/home/MobileAppBanner";
+import PcLiveMatchHero from "@/components/home/PcLiveMatchHero";
 import { lc } from "@/i18n/content";
 
 /* ─── Phase detection ────────────────────────────────────────────────────── */
@@ -235,13 +236,13 @@ export default async function HomePage({ params }: HomePageProps) {
     groupMatchesResult,
     wealthResult,
   ] = await Promise.all([
-    // 1. Next 4 upcoming matches
+    // 1. Upcoming + any live/paused matches (limit 8 so after filtering live out we have 4 upcoming)
     supabase
       .from("matches")
       .select("id,match_code,home_team,away_team,home_score,away_score,kickoff_time,venue,status,group_name,stage")
-      .in("status", ["upcoming", "live"])
+      .in("status", ["upcoming", "live", "paused"])
       .order("kickoff_time", { ascending: true })
-      .limit(4),
+      .limit(8),
 
     // 2. Manually curated featured matches (is_featured=true)
     supabase
@@ -274,7 +275,11 @@ export default async function HomePage({ params }: HomePageProps) {
   ]);
 
   const allUpcoming: MatchRow[] = (allUpcomingResult.data ?? []) as MatchRow[];
-  const upcomingMatches: MatchRow[] = allUpcoming;
+  // Live match (if any) goes to the hero card — not shown in the upcoming grid
+  const liveMatch: MatchRow | null =
+    allUpcoming.find((m) => m.status === "live" || m.status === "paused") ?? null;
+  // Upcoming grid: only truly-upcoming matches (started/live ones are excluded)
+  const upcomingMatches: MatchRow[] = allUpcoming.filter((m) => m.status === "upcoming").slice(0, 4);
   // Featured: use manually curated if available, else fallback to next 4 after upcoming
   const featuredCurated: MatchRow[] = (featuredResult.data ?? []) as MatchRow[];
   const featuredMatches: MatchRow[] = featuredCurated.length > 0 ? featuredCurated : [];
@@ -290,7 +295,7 @@ export default async function HomePage({ params }: HomePageProps) {
     rank: i + 1,
   }));
 
-  const totalMatches = allUpcoming.length;
+  const totalMatches = upcomingMatches.length;
 
   return (
     <main className="min-h-screen bg-[#050D1E] text-white">
@@ -305,7 +310,21 @@ export default async function HomePage({ params }: HomePageProps) {
         />
       )}
 
-      {phase === "during" && (
+      {phase === "during" && liveMatch && (
+        <PcLiveMatchHero
+          matchId={liveMatch.id}
+          homeTeam={liveMatch.home_team}
+          awayTeam={liveMatch.away_team}
+          homeScore={liveMatch.home_score}
+          awayScore={liveMatch.away_score}
+          status={liveMatch.status}
+          stage={liveMatch.stage}
+          venue={liveMatch.venue}
+          locale={locale}
+          isLoggedIn={!!user}
+        />
+      )}
+      {phase === "during" && !liveMatch && (
         <section className="bg-[#050D1E] border-b border-[#FFD700]/20">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3">
