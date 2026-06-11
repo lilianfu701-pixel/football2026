@@ -102,7 +102,8 @@ export default async function PostPage({ params, searchParams }: PageProps) {
 
   if (postErr) console.error("POST_ERR", JSON.stringify(postErr));
   if (!post) notFound();
-  if (post.is_deleted) notFound();
+  // Soft-deleted OP: keep the thread accessible so replies remain reachable.
+  // The OP cell is rendered as a "[deleted]" placeholder below.
 
   // ── Parallel fetches ────────────────────────────────────────────────────────
   const [repliesRes, myLikesRes, myFollowRes, ratingsRes, postAuthorRes, postTransRes, myBookmarkRes, postTagsRes] = await Promise.all([
@@ -701,20 +702,34 @@ export default async function PostPage({ params, searchParams }: PageProps) {
         </div>
 
         {/* ── OP Post ── */}
-        <PostCell
-          authorUser={authorRaw ?? null}
-          content={post.content}
-          createdAt={post.created_at}
-          editedAt={(post as typeof post & { edited_at?: string | null }).edited_at ?? null}
-          title={post.title}
-          floorNum={1}
-          isOp={true}
-          cellId={post.id}
-          cellLikeCount={post.like_count}
-          isLiked={myLikedIds.has(`post-${post.id}`)}
-          isPost={true}
-          floorRatings={ratingsMap.get(`post-${post.id}`) ?? []}
-        />
+        {post.is_deleted ? (
+          <div className="bg-[#0F2040] border border-[#1E3A5F]/50 rounded-2xl overflow-hidden">
+            <div className="flex min-h-[80px] items-center gap-3 px-5 py-4">
+              <span className="text-2xl opacity-40">🗑</span>
+              <span className="text-gray-600 text-sm italic">
+                {lc(locale, "该内容已被删除", "This post has been deleted")}
+              </span>
+              <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-md bg-[#1E3A5F]/40 text-gray-600">
+                {zh ? "1楼" : "#1"}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <PostCell
+            authorUser={authorRaw ?? null}
+            content={post.content}
+            createdAt={post.created_at}
+            editedAt={(post as typeof post & { edited_at?: string | null }).edited_at ?? null}
+            title={post.title}
+            floorNum={1}
+            isOp={true}
+            cellId={post.id}
+            cellLikeCount={post.like_count}
+            isLiked={myLikedIds.has(`post-${post.id}`)}
+            isPost={true}
+            floorRatings={ratingsMap.get(`post-${post.id}`) ?? []}
+          />
+        )}
 
         {/* ── Replies ── */}
         {topReplies.length > 0 && (

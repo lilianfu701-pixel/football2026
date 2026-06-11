@@ -77,6 +77,7 @@ export default async function ForumPage({ params }: PageProps) {
         forum_categories!inner(slug, name, name_zh, icon),
         users!inner(username, avatar_url, gc_balance)
       `)
+      .eq("is_deleted", false)
       .gte("created_at", new Date(Date.now() - 7 * 86400000).toISOString())
       .order("like_count", { ascending: false })
       .limit(5),
@@ -88,6 +89,7 @@ export default async function ForumPage({ params }: PageProps) {
         forum_categories!inner(slug, name, name_zh, icon),
         users!inner(username, avatar_url, gc_balance)
       `)
+      .eq("is_deleted", false)
       .order("last_reply_at", { ascending: false })
       .limit(10),
 
