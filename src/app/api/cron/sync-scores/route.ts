@@ -5,11 +5,14 @@ const FD_BASE = "https://api.football-data.org/v4";
 const COMPETITION_CODE = "WC";
 
 const TEAM_MAP: Record<string, string> = {
-  "Korea Republic": "South Korea",
-  "United States":  "USA",
-  "Côte d'Ivoire":  "Ivory Coast",
-  "Türkiye":        "Turkey",
-  "Congo DR":       "DR Congo",
+  "Korea Republic":     "South Korea",
+  "United States":      "USA",
+  "Côte d'Ivoire":      "Ivory Coast",
+  "Türkiye":            "Turkey",
+  "Congo DR":           "DR Congo",
+  "Bosnia-Herzegovina": "Bosnia & Herzegovina",
+  "Cape Verde Islands": "Cape Verde",
+  "Curaçao":            "Curacao",
 };
 
 function mapStatus(s: string): string {
