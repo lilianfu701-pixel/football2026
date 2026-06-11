@@ -30,59 +30,6 @@ type Match = {
   odds_away: number | null;
 };
 
-// City → country abbreviation
-const CITY_COUNTRY: Record<string, string> = {
-  "Mexico City": "MEX", "Guadalajara": "MEX", "Monterrey": "MEX",
-  "New York": "USA", "Los Angeles": "USA", "Dallas": "USA",
-  "Houston": "USA", "Atlanta": "USA", "Seattle": "USA",
-  "Philadelphia": "USA", "Miami": "USA", "Kansas City": "USA",
-  "Santa Clara": "USA", "San Francisco": "USA", "Boston": "USA",
-  "Toronto": "CAN", "Vancouver": "CAN",
-};
-
-// Country abbreviation → localized label
-const COUNTRY_LABEL: Record<string, Record<string, string>> = {
-  zh: { "USA": "美国",            "MEX": "墨西哥",       "CAN": "加拿大" },
-  en: { "USA": "USA",             "MEX": "Mexico",       "CAN": "Canada" },
-  es: { "USA": "EE. UU.",         "MEX": "México",       "CAN": "Canadá" },
-  fr: { "USA": "États-Unis",      "MEX": "Mexique",      "CAN": "Canada" },
-  de: { "USA": "USA",             "MEX": "Mexiko",       "CAN": "Kanada" },
-  pt: { "USA": "EUA",             "MEX": "México",       "CAN": "Canadá" },
-  ru: { "USA": "США",             "MEX": "Мексика",      "CAN": "Канада" },
-  ar: { "USA": "الولايات المتحدة","MEX": "المكسيك",     "CAN": "كندا" },
-  ja: { "USA": "アメリカ",         "MEX": "メキシコ",     "CAN": "カナダ" },
-  ko: { "USA": "미국",             "MEX": "멕시코",       "CAN": "캐나다" },
-  vi: { "USA": "Mỹ",              "MEX": "México",       "CAN": "Canada" },
-  id: { "USA": "Amerika Serikat", "MEX": "Meksiko",      "CAN": "Kanada" },
-};
-
-// City → Chinese name
-const CITY_ZH: Record<string, string> = {
-  "Mexico City": "墨西哥城", "Guadalajara": "瓜达拉哈拉", "Monterrey": "蒙特雷",
-  "New York": "纽约", "Los Angeles": "洛杉矶", "Dallas": "达拉斯",
-  "Houston": "休斯顿", "Atlanta": "亚特兰大", "Seattle": "西雅图",
-  "Philadelphia": "费城", "Miami": "迈阿密", "Kansas City": "堪萨斯城",
-  "Santa Clara": "圣克拉拉", "San Francisco": "旧金山", "Boston": "波士顿",
-  "Toronto": "多伦多", "Vancouver": "温哥华",
-};
-
-// Venue → Chinese name
-const VENUE_ZH: Record<string, string> = {
-  "Estadio Azteca":     "阿兹特克体育场",
-  "SoFi Stadium":       "苏菲体育场",
-  "MetLife Stadium":    "大都会人寿体育场",
-  "AT&T Stadium":       "AT&T球场",
-  "Rose Bowl":          "玫瑰碗体育场",
-  "BMO Field":          "BMO球场",
-  "Hard Rock Stadium":  "硬石体育场",
-  "Arrowhead Stadium":  "箭头体育场",
-  "Gillette Stadium":   "吉列体育场",
-  "Levi's Stadium":     "李维斯体育场",
-  "Lincoln Financial":  "林肯金融球场",
-  "BC Place":           "BC广场",
-  "Estadio Akron":      "阿克伦体育场",
-  "Estadio BBVA":       "BBVA体育场",
-};
 
 function getCountdown(kickoffStr: string, locale: string): string {
   const now = new Date();
@@ -101,34 +48,32 @@ function getCountdown(kickoffStr: string, locale: string): string {
 }
 
 
-// Display offset: zh → UTC+8 (北京时间), others → UTC
-function getDisplayDate(kickoffStr: string, locale: string): Date {
-  const offsetMs = locale === "zh" ? 8 * 60 * 60 * 1000 : 0;
-  return new Date(new Date(kickoffStr).getTime() + offsetMs);
+// Venue UTC offsets — summer 2026 (DST in effect for all North American cities)
+const CITY_OFFSET: Record<string, number> = {
+  // CDT = UTC−5
+  "Mexico City": -5, "Guadalajara": -5, "Monterrey": -5,
+  "Dallas": -5, "Houston": -5, "Kansas City": -5,
+  // EDT = UTC−4
+  "New York": -4, "Philadelphia": -4, "Miami": -4,
+  "Atlanta": -4, "Boston": -4, "Toronto": -4,
+  // PDT = UTC−7
+  "Los Angeles": -7, "Santa Clara": -7, "San Francisco": -7,
+  "Seattle": -7, "Vancouver": -7,
+};
+
+// Returns a Date shifted to venue local time; use getUTC* methods on the result
+function getVenueDate(kickoffStr: string, city?: string | null): Date {
+  const offsetHours = city ? (CITY_OFFSET[city] ?? 0) : 0;
+  return new Date(new Date(kickoffStr).getTime() + offsetHours * 60 * 60 * 1000);
 }
 
-function formatMatchDate(dateStr: string, locale: string) {
-  const d  = getDisplayDate(dateStr, locale);
+function formatMatchTime(kickoffStr: string, city?: string | null): string {
+  const d  = getVenueDate(kickoffStr, city);
   const hh = String(d.getUTCHours()).padStart(2, "0");
   const mm = String(d.getUTCMinutes()).padStart(2, "0");
-
-  let cardLabel: string;
-  if (locale === "zh") {
-    const ZH_DAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
-    cardLabel = `北京时间 ${d.getUTCMonth() + 1}月${d.getUTCDate()}日${ZH_DAYS[d.getUTCDay()]} ${hh}:${mm}`;
-  } else {
-    const EN_MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    const EN_DAYS   = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-    cardLabel = `${EN_MONTHS[d.getUTCMonth()]} ${d.getUTCDate()} ${EN_DAYS[d.getUTCDay()]} ${hh}:${mm} UTC`;
-  }
-
-  return { time: cardLabel };
+  return `${hh}:${mm}`;
 }
 
-const STAGE_KEYS: Record<string, string> = {
-  group: "group", round32: "round32", round16: "round16",
-  quarter: "quarter", semi: "semi", third: "third", final: "final",
-};
 
 export default async function MatchesPage({ params, searchParams }: MatchesPageProps) {
   const { locale } = await params;
@@ -182,14 +127,15 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
     ...(teamsData?.map((m) => m.away_team) ?? []),
   ])].filter((t) => !isTBD(t)).sort() as string[];
 
-  // Group by date — use locale-aware display date so zh shows UTC+8 dates
+  // Group by venue-local date
   const matchesByDate: Record<string, Match[]> = {};
   (matches ?? []).forEach((m) => {
-    const displayDate = getDisplayDate(m.kickoff_time, locale);
+    const venueDate = getVenueDate(m.kickoff_time, m.city);
     const lang = locale === "zh" ? "zh-CN" : "en-US";
-    const dateKey = displayDate.toLocaleDateString(lang, {
+    // venueDate is already offset; read calendar fields via UTC methods
+    const dateKey = venueDate.toLocaleDateString(lang, {
       weekday: "long", month: "long", day: "numeric",
-      timeZone: "UTC", // displayDate is already offset-adjusted; read as UTC
+      timeZone: "UTC",
     });
     if (!matchesByDate[dateKey]) matchesByDate[dateKey] = [];
     matchesByDate[dateKey].push(m);
@@ -293,7 +239,7 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
 
                     <div className="space-y-3">
                       {dayMatches.map((match) => {
-                        const { time } = formatMatchDate(match.kickoff_time, locale);
+                        const time = formatMatchTime(match.kickoff_time, match.city);
                         const isFinished = match.status === "finished";
                         const isLive = match.status === "live";
                         const countdown = !isFinished && !isLive ? getCountdown(match.kickoff_time, locale) : "";
