@@ -1,7 +1,9 @@
 # Football2026 — CLAUDE.md
 
 > 项目说明文档，供 Claude Code 或新接手的开发者快速上手。
-> 最后更新：2026-06-10（移动端多语言本地化方法 + 西班牙语完成；Paddle 运行时 token；PWA scope 修复；getCopy 底部导航多语言已修复）
+> 最后更新：2026-06-10（**实时比赛通知系统上线**：关注比赛 → 倒数/开赛/进球/红牌/终场通知；外部 cron 每分钟同步；真实赛程队名映射 + 主客反向兼容。另：移动端多语言本地化 + 西班牙语；Paddle 运行时 token；PWA scope 修复）
+>
+> **👉 实时通知系统看 [§十六 实时比赛通知系统](#十六实时比赛通知系统)。**
 >
 > **👉 接手移动端多语言开发的人：直接看 [§十五 移动端多语言本地化方法](#十五移动端多语言本地化方法sop)。**
 >
@@ -327,17 +329,24 @@ lc(locale, "中文原文", "English string")
 
 ## 九、数据库（Supabase PostgreSQL）
 
-迁移文件：`supabase/migrations/` — 当前 **049** 个（`001_init.sql` → `049_users_profile_update_policy.sql`）
+迁移文件：`supabase/migrations/` — 当前 **052** 个（`001_init.sql` → `052_fix_notifications_rls.sql`）
+
+> **最近迁移（2026-06-10，实时通知系统）**：
+> - `051_match_notifications.sql` — `matches` 加 `red_cards_home/away`；`notifications` 加 `match_id`+`event_detail`(jsonb)；新建 `match_notifications_sent` 去重表
+> - `052_fix_notifications_rls.sql` — **补回丢失的 notifications RLS 策略**（select_own/update_own/insert_auth）。原 021 建表+策略，但线上表已存在导致 `CREATE POLICY` 被跳过 → RLS 开着但零策略 → 默认拒绝 → 用户一直读不到任何通知（连论坛回复/打赏通知也收不到）。这是潜伏已久的 bug。
 
 **关键表**（部分）：
 
 | 表 | 关键字段 |
 |---|---|
 | `users` | id, gc_balance, gc_total, nickname, avatar_url, is_admin, country_code, profile_rewards(jsonb), referred_by, welcome_email_sent |
-| `matches` | id, home_team, away_team, home_score, away_score, status, match_time, odds(jsonb) |
+| `matches` | id, home_team, away_team, home_score, away_score, **red_cards_home, red_cards_away**, status, match_time, odds(jsonb) |
 | `match_votes` | user_id, match_id, vote (home/draw/away) |
+| `match_follows` | user_id, match_id — 关注比赛（通知系统的订阅者来源） |
 | `bets` | user_id, match_id, amount, predicted_winner, result, payout |
 | `score_bets` | user_id, match_id, home_score, away_score, amount |
+| `notifications` | id, user_id, type, is_read, actor_id, post_id, reply_id, gc_amount, reason, **match_id, event_detail(jsonb)**, content, created_at |
+| `match_notifications_sent` | match_id, event_type, event_key — **去重**：UNIQUE(match_id,event_type,event_key) 保证同一事件只通知一次 |
 | `gc_transactions` | user_id, amount, type, description, created_at |
 | `forum_threads` | id, title, content, author_id, category, likes |
 | `messages` | sender_id, receiver_id, content, is_read |
@@ -354,20 +363,53 @@ lc(locale, "中文原文", "English string")
 
 ## 十、Cron 任务
 
-| 任务 | 频率 | 端点 |
-|---|---|---|
-| 同步比分 | 每日 00:00 UTC | `GET /api/cron/sync-scores` |
+| 任务 | 频率 | 端点 | 触发方 |
+|---|---|---|---|
+| 同步比分 + 发通知 | 每日 00:00 UTC（备份） | `GET /api/cron/sync-scores` | Vercel Cron (`vercel.json`) |
+| 同步比分 + 发通知 | **每分钟** | 同上 | **cron-job.org（外部）** |
 
-配置在 `vercel.json`，由 Vercel Cron 自动触发。
+**为什么用外部 cron**：Vercel **免费版（Hobby）的定时任务只允许"每天一次"**，写高频 cron 会让 `vercel build` 校验失败、整个部署被拒（见 §十二.14）。所以 `vercel.json` 保持每天一次（合法）做备份，真正的每分钟轮询交给 **cron-job.org**（免费、支持 1 分钟）。
+
+**cron-job.org 配置**：
+- URL：`https://www.football2026.net/api/cron/sync-scores`
+- Schedule：`* * * * *`（每分钟）
+- Header：`Authorization: Bearer <CRON_SECRET>`（值见 §十四；缺这个头返回 401，连续失败会被自动禁用）
+
+**接口自带守卫**：没有 live 比赛、也没有 15 分钟内开赛的比赛时，**直接返回 `{"ok":true,"skipped":true}` 不调用 football-data.org**，省额度（免费 10 次/分钟）。所以每分钟空跑几乎零成本，只有比赛日才真正拉数据。
+
+鉴权：接口校验 `Authorization === Bearer ${CRON_SECRET}`。Vercel 原生 cron 自动注入该头；cron-job.org 需手动配。
 
 ---
 
 ## 十一、当前进度 & 近期提交
 
-### 2026-06-10 本轮会话（移动端多语言 + 支付 + PWA）
+### 2026-06-10 第二轮会话（实时比赛通知系统）
 
 ```
-04ff3f3 feat(mobile): localize the mobile site for Spanish (and all dict locales)  ← 最新
+8181625 fix: sync matches stored with reversed home/away orientation  ← 最新
+85dac03 fix: map football-data team names to DB spellings (Bosnia, Cape Verde, Curacao)
+164956f chore: redeploy to pick up FOOTBALL_DATA_API_KEY
+5a689f4 chore: redeploy to pick up CRON_SECRET
+b5d319e fix: revert cron to daily (Hobby plan only allows once-per-day cron)
+b427847 fix: add required content field to match notification inserts
+7fbfce2 perf: skip external API call when no active matches
+5628073 feat: match notification system phase 1
+（迁移 051/052 + cron-job.org 外部触发 + 环境变量 CRON_SECRET/FOOTBALL_DATA_API_KEY）
+```
+
+**本轮做了什么（实时通知系统，详见 §十六）：**
+1. **通知基础设施**：迁移 051（red_cards 字段、notifications 加 match_id/event_detail、去重表）；改造 `sync-scores` 检测开赛/进球/红牌/终场/倒数 5 种事件 → 写关注者通知；扩展通知 API + `NotificationBell` 渲染 5 种比赛通知。
+2. **修复潜伏 bug**：迁移 052 补回丢失的 notifications RLS 策略——以前整个站**所有通知读取**都是坏的（RLS 开着但零策略=默认拒绝），不只是比赛通知。
+3. **修复部署管线**：高频 cron 让 `vercel build` 校验失败、部署全被拒（线上卡旧代码好几个提交）。cron 改回每天一次，每分钟轮询交给 **cron-job.org**（免费外部）。
+4. **真实赛程对齐**：种子文件是占位数据，但线上 DB 早已是真实赛程。真正问题是 ① 3 个队名写法不一致（加 TEAM_MAP 映射）② 12 场 2/3 轮小组赛主客顺序与官方相反（sync 自动识别反向并反向赋值比分，**不改数据**，零影响投注/投票）。
+5. **配置**：CRON_SECRET + FOOTBALL_DATA_API_KEY 设进 Vercel Production；cron-job.org 加 Bearer 头每分钟触发。
+
+---
+
+### 2026-06-10 第一轮会话（移动端多语言 + 支付 + PWA）
+
+```
+04ff3f3 feat(mobile): localize the mobile site for Spanish (and all dict locales)
 ab2b637 fix(mobile): resolve Paddle token at runtime for card checkout
 f03776e fix(pwa): no-cache the web manifest so installed apps adopt the new scope
 8b4f30f fix(topup): read Paddle token via runtime env, defeating NEXT_PUBLIC inlining
@@ -488,6 +530,21 @@ const t = process.env[key] || process.env.PADDLE_CLIENT_TOKEN || "";
 - 切换器/设置页切语言时 `document.cookie = "NEXT_LOCALE=<code>; path=/; max-age=…"`；英文要**显式写 `en`**（不能清空），否则又回退 Accept-Language。
 - 相关文件：`src/components/locale-switcher/MobileLocaleSwitcher.tsx`、`MobileHome.tsx` 设置页语言行。
 
+**14. ⚠️ Vercel 免费版（Hobby）cron 只能"每天一次"，高频 cron 会让整个部署失败**
+- 把 `vercel.json` 的 cron 改成 `*/5 * * * *` 或 `* * * * *`，在 Hobby 版是**非法配置**。
+- 本项目部署经 `.github/workflows/deploy.yml` 跑 `vercel build` + `vercel deploy`——非法 cron 会让 **`vercel build` 校验失败 → 整个部署被拒**，Vercel 上看不到新部署，线上一直卡旧代码（排查时去 **GitHub Actions** 看红色失败，不是 Vercel）。
+- 正确做法：`vercel.json` 保持 `0 0 * * *`（每天一次，合法）；高频轮询用**外部 cron（cron-job.org）**打同一个端点（见 §十）。
+- 想要 Vercel 原生每分钟 cron 需升级 Pro（$20/月）——本项目用免费外部 cron 规避，不用付费。
+
+**15. ⚠️ RLS 开着但零策略 = 默认拒绝一切（notifications 通知系统血泪教训）**
+- Postgres 表 `ENABLE ROW LEVEL SECURITY` 后，如果**一条策略都没有**，所有非 service_role 访问被默认拒绝（select 返回空、insert 被挡）。
+- 本项目 `notifications` 表正是如此：迁移 021 本应建表+3 条策略，但线上表已存在导致 `CREATE TABLE IF NOT EXISTS` 跳过、`CREATE POLICY` 也没生效 → RLS 开着但零策略 → **用户从来收不到任何通知**（铃铛永远空），而 Cron 用 service_role（绕过 RLS）写入正常，所以问题隐蔽。
+- 修复：迁移 052 补回 `notif_select_own`/`notif_update_own`/`notif_insert_auth`。排查手段：`SELECT * FROM pg_policies WHERE tablename='xxx'`，零行 + RLS 开 = 这个坑。
+
+**16. football-data.org 队名 vs DB 队名要映射；主客顺序可能与官方相反**
+- football-data.org 的队名和本项目 DB/`flags.ts` 的写法不完全一致，靠 `sync-scores` 的 `TEAM_MAP` 归一化（如 `Bosnia-Herzegovina`→`Bosnia & Herzegovina`、`Cape Verde Islands`→`Cape Verde`、`Curaçao`→`Curacao`、`United States`→`USA` 等）。新增队/改队名时要补 `TEAM_MAP`。
+- DB 里部分小组赛（2/3 轮）主客顺序与官方相反。`sync-scores` 找不到精确 `(home,away)` 时会找反向 `(away,home)`，并把 API 比分/红牌**对应反过来赋值**到 DB 的 home/away——**不改数据**，零影响已有投注/投票。校验方法见 §十六。
+
 ---
 
 ## 十三、移动端架构说明
@@ -546,6 +603,12 @@ NEXT_PUBLIC_PAYPAL_CLIENT_ID=
 NOWPAYMENTS_API_KEY=
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
+
+# 实时通知 / 赛事同步（2026-06-10 新增）
+CRON_SECRET=                       # sync-scores 端点鉴权；Vercel 原生 cron 自动注入此头，
+                                   # cron-job.org 需手动配 `Authorization: Bearer <值>`。必须存 Production。
+FOOTBALL_DATA_API_KEY=             # football-data.org 的 API Token（免费版 10 次/分钟，覆盖世界杯 WC）
+                                   # 缺失时 sync-scores 返回 500 "FOOTBALL_DATA_API_KEY not set"。必须存 Production。
 
 # 其他
 XUNHUPAY_APP_ID=
@@ -746,6 +809,69 @@ function getCopy(locale: string): MobileCopy {
 | ko 韩语 | ✅ 90 条 | ✅ 56 条 | ~1400 | ✅ 完全 |
 | vi 越南语 | ✅ 90 条 | ✅ 56 条 | ~1400 | ✅ 完全 |
 | id 印尼语 | ✅ 90 条 | ✅ 56 条 | ~1400 | ✅ 完全 |
+
+---
+
+## 十六、实时比赛通知系统
+
+> 2026-06-10 上线。关注比赛的用户在 **倒数 / 开赛 / 进球 / 红牌 / 终场** 时收到站内通知（PC 铃铛 + 移动端）。
+
+### 数据流
+
+```
+football-data.org API (WC 赛事)
+   │  每分钟（cron-job.org）/ 每天（Vercel 备份）
+   ▼
+GET /api/cron/sync-scores
+   │  ① 守卫：无 live/15分钟内开赛的比赛 → 直接 skip，不调 API
+   │  ② 拉赛事 → 队名 TEAM_MAP 归一化 → 匹配 DB matches（含反向兼容）
+   │  ③ diff 旧值 vs 新值 → detectEvents() 识别事件
+   │  ④ 每个事件先抢 match_notifications_sent（UNIQUE 去重）→ 给 match_follows 的关注者批量写 notifications
+   ▼
+notifications 表（RLS：用户只读自己的）
+   ▼
+PC: NotificationBell 每 30s 轮询 /api/notifications  /  移动端同理
+```
+
+### 5 种事件（`detectEvents` in `src/app/api/cron/sync-scores/route.ts`）
+
+| type | 触发 | event_key（去重粒度） |
+|---|---|---|
+| `match_countdown` | 开赛前 ≤10 分钟（`checkCountdowns` 单独扫 DB） | `countdown_10min` |
+| `match_kickoff` | status `upcoming`→`live` | `kickoff` |
+| `match_goal` | home/away_score 增加（每球一条） | `goal_home_N` / `goal_away_N` |
+| `match_red_card` | red_cards_home/away 增加 | `red_home_N` / `red_away_N` |
+| `match_final` | status `live`→`finished` | `final` |
+
+> 倒数只发一次（提前 10 分钟）。红牌依赖 football-data 的 `bookings` 字段（免费版可能为空，届时红牌通知不触发，不影响其他）。
+
+### 关键文件
+
+| 文件 | 作用 |
+|---|---|
+| `src/app/api/cron/sync-scores/route.ts` | 同步 + 事件检测 + 发通知（核心）。含 `TEAM_MAP`、反向匹配、`detectEvents`、`fireNotifications`、`checkCountdowns`、`buildContent` |
+| `src/app/api/notifications/route.ts` | 读通知（已含 `match_id`/`event_detail`）+ PATCH 全部已读 |
+| `src/components/NotificationBell.tsx` | PC 铃铛，渲染 5 种比赛通知（⏰🟢⚽🟥🏁），点击跳 `/[locale]/matches/[id]` |
+| `src/app/api/match-follow/route.ts` | 关注/取关（订阅者来源） |
+| `supabase/migrations/051_*`、`052_*` | 表结构 + RLS |
+| `vercel.json` | 每天备份 cron（**勿改成高频**，见 §十二.14） |
+
+### 去重机制
+
+`match_notifications_sent(match_id, event_type, event_key)` 上有 `UNIQUE` 约束。每个事件先尝试 `INSERT` 这张表：成功 = 第一次检测到 → 发通知；唯一冲突 = 已发过 → 跳过。所以即使每分钟跑、即使 Vercel cron 和 cron-job.org 同时跑，**同一事件也只通知一次**。
+
+### 真实赛程校验（队名 / 主客顺序）
+
+线上 DB 已是真实赛程（种子文件 002 是旧占位，别参考）。新赛季/对数据时可用以下思路校验同步匹配：
+1. 拉 `GET /v4/competitions/WC/matches`，把 `homeTeam.name`/`awayTeam.name` 经 `TEAM_MAP` 归一化。
+2. 对每个 `(home,away)`，查 DB `matches` 是否精确存在；不存在再查反向 `(away,home)`。
+3. 既不精确也无反向 = 真缺该对阵，需补数据；只反向 = sync 已自动兼容（不用改数据）。
+
+### 待办（第二阶段，可选）
+
+- 进球**音效 + 震动**（移动端 `navigator.vibrate`）、比赛中**实时浮窗**。
+- 移动端比赛行显示比分（目前 `MatchAlignedRow` 恒显 "VS"，`MobileMatch` 类型未含 score 字段；PC `MatchHero` 已支持）。
+- 浏览器 Web Push / PWA 推送（后台也能收）。
 
 ---
 
