@@ -106,6 +106,9 @@ function getDeviceResponse(request: NextRequest) {
     return NextResponse.rewrite(rewriteUrl);
   }
 
+  // Embed pages must always load from www (they appear in iframes on external sites)
+  if (nextUrl.pathname.startsWith("/embed/")) return null;
+
   if (mobile && viewPreference !== "desktop") {
     const redirectUrl = nextUrl.clone();
     redirectUrl.protocol = "https:";

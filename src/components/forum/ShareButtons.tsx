@@ -13,6 +13,7 @@ interface Props {
   locale:           string;
   zh?:              boolean;
   username?:        string | null;   // logged-in user's username → appended as ?ref=
+  embedCode?:       string;          // when provided, share/copy this embed code instead of page URL
 }
 
 // ── Platform definitions ──────────────────────────────────────────────────────
@@ -83,7 +84,7 @@ const PLATFORMS: PlatformDef[] = [
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function ShareButtons({ title, translatedTitle, locale, zh, username }: Props) {
+export default function ShareButtons({ title, translatedTitle, locale, zh, username, embedCode }: Props) {
   const [copied,     setCopied]     = useState(false);
   const [canNative,  setCanNative]  = useState(false);
   const [showQr,     setShowQr]     = useState(false);
@@ -128,7 +129,8 @@ export default function ShareButtons({ title, translatedTitle, locale, zh, usern
   // ── Share text ────────────────────────────────────────────────────────────
   const shareTitle = translatedTitle || title;
   const forumLabel = SHARE_LABELS[locale]?.forum ?? SHARE_LABELS["en"].forum;
-  const shareText  = `${shareTitle} — ${forumLabel}`;
+  // When embedCode is provided, share the iframe code so platforms pre-fill it in their text area
+  const shareText  = embedCode ?? `${shareTitle} — ${forumLabel}`;
 
   function getUrl() { return shareUrl || window.location.href; }
 
@@ -152,13 +154,15 @@ export default function ShareButtons({ title, translatedTitle, locale, zh, usern
   }
 
   async function handleCopy() {
-    const url = getUrl();
+    const url    = getUrl();
+    // When embedCode is provided, copy the embed code; otherwise copy the page URL
+    const toCopy = embedCode ?? url;
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(toCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 2400);
     } catch {
-      prompt(lc(locale, "复制链接：", "Copy link:"), url);
+      prompt(embedCode ? lc(locale, "复制嵌入代码：", "Copy embed code:") : lc(locale, "复制链接：", "Copy link:"), toCopy);
     }
     triggerReward(url);
   }
@@ -267,7 +271,7 @@ export default function ShareButtons({ title, translatedTitle, locale, zh, usern
       {/* Copy link */}
       <button
         onClick={handleCopy}
-        title={lc(locale, "复制链接", "Copy link")}
+        title={embedCode ? lc(locale, "复制嵌入代码", "Copy embed code") : lc(locale, "复制链接", "Copy link")}
         className={`${btn} ${
           copied
             ? "bg-green-500/15 border-green-500/40 text-green-400"

@@ -1810,21 +1810,26 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
           )}
         </div>
 
-        {/* ── Share & Earn GC ───────────────────────────────────────────────── */}
+        {/* ── Embed & Share ─────────────────────────────────────────────────── */}
         <div className="mt-4 pt-3.5 border-t border-[#1E3A5F]/60">
           <div className="mb-2.5">
             <h4 className="text-sm font-bold text-gray-200">
-              📣 {lc(locale, "分享赛事 · 赢取 GoalCoin", "Share & Earn GoalCoin")}
+              🔗 {lc(locale, "嵌入球迷地图 · 赚 GoalCoin", "Embed Fan Map · Earn GoalCoin")}
             </h4>
             <p className="text-[11px] text-gray-500 mt-0.5">
-              {lc(locale, "每次分享最高可获 1M GC 奖励", "Earn up to 1M GC for every share")}
+              {lc(locale, "分享嵌入代码，让你的粉丝在任何平台看到实时球迷地图", "Share the embed code so fans can view this live map on any platform")}
             </p>
+          </div>
+          {/* Embed code preview */}
+          <div className="mb-3 rounded-lg bg-[#080F1F] border border-[#1E3A5F]/80 px-3 py-2 font-mono text-[10px] text-[#7DD3FC] leading-relaxed select-all break-all">
+            {`<iframe src="https://www.football2026.net/embed/fan-map/${matchId}" width="100%" height="500" frameborder="0" allowtransparency="true"></iframe>`}
           </div>
           <ShareButtons
             title={`${getTeamDisplayName(homeTeam, "en")} vs ${getTeamDisplayName(awayTeam, "en")}`}
             locale={locale}
             zh={zh}
             username={null}
+            embedCode={`<iframe src="https://www.football2026.net/embed/fan-map/${matchId}" width="100%" height="500" frameborder="0" allowtransparency="true"></iframe>`}
           />
         </div>
 
