@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Suspense } from "react";
 import { getFlagUrl, isTBD, getTeamDisplayName } from "@/lib/flags";
-import { getH2H } from "@/data/h2h";
 import TeamFilter from "./TeamFilter";
 import MatchFollowButton from "@/components/matches/MatchFollowButton";
 
@@ -102,26 +101,28 @@ function getCountdown(kickoffStr: string, locale: string): string {
 }
 
 
+// Display offset: zh → UTC+8 (北京时间), others → UTC
+function getDisplayDate(kickoffStr: string, locale: string): Date {
+  const offsetMs = locale === "zh" ? 8 * 60 * 60 * 1000 : 0;
+  return new Date(new Date(kickoffStr).getTime() + offsetMs);
+}
+
 function formatMatchDate(dateStr: string, locale: string) {
-  const d    = new Date(dateStr);
-  const lang = locale === "zh" ? "zh-CN" : "en-US";
-  const hh   = String(d.getHours()).padStart(2, "0");
-  const mm   = String(d.getMinutes()).padStart(2, "0");
+  const d  = getDisplayDate(dateStr, locale);
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const mm = String(d.getUTCMinutes()).padStart(2, "0");
 
   let cardLabel: string;
   if (locale === "zh") {
     const ZH_DAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
-    cardLabel = `当地时间 ${d.getMonth() + 1}月${d.getDate()}日${ZH_DAYS[d.getDay()]} ${hh}:${mm}`;
+    cardLabel = `北京时间 ${d.getUTCMonth() + 1}月${d.getUTCDate()}日${ZH_DAYS[d.getUTCDay()]} ${hh}:${mm}`;
   } else {
     const EN_MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     const EN_DAYS   = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-    cardLabel = `Local ${EN_MONTHS[d.getMonth()]} ${d.getDate()} ${EN_DAYS[d.getDay()]} ${hh}:${mm}`;
+    cardLabel = `${EN_MONTHS[d.getUTCMonth()]} ${d.getUTCDate()} ${EN_DAYS[d.getUTCDay()]} ${hh}:${mm} UTC`;
   }
 
-  return {
-    dateLabel: d.toLocaleDateString(lang, { weekday: "long", month: "long", day: "numeric" }),
-    time: cardLabel,
-  };
+  return { time: cardLabel };
 }
 
 const STAGE_KEYS: Record<string, string> = {
@@ -181,12 +182,14 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
     ...(teamsData?.map((m) => m.away_team) ?? []),
   ])].filter((t) => !isTBD(t)).sort() as string[];
 
-  // Group by date
+  // Group by date — use locale-aware display date so zh shows UTC+8 dates
   const matchesByDate: Record<string, Match[]> = {};
   (matches ?? []).forEach((m) => {
+    const displayDate = getDisplayDate(m.kickoff_time, locale);
     const lang = locale === "zh" ? "zh-CN" : "en-US";
-    const dateKey = new Date(m.kickoff_time).toLocaleDateString(lang, {
+    const dateKey = displayDate.toLocaleDateString(lang, {
       weekday: "long", month: "long", day: "numeric",
+      timeZone: "UTC", // displayDate is already offset-adjusted; read as UTC
     });
     if (!matchesByDate[dateKey]) matchesByDate[dateKey] = [];
     matchesByDate[dateKey].push(m);
@@ -294,9 +297,6 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
                         const isFinished = match.status === "finished";
                         const isLive = match.status === "live";
                         const countdown = !isFinished && !isLive ? getCountdown(match.kickoff_time, locale) : "";
-                        const h2h = (!isTBD(match.home_team) && !isTBD(match.away_team))
-                          ? getH2H(match.home_team, match.away_team)
-                          : null;
 
                         return (
                           <Link
@@ -346,37 +346,14 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
                                 <p className="text-white font-bold text-sm text-center leading-tight">{getTeamDisplayName(match.home_team, locale)}</p>
                               </div>
 
-                              {/* Center — vs / score · location */}
-                              <div className="px-2 text-center shrink-0 flex flex-col items-center justify-center gap-1">
-                                {isFinished || isLive ? (
+                              {/* Center — score for finished/live, blank for upcoming */}
+                              <div className="px-4 text-center shrink-0 flex items-center justify-center">
+                                {(isFinished || isLive) && (
                                   <div className="flex items-center gap-2 justify-center">
                                     <span className="text-2xl font-black text-white">{match.home_score ?? 0}</span>
                                     <span className="text-gray-600 font-bold">:</span>
                                     <span className="text-2xl font-black text-white">{match.away_score ?? 0}</span>
                                   </div>
-                                ) : (
-                                  <>
-                                    <p className="text-[#FFD700] font-black text-lg tracking-wider leading-none">VS</p>
-                                    {/* City \ country */}
-                                    {match.city && (
-                                      <p className="text-xs leading-snug text-center whitespace-nowrap">
-                                        <span className="text-gray-200 font-semibold">
-                                          {locale === "zh" ? (CITY_ZH[match.city] ?? match.city) : match.city}
-                                        </span>
-                                        {match.city && CITY_COUNTRY[match.city] && (
-                                          <span className="text-gray-500 font-normal">
-                                            {" "}\{" "}{COUNTRY_LABEL[locale]?.[CITY_COUNTRY[match.city]] ?? CITY_COUNTRY[match.city]}
-                                          </span>
-                                        )}
-                                      </p>
-                                    )}
-                                    {/* Venue */}
-                                    {match.venue && (
-                                      <p className="text-[11px] text-[#5B8DB8] font-normal leading-tight text-center whitespace-nowrap">
-                                        {locale === "zh" ? (VENUE_ZH[match.venue] ?? match.venue) : match.venue}
-                                      </p>
-                                    )}
-                                  </>
                                 )}
                               </div>
 
@@ -395,33 +372,6 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
                               </div>
                             </div>
 
-                            {/* ── H2H row — below teams ── */}
-                            {!isFinished && !isLive && !isTBD(match.home_team) && !isTBD(match.away_team) && h2h && h2h.total > 0 && (
-                              <div className="relative flex items-center justify-between gap-2 mt-2">
-                                {/* Label: absolute so it doesn't affect flex column widths */}
-                                <span className="absolute left-3 text-[10px] text-gray-500 font-medium whitespace-nowrap">
-                                  ⚔ {locale === "zh" ? "交战历史" : "H2H"}
-                                </span>
-                                {/* Home wins: flex-1 — same width as home team column */}
-                                <div className="flex-1 text-center">
-                                  <span className="text-xs font-black text-[#FFD700]">
-                                    {h2h.homeWins}{locale === "zh" ? "胜" : "W"}
-                                  </span>
-                                </div>
-                                {/* Draws: px-10 widens center col to match VS+city column */}
-                                <div className="px-10 shrink-0 text-center">
-                                  <span className="text-xs font-black text-gray-400">
-                                    {h2h.draws}{locale === "zh" ? "平" : "D"}
-                                  </span>
-                                </div>
-                                {/* Away wins: flex-1 — same width as away team column */}
-                                <div className="flex-1 text-center">
-                                  <span className="text-xs font-black text-purple-400">
-                                    {h2h.awayWins}{locale === "zh" ? "胜" : "W"}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
 
                             {/* Bottom row */}
                             <div className="mt-2 pt-1.5 border-t border-[#1E3A5F] flex items-center justify-between gap-2">
