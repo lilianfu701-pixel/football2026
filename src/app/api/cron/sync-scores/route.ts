@@ -324,26 +324,38 @@ export async function GET(req: Request) {
           (bk.type === "RED_CARD" || bk.type === "YELLOW_RED_CARD");
       }).length;
 
-      const db = (dbMatches as DbMatch[] | null)?.find(
-        (d) => d.home_team === home && d.away_team === away,
-      );
+      const list = dbMatches as DbMatch[] | null;
+
+      // Match by exact home/away first; if the DB stored the fixture with the
+      // opposite orientation (home/away swapped vs football-data), match the
+      // reversed pair and re-map scores/red cards into the DB's orientation.
+      // This keeps existing match rows (and their bets/votes) untouched.
+      let db = list?.find((d) => d.home_team === home && d.away_team === away);
+      let mHs = hs, mAs = as_, mRedHome = redHome, mRedAway = redAway;
+      if (!db) {
+        db = list?.find((d) => d.home_team === away && d.away_team === home);
+        if (db) {
+          mHs = as_; mAs = hs;
+          mRedHome = redAway; mRedAway = redHome;
+        }
+      }
       if (!db) continue;
 
       const noChange =
         db.status         === status &&
-        db.home_score     === hs &&
-        db.away_score     === as_ &&
-        db.red_cards_home === redHome &&
-        db.red_cards_away === redAway;
+        db.home_score     === mHs &&
+        db.away_score     === mAs &&
+        db.red_cards_home === mRedHome &&
+        db.red_cards_away === mRedAway;
       if (noChange) continue;
 
       // Fire notifications for changed events (non-blocking on error)
-      const events = detectEvents(db, status, hs, as_, redHome, redAway);
+      const events = detectEvents(db, status, mHs, mAs, mRedHome, mRedAway);
       await fireNotifications(supabase, db.id, events).catch(() => {});
 
       await supabase
         .from("matches")
-        .update({ status, home_score: hs, away_score: as_, red_cards_home: redHome, red_cards_away: redAway })
+        .update({ status, home_score: mHs, away_score: mAs, red_cards_home: mRedHome, red_cards_away: mRedAway })
         .eq("id", db.id);
 
       updated++;
