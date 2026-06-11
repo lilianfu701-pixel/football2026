@@ -65,6 +65,8 @@ type DbMatch = {
   odds_draw: number | null;
   odds_away: number | null;
   is_featured: boolean | null;
+  home_score: number | null;
+  away_score: number | null;
 };
 
 type DbTopScorer = {
@@ -190,7 +192,7 @@ type DbInviteUserRow = {
   avatar_url: string | null;
 };
 
-const MATCH_COLUMNS = "id, home_team, away_team, kickoff_time, group_name, stage, venue, city, status, pool_home, pool_draw, pool_away, odds_home, odds_draw, odds_away, is_featured";
+const MATCH_COLUMNS = "id, home_team, away_team, kickoff_time, group_name, stage, venue, city, status, pool_home, pool_draw, pool_away, odds_home, odds_draw, odds_away, is_featured, home_score, away_score";
 const FORUM_POST_COLUMNS = `
   id, user_id, title, title_zh, content, content_zh, reply_count, like_count, view_count, created_at, last_reply_at,
   forum_categories!inner(slug, name, name_zh, icon),
@@ -264,6 +266,8 @@ function toMobileMatch(match: DbMatch, followCount = 0, isFollowing = false): Mo
     oddsAway: match.odds_away,
     followCount,
     isFollowing,
+    homeScore: match.home_score,
+    awayScore: match.away_score,
   };
 }
 
@@ -638,6 +642,8 @@ export default async function MobileHomePage({ params, searchParams }: MobileHom
   const featuredMatches = (featuredRows ?? []).map(toVisibleMobileMatch);
   const scheduleMobileMatches = (scheduleRows ?? rows).map(toVisibleMobileMatch);
   const followedMatches = scheduleMobileMatches.filter((match) => followedIds.has(match.id));
+  const liveDbMatch = (scheduleRows ?? rows).find((m) => m.status === "live" || m.status === "paused") ?? null;
+  const liveMatch: MobileMatch | null = liveDbMatch ? toMobileMatch(liveDbMatch, 0, followedIds.has(liveDbMatch.id)) : null;
   const forumLatestPosts = latestPostData.map((post) => toMobileForumPost(post, locale, repliesByPost, forumState));
   const forumHotPosts = (hotPostData.length ? hotPostData : latestPostData).map((post) => toMobileForumPost(post, locale, repliesByPost, forumState));
   const forumSelectedPost = selectedForumRes.data ? toMobileForumPost(selectedForumRes.data, locale, repliesByPost, forumState) : null;
@@ -734,6 +740,7 @@ export default async function MobileHomePage({ params, searchParams }: MobileHom
       inviteClaimedMilestones={[]}
       inviteLeaderboard={inviteLeaderboard}
       inviteSiteUrl={process.env.NEXT_PUBLIC_SITE_URL ?? "https://football2026.net"}
+      liveMatch={liveMatch}
     />
     <MobileLocaleSwitcher locale={locale} />
     </>

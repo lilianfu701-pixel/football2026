@@ -48,6 +48,7 @@ import { lc } from "@/i18n/content";
 import { MILESTONES, PER_INVITE_GC } from "@/lib/inviteMilestones";
 import MobileInstallPrompt from "@/components/mobile/MobileInstallPrompt";
 import MobileScheduleDetails from "@/components/mobile/MobileScheduleDetails";
+import LiveMatchHero from "@/components/mobile/LiveMatchHero";
 import { redirectToMobileLogin } from "@/components/mobile/mobileAuth";
 
 // ── Paddle.js global typing ──────────────────────────────────────────────────
@@ -108,6 +109,8 @@ export type MobileMatch = {
   oddsAway: number | null;
   followCount: number;
   isFollowing: boolean;
+  homeScore: number | null;
+  awayScore: number | null;
 };
 
 export type MobileTopScorer = {
@@ -267,6 +270,7 @@ interface MobileHomeProps {
   inviteClaimedMilestones: number[];
   inviteLeaderboard: MobileInviteLeaderboardEntry[];
   inviteSiteUrl: string;
+  liveMatch?: MobileMatch | null;
 }
 
 type MobileView = "home" | "matches" | "predict" | "forum" | "mine" | "topup" | "invite" | "profile" | "settings" | "leaderboard" | "awards" | "checkin";
@@ -652,6 +656,7 @@ export default function MobileHome({
   inviteClaimedMilestones,
   inviteLeaderboard,
   inviteSiteUrl,
+  liveMatch,
 }: MobileHomeProps) {
   const t = getCopy(locale);
   const { balance, setBalance, refresh } = useGcBalance();
@@ -771,7 +776,7 @@ export default function MobileHome({
 
       <section className="mx-auto max-w-md px-3 py-3">
         {activeView === "home" && (
-          <HomeView locale={locale} t={t} daysLeft={daysLeft} upcomingMatches={upcomingMatches} featuredMatches={featuredMatches} topScorers={topScorers} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} />
+          <HomeView locale={locale} t={t} daysLeft={daysLeft} upcomingMatches={upcomingMatches} featuredMatches={featuredMatches} topScorers={topScorers} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} liveMatch={liveMatch} />
         )}
         {activeView === "matches" && (
           <MatchesView locale={locale} t={t} matches={scheduleMatches} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} onOpenView={openView} />
@@ -991,6 +996,7 @@ function HomeView({
   topScorers,
   isLoggedIn,
   canPersistActions,
+  liveMatch,
 }: {
   locale: string;
   t: MobileCopy;
@@ -1000,6 +1006,7 @@ function HomeView({
   topScorers: MobileTopScorer[];
   isLoggedIn: boolean;
   canPersistActions: boolean;
+  liveMatch?: MobileMatch | null;
 }) {
   const [expandedMatchId, setExpandedMatchId] = useState<number | null>(null);
   const matchRefs = useRef(new Map<number, HTMLElement>());
@@ -1020,14 +1027,23 @@ function HomeView({
 
   return (
     <div className="grid gap-3">
-      <section className="overflow-hidden rounded-xl border border-white/10 bg-[linear-gradient(145deg,#0d1a2b_0%,#10345b_58%,#14533b_100%)] p-3">
-        <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-[#FFD700]/25 bg-[#FFD700]/10 px-2 py-1 text-[12px] font-black text-[#FFD700]">
-          <Sparkles className="h-3.5 w-3.5" />
-          {locale === "zh" ? `${t.badge} ${daysLeft} 天` : `${t.badge} ${daysLeft} days`}
-        </div>
-        <h1 className="text-lg font-black leading-tight">{t.title}</h1>
-        <p className="mt-1 text-[15px] leading-5 text-slate-300">{t.subtitle}</p>
-      </section>
+      {liveMatch ? (
+        <LiveMatchHero
+          match={liveMatch}
+          locale={locale}
+          isLoggedIn={isLoggedIn}
+          canPersistActions={canPersistActions}
+        />
+      ) : (
+        <section className="overflow-hidden rounded-xl border border-white/10 bg-[linear-gradient(145deg,#0d1a2b_0%,#10345b_58%,#14533b_100%)] p-3">
+          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-[#FFD700]/25 bg-[#FFD700]/10 px-2 py-1 text-[12px] font-black text-[#FFD700]">
+            <Sparkles className="h-3.5 w-3.5" />
+            {locale === "zh" ? `${t.badge} ${daysLeft} 天` : `${t.badge} ${daysLeft} days`}
+          </div>
+          <h1 className="text-lg font-black leading-tight">{t.title}</h1>
+          <p className="mt-1 text-[15px] leading-5 text-slate-300">{t.subtitle}</p>
+        </section>
+      )}
 
       <HomeScheduleSection
         locale={locale}
