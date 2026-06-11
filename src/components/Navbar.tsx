@@ -231,12 +231,13 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                         setLangOpen(false);
                         // Persist locale preference so the root URL redirect
                         // and post-login redirect can pick it up on the next visit.
+                        // Always write the cookie (including "en") so we can
+                        // distinguish "user explicitly chose English" from
+                        // "brand-new visitor with no preference" — the latter
+                        // falls back to Accept-Language and might be redirected
+                        // to a non-English locale on the next visit.
                         const maxAge = 365 * 24 * 60 * 60;
-                        if (code === "en") {
-                          document.cookie = `NEXT_LOCALE=; path=/; max-age=0; samesite=lax`;
-                        } else {
-                          document.cookie = `NEXT_LOCALE=${code}; path=/; max-age=${maxAge}; samesite=lax`;
-                        }
+                        document.cookie = `NEXT_LOCALE=${code}; path=/; max-age=${maxAge}; samesite=lax`;
                       }}
                       className={`block px-4 py-2 text-sm transition-colors ${
                         code === locale

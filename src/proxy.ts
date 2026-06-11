@@ -225,14 +225,17 @@ function getDesktopOAuthCodeResponse(request: NextRequest) {
 }
 
 // When a desktop user visits the bare root URL ("/"), redirect them to their
-// previously-saved locale (stored in the NEXT_LOCALE cookie when they click the
-// language switcher). This makes the language preference persist across sessions
-// and also fixes post-login redirects: after signing in the app redirects to
-// "/{locale}", next-intl normalises "/en" → "/", and then this function sends
-// them straight to "/zh" (or whichever locale they last chose).
+// preferred locale. Priority:
+//   1. NEXT_LOCALE cookie — set explicitly by the language switcher
+//      (switching to English writes NEXT_LOCALE=en, so users who chose English
+//       are not accidentally redirected back by Accept-Language)
+//   2. Accept-Language header — used for first-time visitors with no cookie
+// This also fixes post-login redirects: after signing in the app redirects to
+// "/{locale}", next-intl normalises "/en" → "/", and this function sends them
+// straight to "/zh" (or whichever locale was last chosen / browser-preferred).
 function getRootLocaleRedirectResponse(request: NextRequest) {
   if (request.nextUrl.pathname !== "/") return null;
-  const locale = getSupportedLocale(request.cookies.get("NEXT_LOCALE")?.value);
+  const locale = getPreferredLocale(request);
   if (!locale || locale === routing.defaultLocale) return null;
   const redirectUrl = request.nextUrl.clone();
   redirectUrl.pathname = `/${locale}`;
