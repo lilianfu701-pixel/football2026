@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditor, EditorContent, Extension } from "@tiptap/react";
+import { useEditor, EditorContent, Extension, Node, mergeAttributes } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import ImageExt from "@tiptap/extension-image";
 import Youtube from "@tiptap/extension-youtube";
@@ -39,6 +39,25 @@ const FontSize = Extension.create({
       unsetFontSize: () => ({ chain }: { chain: () => any }) =>
         chain().setMark("textStyle", { fontSize: null }).removeEmptyTextStyle().run(),
     };
+  },
+});
+
+// ── Custom Video node (lets TipTap parse & render <video> tags) ────────────
+const VideoNode = Node.create({
+  name: "video",
+  group: "block",
+  atom: true,
+  addAttributes() {
+    return {
+      src:      { default: null },
+      controls: { default: "true" },
+      preload:  { default: "metadata" },
+      style:    { default: null },
+    };
+  },
+  parseHTML()  { return [{ tag: "video" }]; },
+  renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, string> }) {
+    return ["video", mergeAttributes(HTMLAttributes, { controls: "" })];
   },
 });
 
@@ -178,6 +197,7 @@ export default function RichTextEditor({ value, onChange, placeholder, zh, injec
       Placeholder.configure({
         placeholder: placeholder ?? (lc(locale, "分享你的想法…", "Share your thoughts…")),
       }),
+      VideoNode,
     ],
     content: value || "",
     editorProps: {
