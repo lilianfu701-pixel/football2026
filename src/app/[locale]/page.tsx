@@ -236,20 +236,29 @@ export default async function HomePage({ params }: HomePageProps) {
   /* ── Parallel data fetches ── */
   const [
     allUpcomingResult,
+    liveMatchResult,
     featuredResult,
     scorersResult,
     groupMatchesResult,
     wealthResult,
   ] = await Promise.all([
-    // 1. Upcoming + any live/paused matches (limit 8 so after filtering live out we have 4 upcoming)
+    // 1. Next upcoming matches (excluding live/paused — those come from query 2)
     supabase
       .from("matches")
       .select("id,match_code,home_team,away_team,home_score,away_score,home_flag,away_flag,kickoff_time,venue,city,status,group_name,stage")
-      .in("status", ["upcoming", "live", "paused"])
+      .eq("status", "upcoming")
       .order("kickoff_time", { ascending: true })
       .limit(8),
 
-    // 2. Manually curated featured matches (is_featured=true)
+    // 2. Dedicated live/paused query — no limit, unaffected by kickoff_time ordering
+    supabase
+      .from("matches")
+      .select("id,match_code,home_team,away_team,home_score,away_score,home_flag,away_flag,kickoff_time,venue,city,status,group_name,stage")
+      .in("status", ["live", "paused"])
+      .order("kickoff_time", { ascending: false })
+      .limit(1),
+
+    // 3. Manually curated featured matches (is_featured=true)
     supabase
       .from("matches")
       .select("id,match_code,home_team,away_team,home_score,away_score,home_flag,away_flag,kickoff_time,venue,city,status,group_name,stage")
@@ -281,11 +290,10 @@ export default async function HomePage({ params }: HomePageProps) {
   ]);
 
   const allUpcoming: MatchRow[] = (allUpcomingResult.data ?? []) as MatchRow[];
-  // Live match (if any) goes to the hero card — not shown in the upcoming grid
-  const liveMatch: MatchRow | null =
-    allUpcoming.find((m) => m.status === "live" || m.status === "paused") ?? null;
-  // Upcoming grid: only truly-upcoming matches (started/live ones are excluded)
-  const upcomingMatches: MatchRow[] = allUpcoming.filter((m) => m.status === "upcoming").slice(0, 4);
+  // Live match comes from its own dedicated query — not limited by kickoff_time ordering
+  const liveMatch: MatchRow | null = ((liveMatchResult.data ?? [])[0] as MatchRow) ?? null;
+  // Upcoming grid: next 4 upcoming matches
+  const upcomingMatches: MatchRow[] = allUpcoming.slice(0, 4);
   // Featured: use manually curated if available, else fallback to next 4 after upcoming
   const featuredCurated: MatchRow[] = (featuredResult.data ?? []) as MatchRow[];
   const featuredMatches: MatchRow[] = featuredCurated.length > 0 ? featuredCurated : [];
