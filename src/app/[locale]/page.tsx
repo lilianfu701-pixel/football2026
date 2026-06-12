@@ -11,6 +11,7 @@ import MatchHero from "@/components/forum/MatchHero";
 import MatchFanSection from "@/components/matches/MatchFanSection";
 import { getTeamColor } from "@/lib/teamColors";
 import { lc } from "@/i18n/content";
+import LocalKickoffTime from "@/components/LocalKickoffTime";
 
 /* ─── Phase detection ────────────────────────────────────────────────────── */
 const WC_START = new Date("2026-06-11T20:00:00+00:00");
@@ -72,13 +73,6 @@ function SectionTitle({ en, zh, locale }: { en: string; zh: string; locale: stri
 
 function MatchCard({ match, locale }: { match: MatchRow; locale: string }) {
   const zh = locale === "zh";
-  const dt = new Date(match.kickoff_time);
-  const dateStr = dt.toLocaleDateString(zh ? "zh-CN" : "en-US", {
-    month: "short", day: "numeric", timeZone: "UTC",
-  });
-  const timeStr = dt.toLocaleTimeString(zh ? "zh-CN" : "en-US", {
-    hour: "2-digit", minute: "2-digit", timeZone: "UTC",
-  });
   const isFinished = match.status === "finished";
 
   return (
@@ -86,7 +80,7 @@ function MatchCard({ match, locale }: { match: MatchRow; locale: string }) {
       className="block rounded-2xl border border-white/10 bg-[#0A1628] hover:border-[#FFD700]/30 hover:bg-[#0d1e36] transition-all p-4">
       <div className="flex items-center justify-between text-[11px] text-gray-500 mb-3 uppercase tracking-wider">
         <span>{match.group_name ? (zh ? `小组 ${match.group_name}` : `Group ${match.group_name}`) : (match.stage ?? "")}</span>
-        <span>{dateStr} {timeStr}</span>
+        <LocalKickoffTime iso={match.kickoff_time} locale={locale} />
       </div>
       <div className="flex items-center justify-between gap-2">
         {/* Home */}
@@ -111,7 +105,7 @@ function MatchCard({ match, locale }: { match: MatchRow; locale: string }) {
           }`}>
             {match.status === "live"     ? (lc(locale, "直播中", "LIVE")) :
              match.status === "finished" ? (lc(locale, "已结束", "FT")) :
-                                           timeStr}
+                                           <LocalKickoffTime iso={match.kickoff_time} locale={locale} mode="time" />}
           </span>
         </div>
         {/* Away */}
