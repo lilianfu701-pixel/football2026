@@ -8,6 +8,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { lc } from "@/i18n/content";
 import { useLocale } from "next-intl";
 import { getFlagUrl, getTeamDisplayName } from "@/lib/flags";
+import ShareButtons from "@/components/forum/ShareButtons";
 
 const GEO_URL = "/countries-110m.json";
 
@@ -1809,6 +1810,58 @@ export default function MatchFanSection({ matchId, homeTeam, awayTeam, homeColor
           )}
         </div>
 
+        {/* ── Share Fan Map ──────────────────────────────────────────────────── */}
+        <div className="mt-4 pt-3.5 border-t border-[#1E3A5F]/60 space-y-5">
+
+          {/* Social share: points to the fan-map share page with rich OG card */}
+          <div>
+            <h4 className="text-sm font-bold text-gray-200 mb-1">
+              📣 {lc(locale, "分享球迷地图", "Share Fan Map")}
+            </h4>
+            <p className="text-[11px] text-gray-500 mb-2.5">
+              {lc(
+                locale,
+                "把你的支持分享出去！好友点开后可以看到实时球迷地图和你的投票",
+                "Share your support! Friends will see the live fan map and your vote.",
+              )}
+            </p>
+            <ShareButtons
+              title={
+                effectiveUserVote && effectiveUserVote !== "neutral"
+                  ? `🌍 ${lc(locale, "我支持", "I support")} ${effectiveUserVote === "home" ? getTeamDisplayName(homeTeam, locale) : getTeamDisplayName(awayTeam, locale)}！${getTeamDisplayName(homeTeam, "en")} vs ${getTeamDisplayName(awayTeam, "en")} — ${lc(locale, "全球球迷支持地图", "Global Fan Support Map")} | Football2026`
+                  : `🌍 ${getTeamDisplayName(homeTeam, "en")} vs ${getTeamDisplayName(awayTeam, "en")} — ${lc(locale, "全球球迷支持地图", "Global Fan Support Map")} | Football2026`
+              }
+              locale={locale}
+              zh={zh}
+              username={null}
+              baseUrl={
+                `https://www.football2026.net${locale === "en" ? "" : `/${locale}`}/fan-map/${matchId}` +
+                (effectiveUserVote && effectiveUserVote !== "neutral" ? `?vote=${effectiveUserVote}` : "")
+              }
+            />
+          </div>
+
+          {/* Embed code for webmasters */}
+          <div className="pt-3.5 border-t border-[#1E3A5F]/40">
+            <h4 className="text-sm font-bold text-gray-200 mb-1">
+              🔗 {lc(locale, "嵌入球迷地图 · 赚 GoalCoin", "Embed Fan Map · Earn GoalCoin")}
+            </h4>
+            <p className="text-[11px] text-gray-500 mb-2">
+              {lc(locale, "把嵌入代码放到你的网站，让球迷实时互动", "Paste the embed code on your site so fans can interact live")}
+            </p>
+            <div className="mb-3 rounded-lg bg-[#080F1F] border border-[#1E3A5F]/80 px-3 py-2 font-mono text-[10px] text-[#7DD3FC] leading-relaxed select-all break-all">
+              {`<iframe src="https://www.football2026.net/embed/fan-map/${matchId}" width="100%" height="500" frameborder="0" allowtransparency="true"></iframe>`}
+            </div>
+            <ShareButtons
+              title={`${getTeamDisplayName(homeTeam, "en")} vs ${getTeamDisplayName(awayTeam, "en")}`}
+              locale={locale}
+              zh={zh}
+              username={null}
+              embedCode={`<iframe src="https://www.football2026.net/embed/fan-map/${matchId}" width="100%" height="500" frameborder="0" allowtransparency="true"></iframe>`}
+            />
+          </div>
+
+        </div>
 
       </div>
     </div>
