@@ -177,6 +177,7 @@ export default async function AdminDashboard({ params }: Props) {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {[
           { href: `/${locale}/admin/matches`,  icon: "⚽", label: zh ? "更新比分" : "Update Scores",  desc: zh ? "比赛结果、AI 预测"  : "Match results & AI" },
+          { href: `/${locale}/admin/scorers`, icon: "🥇", label: zh ? "射手榜"   : "Top Scorers",    desc: zh ? "手动更新进球/助攻"    : "Edit goals & assists" },
           { href: `/${locale}/admin/players`, icon: "👤", label: zh ? "球员管理" : "Players",         desc: zh ? "导入、编辑球员资料"  : "Import & edit squad data" },
           { href: `/${locale}/admin/bets`,     icon: "🎯", label: zh ? "预测管理" : "Predictions",    desc: zh ? "查看预测、结算奖励"  : "View & settle predictions" },
           { href: `/${locale}/admin/gc-tools`, icon: "🪙", label: zh ? "GC 工具"  : "GC Tools",       desc: zh ? "手动奖励或调整余额"  : "Award or adjust GC" },

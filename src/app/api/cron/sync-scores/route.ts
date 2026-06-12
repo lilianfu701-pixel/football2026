@@ -217,6 +217,67 @@ async function fireNotifications(
   }
 }
 
+// ── Scorer sync ──────────────────────────────────────────────────────────────
+// Fetches top scorers from football-data.org and updates the top_scorers table.
+// Only updates existing rows (matched by player name, case-insensitive).
+// Non-critical — errors are swallowed so a scorer failure never breaks match sync.
+
+interface ApiScorer {
+  player:        { id: number; name: string };
+  team:          { id: number; name: string };
+  goals:         number;
+  assists:       number | null;
+  playedMatches: number;
+}
+
+async function syncScorers(supabase: ServiceClient, apiKey: string): Promise<number> {
+  try {
+    const url = `${FD_BASE}/competitions/${COMPETITION_CODE}/scorers?limit=20`;
+    const res = await fetch(url, { headers: { "X-Auth-Token": apiKey }, next: { revalidate: 0 } });
+    if (!res.ok) return 0;
+
+    const json = await res.json() as { scorers?: ApiScorer[] };
+    const apiScorers = json.scorers ?? [];
+    if (!apiScorers.length) return 0;
+
+    const { data: dbRows } = await supabase
+      .from("top_scorers")
+      .select("id, player_name, goals, assists, matches_played");
+    if (!dbRows?.length) return 0;
+
+    let synced = 0;
+    for (const row of dbRows as Array<{
+      id: number; player_name: string;
+      goals: number; assists: number; matches_played: number;
+    }>) {
+      // Match by exact or close name (Mbappé / Mbappe accent differences)
+      const apiMatch = apiScorers.find((s) =>
+        s.player.name.toLowerCase() === row.player_name.toLowerCase() ||
+        s.player.name.toLowerCase().replace(/[éèêë]/g, "e").replace(/[àâä]/g, "a")
+          === row.player_name.toLowerCase().replace(/[éèêë]/g, "e").replace(/[àâä]/g, "a")
+      );
+      if (!apiMatch) continue;
+
+      const noChange =
+        row.goals           === apiMatch.goals &&
+        row.assists         === (apiMatch.assists ?? 0) &&
+        row.matches_played  === apiMatch.playedMatches;
+      if (noChange) continue;
+
+      await supabase.from("top_scorers").update({
+        goals:          apiMatch.goals,
+        assists:        apiMatch.assists ?? 0,
+        matches_played: apiMatch.playedMatches,
+        updated_at:     new Date().toISOString(),
+      }).eq("id", row.id);
+      synced++;
+    }
+    return synced;
+  } catch {
+    return 0; // non-critical
+  }
+}
+
 // ── Countdown check ───────────────────────────────────────────────────────────
 // Finds upcoming matches that kick off within the next 10 minutes and
 // sends a one-time reminder to followers (dedup prevents duplicates).
@@ -280,9 +341,11 @@ export async function GET(req: Request) {
     }
     // ─────────────────────────────────────────────────────────────────────────
 
-    // Fetch matches for yesterday → +2 days (live matches are in this window)
+    // Fetch matches for the past 7 days → +2 days ahead.
+    // 7-day lookback ensures we catch any match whose status/score wasn't
+    // updated during a previous cron outage (e.g. name-mapping miss, cron pause).
     const today = new Date();
-    const from  = new Date(today); from.setDate(today.getDate() - 1);
+    const from  = new Date(today); from.setDate(today.getDate() - 7);
     const to    = new Date(today); to.setDate(today.getDate() + 2);
     const fmt   = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -393,7 +456,10 @@ export async function GET(req: Request) {
     // Separate countdown check (uses current DB state, no API call needed)
     await checkCountdowns(supabase).catch(() => {});
 
-    return NextResponse.json({ ok: true, updated, total: apiMatches.length });
+    // Sync top scorers (non-critical, uses one extra API request)
+    const scorersSynced = await syncScorers(supabase, apiKey);
+
+    return NextResponse.json({ ok: true, updated, total: apiMatches.length, scorersSynced });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: msg }, { status: 500 });
