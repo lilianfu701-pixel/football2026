@@ -19,6 +19,7 @@ const ALLOWED_TAGS = [
   "blockquote", "pre", "code",
   "a", "img", "figure", "figcaption",
   "iframe",
+  "video", "source",
   "table", "thead", "tbody", "tr", "th", "td",
 ];
 
@@ -27,6 +28,8 @@ const ALLOWED_ATTRS: sanitizeHtml.IOptions["allowedAttributes"] = {
   "a":       ["href", "target", "rel"],
   "img":     ["src", "alt", "width", "height", "loading"],
   "iframe":  ["src", "width", "height", "allowfullscreen", "allow", "frameborder", "title"],
+  "video":   ["src", "controls", "preload", "width", "height", "playsinline", "muted"],
+  "source":  ["src", "type"],
 };
 
 // Only allow style properties that are safe
@@ -38,6 +41,10 @@ const ALLOWED_STYLES: sanitizeHtml.IOptions["allowedStyles"] = {
     "font-weight":     [/^(bold|normal|\d{3})$/],
     "text-decoration": [/^(underline|line-through|none)$/],
     "font-style":      [/^(italic|normal)$/],
+    "width":           [/^(100%|\d+px)$/],
+    "max-width":       [/^\d+(px|%)$/],
+    "border-radius":   [/^\d+(px|%)$/],
+    "margin":          [/^\d+px( \d+px){0,3}$/],
   },
 };
 
@@ -56,6 +63,21 @@ function sanitize(dirty: string): string {
         const src = attribs.src ?? "";
         if (!src.startsWith("https://")) return { tagName: "span", attribs: {} };
         return { tagName, attribs: { ...attribs, loading: "lazy" } };
+      },
+      video: (tagName, attribs) => {
+        const src = attribs.src ?? "";
+        // Only allow videos from our video server
+        if (src && !src.startsWith("https://v.xunni.org/") && !src.startsWith("https://v.football2026.net/")) {
+          return { tagName: "span", attribs: {} };
+        }
+        return { tagName, attribs: { ...attribs, controls: "", preload: "metadata", playsinline: "" } };
+      },
+      source: (tagName, attribs) => {
+        const src = attribs.src ?? "";
+        if (src && !src.startsWith("https://v.xunni.org/") && !src.startsWith("https://v.football2026.net/")) {
+          return { tagName: "span", attribs: {} };
+        }
+        return { tagName, attribs };
       },
       a: (tagName, attribs) => ({
         tagName,

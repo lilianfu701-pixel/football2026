@@ -129,8 +129,9 @@ function Divider() {
 // ── Main component ─────────────────────────────────────────────────────────
 export default function RichTextEditor({ value, onChange, placeholder, zh, injectHtml }: Props) {
   const locale = useLocale();
-  const [uploading,    setUploading]    = useState(false);
-  const [uploadError,  setUploadError]  = useState<string | null>(null);
+  const [uploading,       setUploading]       = useState(false);
+  const [videoUploading,  setVideoUploading]  = useState(false);
+  const [uploadError,     setUploadError]     = useState<string | null>(null);
   const [showColors,   setShowColors]   = useState(false);
   const [showSizes,    setShowSizes]    = useState(false);
   const [linkUrl,      setLinkUrl]      = useState("");
@@ -265,6 +266,57 @@ export default function RichTextEditor({ value, onChange, placeholder, zh, injec
       setUploading(false);
     }
   }, [editor, zh]);
+
+  // ── Video upload handler ──────────────────────────────────────────────
+  const handleVideoUpload = useCallback(async (file: File) => {
+    if (!file) return;
+    if (file.size > 100 * 1024 * 1024) {
+      setUploadError(lc(locale, "视频大小不能超过 100MB", "Video must be under 100 MB"));
+      return;
+    }
+    setVideoUploading(true);
+    setUploadError(null);
+    try {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setUploadError(lc(locale, "请先登录再上传视频", "Please login to upload videos"));
+        return;
+      }
+      const fd = new FormData();
+      fd.append("video", file);
+      const res = await fetch("https://v.xunni.org/api/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok) { setUploadError(data.error ?? "Upload failed"); return; }
+      // Normalize URL to v.xunni.org domain
+      const videoUrl: string = (data.url as string).replace("v.football2026.net", "v.xunni.org");
+      editor?.chain().focus().insertContent(
+        `<p><video controls preload="metadata" src="${videoUrl}" style="width:100%;max-width:640px;border-radius:12px;margin:8px 0"></video></p>`
+      ).run();
+    } catch {
+      setUploadError(lc(locale, "视频上传失败，请重试", "Video upload failed, please retry"));
+    } finally {
+      setVideoUploading(false);
+    }
+  }, [editor, locale]);
+
+  // ── Video file picker ─────────────────────────────────────────────────
+  const triggerVideoSelect = useCallback(() => {
+    if (videoUploading) return;
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "video/mp4,video/webm,video/quicktime";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) handleVideoUpload(file);
+    };
+    input.click();
+  }, [videoUploading, handleVideoUpload]);
 
   // ── Image file picker — JS-only, never touches the DOM ────────────────
   const triggerFileSelect = useCallback(() => {
@@ -493,6 +545,23 @@ export default function RichTextEditor({ value, onChange, placeholder, zh, injec
           )}
         </Btn>
 
+        {/* Video Upload */}
+        <Btn
+          active={false}
+          onClick={triggerVideoSelect}
+          title={lc(locale, "上传视频 (MP4/WebM, 最大100MB)", "Upload video (MP4/WebM, max 100MB)")}
+        >
+          {videoUploading ? (
+            <div className="w-3 h-3 rounded-full border-2 border-[#FFD700] border-t-transparent animate-spin" />
+          ) : (
+            <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5">
+              <rect x="1" y="3" width="18" height="14" rx="2.5" fill="#7C3AED"/>
+              <polygon points="8,7 8,13 14,10" fill="#FCD34D"/>
+              <rect x="1" y="3" width="18" height="14" rx="2.5" stroke="#A78BFA" strokeWidth="1.5" fill="none"/>
+            </svg>
+          )}
+        </Btn>
+
         {/* YouTube */}
         <div className="relative">
           <Btn
@@ -628,7 +697,7 @@ export default function RichTextEditor({ value, onChange, placeholder, zh, injec
       {/* Char counter */}
       <div className="px-4 py-1.5 bg-[#0A1628] border-t border-[#1E3A5F]/40 flex items-center justify-between">
         <span className="text-[10px] text-gray-600">
-          {lc(locale, "支持图片、YouTube视频", "Supports images & YouTube embeds")}
+          {lc(locale, "支持图片、视频、YouTube", "Supports images, videos & YouTube")}
         </span>
         <span className="text-[10px] text-gray-600">
           {editor.storage.characterCount?.characters?.() ?? editor.getText().length} / 10,000

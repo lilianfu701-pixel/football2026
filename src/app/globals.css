@@ -234,6 +234,14 @@
   border: 1px solid #1E3A5F;
   margin: 0.75rem 0;
 }
+.rich-content video {
+  width: 100%;
+  max-width: 640px;
+  border-radius: 0.75rem;
+  border: 1px solid #1E3A5F;
+  margin: 0.5rem 0;
+  background: #000;
+}
 .rich-content p { margin-bottom: 0.5rem; }
 .rich-content strong, .rich-content b { font-weight: 700; color: #F9FAFB; }
 .rich-content table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; }
