@@ -41,6 +41,8 @@ import { PLAYERS, AWARD_META, awardKeyToDb, dbToAwardKey, getPlayersByAward, typ
 import { cancelAwardBet, placeAwardBet } from "@/app/[locale]/awards/actions";
 import { type AwardPhase } from "@/lib/awardPhase";
 import { getFlagUrl, getTeamDisplayName } from "@/lib/flags";
+import { getTeamColor } from "@/lib/teamColors";
+import MatchFanSection from "@/components/matches/MatchFanSection";
 import { formatGc, getWealthLevel } from "@/lib/levels";
 import { getMaxAmount, makePresets } from "@/lib/forum/ratingCap";
 import { needsTranslation } from "@/lib/languages";
@@ -1038,6 +1040,12 @@ function HomeView({
     else matchRefs.current.delete(matchId);
   }
 
+  // Upcoming match within 1 hour — show hero like PC homepage
+  const wcStarted = new Date() >= new Date("2026-06-11T20:00:00+00:00");
+  const soonMatch = upcomingMatches.find(
+    (m) => new Date(m.kickoffTime).getTime() <= Date.now() + 3_600_000,
+  ) ?? null;
+
   return (
     <div className="grid gap-3">
       {liveMatch ? (
@@ -1047,7 +1055,81 @@ function HomeView({
           isLoggedIn={isLoggedIn}
           canPersistActions={canPersistActions}
         />
-      ) : (
+      ) : soonMatch ? (
+        /* ── Upcoming-within-1-hour hero (same as PC: flags + VS + fan map) ── */
+        <section className="overflow-hidden rounded-xl border border-white/10 bg-[linear-gradient(145deg,#0d1a2b_0%,#10345b_58%,#14533b_100%)]">
+          <div className="relative p-3 pb-1">
+            {/* Top row: badge + kickoff time + details link */}
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-[#FFD700]/30 bg-[#FFD700]/10 px-2 py-1 text-[11px] font-black text-[#FFD700]">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FFD700] opacity-60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-[#FFD700]" />
+                </span>
+                {lc(locale, "即将开赛", "Starting Soon")}
+              </div>
+              <span className="text-[11px] font-bold text-slate-400">
+                {new Date(soonMatch.kickoffTime).toLocaleTimeString(locale === "zh" ? "zh-CN" : "en-US", { hour: "2-digit", minute: "2-digit" })}
+              </span>
+              <a
+                href={`${locale === "en" ? "" : `/${locale}`}/matches/${soonMatch.id}`}
+                className="flex items-center gap-1 text-[11px] font-bold text-slate-400"
+              >
+                {lc(locale, "详情", "Details")}
+                <ChevronRight className="h-3 w-3" />
+              </a>
+            </div>
+
+            {/* Score row: flags + VS */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={getFlagUrl(soonMatch.homeTeam)} alt={soonMatch.homeTeam}
+                  className="h-10 w-10 rounded-full object-cover shadow-md" />
+                <span className="line-clamp-2 text-center text-[12px] font-black leading-tight text-white">
+                  {getTeamDisplayName(soonMatch.homeTeam, locale)}
+                </span>
+              </div>
+              <div className="flex shrink-0 flex-col items-center gap-0.5">
+                <span className="text-2xl font-black text-slate-500">VS</span>
+                {soonMatch.groupName && (
+                  <span className="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                    {locale === "zh" ? `小组 ${soonMatch.groupName}` : `Group ${soonMatch.groupName}`}
+                  </span>
+                )}
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={getFlagUrl(soonMatch.awayTeam)} alt={soonMatch.awayTeam}
+                  className="h-10 w-10 rounded-full object-cover shadow-md" />
+                <span className="line-clamp-2 text-center text-[12px] font-black leading-tight text-white">
+                  {getTeamDisplayName(soonMatch.awayTeam, locale)}
+                </span>
+              </div>
+            </div>
+
+            {soonMatch.venue && soonMatch.city && (
+              <p className="mt-2 text-center text-[10px] text-slate-500">
+                {soonMatch.city} · {soonMatch.venue}
+              </p>
+            )}
+          </div>
+
+          <MatchFanSection
+            key={String(soonMatch.id)}
+            matchId={soonMatch.id}
+            homeTeam={getTeamDisplayName(soonMatch.homeTeam, locale)}
+            awayTeam={getTeamDisplayName(soonMatch.awayTeam, locale)}
+            homeColors={getTeamColor(soonMatch.homeTeam)}
+            awayColors={getTeamColor(soonMatch.awayTeam)}
+            zh={locale === "zh"}
+            loggedIn={isLoggedIn || canPersistActions}
+            canPersistProps={canPersistActions}
+            showCurrentUserMarker
+            mobileAudioUnlock
+          />
+        </section>
+      ) : wcStarted ? null : (
         <section className="overflow-hidden rounded-xl border border-white/10 bg-[linear-gradient(145deg,#0d1a2b_0%,#10345b_58%,#14533b_100%)] p-3">
           <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-[#FFD700]/25 bg-[#FFD700]/10 px-2 py-1 text-[12px] font-black text-[#FFD700]">
             <Sparkles className="h-3.5 w-3.5" />
