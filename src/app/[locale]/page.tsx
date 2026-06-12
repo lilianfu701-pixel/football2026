@@ -240,7 +240,6 @@ export default async function HomePage({ params }: HomePageProps) {
     scorersResult,
     groupMatchesResult,
     wealthResult,
-    recentFinishedResult,
   ] = await Promise.all([
     // 1. Upcoming + any live/paused matches (limit 8 so after filtering live out we have 4 upcoming)
     supabase
@@ -279,13 +278,6 @@ export default async function HomePage({ params }: HomePageProps) {
       .order("gc_balance", { ascending: false })
       .limit(5),
 
-    // 6. Most recently finished match (fallback hero when nothing is live)
-    supabase
-      .from("matches")
-      .select("id,match_code,home_team,away_team,home_score,away_score,home_flag,away_flag,kickoff_time,venue,city,status,group_name,stage")
-      .eq("status", "finished")
-      .order("kickoff_time", { ascending: false })
-      .limit(1),
   ]);
 
   const allUpcoming: MatchRow[] = (allUpcomingResult.data ?? []) as MatchRow[];
@@ -309,10 +301,8 @@ export default async function HomePage({ params }: HomePageProps) {
     rank: i + 1,
   }));
 
-  // Hero featured match: live first, otherwise most recently finished
-  const mostRecentFinished: MatchRow | null =
-    (recentFinishedResult.data?.[0] as MatchRow | undefined) ?? null;
-  const featuredMatch: MatchRow | null = liveMatch ?? mostRecentFinished;
+  // Hero featured match: only show when a match is currently live/paused
+  const featuredMatch: MatchRow | null = liveMatch;
 
   // Fan vote counts for the featured match (sequential — depends on featuredMatch)
   const featuredFanCounts = { home: 0, neutral: 0, away: 0 };
