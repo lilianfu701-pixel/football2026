@@ -7,7 +7,9 @@ import { getFlagUrl, getTeamDisplayName } from "@/lib/flags";
 import { computeGroupStandings } from "@/lib/groupStandings";
 import CountdownHero from "@/components/home/CountdownHero";
 import MobileAppBanner from "@/components/home/MobileAppBanner";
-import PcLiveMatchHero from "@/components/home/PcLiveMatchHero";
+import MatchHero from "@/components/forum/MatchHero";
+import MatchFanSection from "@/components/matches/MatchFanSection";
+import { getTeamColor } from "@/lib/teamColors";
 import { lc } from "@/i18n/content";
 
 /* ─── Phase detection ────────────────────────────────────────────────────── */
@@ -29,8 +31,11 @@ interface MatchRow {
   away_team: string;
   home_score: number | null;
   away_score: number | null;
+  home_flag: string | null;
+  away_flag: string | null;
   kickoff_time: string;
   venue: string | null;
+  city: string | null;
   status: string;
   group_name: string | null;
   stage: string | null;
@@ -235,11 +240,12 @@ export default async function HomePage({ params }: HomePageProps) {
     scorersResult,
     groupMatchesResult,
     wealthResult,
+    recentFinishedResult,
   ] = await Promise.all([
     // 1. Upcoming + any live/paused matches (limit 8 so after filtering live out we have 4 upcoming)
     supabase
       .from("matches")
-      .select("id,match_code,home_team,away_team,home_score,away_score,kickoff_time,venue,status,group_name,stage")
+      .select("id,match_code,home_team,away_team,home_score,away_score,home_flag,away_flag,kickoff_time,venue,city,status,group_name,stage")
       .in("status", ["upcoming", "live", "paused"])
       .order("kickoff_time", { ascending: true })
       .limit(8),
@@ -247,7 +253,7 @@ export default async function HomePage({ params }: HomePageProps) {
     // 2. Manually curated featured matches (is_featured=true)
     supabase
       .from("matches")
-      .select("id,match_code,home_team,away_team,home_score,away_score,kickoff_time,venue,status,group_name,stage")
+      .select("id,match_code,home_team,away_team,home_score,away_score,home_flag,away_flag,kickoff_time,venue,city,status,group_name,stage")
       .eq("is_featured", true)
       .order("kickoff_time", { ascending: true })
       .limit(4),
@@ -272,6 +278,14 @@ export default async function HomePage({ params }: HomePageProps) {
       .select("id,nickname,avatar_url,gc_balance")
       .order("gc_balance", { ascending: false })
       .limit(5),
+
+    // 6. Most recently finished match (fallback hero when nothing is live)
+    supabase
+      .from("matches")
+      .select("id,match_code,home_team,away_team,home_score,away_score,home_flag,away_flag,kickoff_time,venue,city,status,group_name,stage")
+      .eq("status", "finished")
+      .order("kickoff_time", { ascending: false })
+      .limit(1),
   ]);
 
   const allUpcoming: MatchRow[] = (allUpcomingResult.data ?? []) as MatchRow[];
@@ -295,6 +309,29 @@ export default async function HomePage({ params }: HomePageProps) {
     rank: i + 1,
   }));
 
+  // Hero featured match: live first, otherwise most recently finished
+  const mostRecentFinished: MatchRow | null =
+    (recentFinishedResult.data?.[0] as MatchRow | undefined) ?? null;
+  const featuredMatch: MatchRow | null = liveMatch ?? mostRecentFinished;
+
+  // Fan vote counts for the featured match (sequential — depends on featuredMatch)
+  const featuredFanCounts = { home: 0, neutral: 0, away: 0 };
+  if (featuredMatch) {
+    const { data: voteRows } = await supabase
+      .from("match_votes")
+      .select("vote")
+      .eq("match_id", featuredMatch.id);
+    for (const v of (voteRows ?? []) as { vote: string }[]) {
+      if (v.vote === "home")         featuredFanCounts.home++;
+      else if (v.vote === "neutral") featuredFanCounts.neutral++;
+      else if (v.vote === "away")    featuredFanCounts.away++;
+    }
+  }
+
+  // Team accent colors for the featured match hero
+  const featuredHomeColors = featuredMatch ? getTeamColor(featuredMatch.home_team) : null;
+  const featuredAwayColors = featuredMatch ? getTeamColor(featuredMatch.away_team) : null;
+
   const totalMatches = upcomingMatches.length;
 
   return (
@@ -310,21 +347,49 @@ export default async function HomePage({ params }: HomePageProps) {
         />
       )}
 
-      {phase === "during" && liveMatch && (
-        <PcLiveMatchHero
-          matchId={liveMatch.id}
-          homeTeam={liveMatch.home_team}
-          awayTeam={liveMatch.away_team}
-          homeScore={liveMatch.home_score}
-          awayScore={liveMatch.away_score}
-          status={liveMatch.status}
-          stage={liveMatch.stage}
-          venue={liveMatch.venue}
-          locale={locale}
-          isLoggedIn={!!user}
-        />
+      {phase === "during" && featuredMatch && featuredHomeColors && featuredAwayColors && (
+        <section className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+          <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden mb-4">
+            <div className="h-0.5 bg-gradient-to-r from-[#FFD700] via-[#FFD700]/60 to-transparent" />
+            <div className="px-5 py-4">
+              <MatchHero
+                matchId={featuredMatch.id}
+                homeTeam={featuredMatch.home_team}
+                awayTeam={featuredMatch.away_team}
+                homeFlag={featuredMatch.home_flag ?? "🏳️"}
+                awayFlag={featuredMatch.away_flag ?? "🏳️"}
+                groupName={featuredMatch.group_name}
+                venue={featuredMatch.venue}
+                city={featuredMatch.city}
+                kickoff={featuredMatch.kickoff_time}
+                homeScore={featuredMatch.home_score}
+                awayScore={featuredMatch.away_score}
+                status={featuredMatch.status}
+                votes={featuredFanCounts}
+                myVote={null}
+                loggedIn={false}
+                zh={zh}
+                homeColors={featuredHomeColors}
+                awayColors={featuredAwayColors}
+                embedded
+                hideVote
+              />
+            </div>
+          </div>
+          <MatchFanSection
+            matchId={featuredMatch.id}
+            homeTeam={featuredMatch.home_team}
+            awayTeam={featuredMatch.away_team}
+            homeColors={featuredHomeColors}
+            awayColors={featuredAwayColors}
+            zh={zh}
+            loggedIn={false}
+            userVote={null}
+            initialVotes={featuredFanCounts}
+          />
+        </section>
       )}
-      {phase === "during" && !liveMatch && (
+      {phase === "during" && !featuredMatch && (
         <section className="bg-[#050D1E] border-b border-[#FFD700]/20">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3">
