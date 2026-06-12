@@ -337,7 +337,7 @@ export default async function HomePage({ params }: HomePageProps) {
         />
       )}
 
-      {phase === "during" && featuredMatch && featuredHomeColors && featuredAwayColors && (
+      {featuredMatch && featuredHomeColors && featuredAwayColors && (
         <section className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
           <div className="bg-[#0F2040] border border-[#1E3A5F] rounded-2xl overflow-hidden mb-4">
             <div className="h-0.5 bg-gradient-to-r from-[#FFD700] via-[#FFD700]/60 to-transparent" />
