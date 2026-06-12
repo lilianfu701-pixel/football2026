@@ -218,8 +218,9 @@ async function fireNotifications(
 }
 
 // ── Scorer sync ──────────────────────────────────────────────────────────────
-// Fetches top scorers from football-data.org and updates the top_scorers table.
-// Only updates existing rows (matched by player name, case-insensitive).
+// Fetches top scorers from football-data.org and replaces the visible
+// top_scorers list with the real data.  Pre-populated rows (Mbappé etc.)
+// are hidden until they actually score and appear in the API response.
 // Non-critical — errors are swallowed so a scorer failure never breaks match sync.
 
 interface ApiScorer {
@@ -228,6 +229,22 @@ interface ApiScorer {
   goals:         number;
   assists:       number | null;
   playedMatches: number;
+}
+
+function normalizeName(name: string): string {
+  return name.toLowerCase()
+    .replace(/[éèêë]/g, "e")
+    .replace(/[àâäã]/g, "a")
+    .replace(/[ñ]/g, "n")
+    .replace(/[óòôö]/g, "o")
+    .replace(/[úùûü]/g, "u")
+    .replace(/[íìîï]/g, "i")
+    .replace(/[ç]/g, "c")
+    .replace(/[š]/g, "s")
+    .replace(/[č]/g, "c")
+    .replace(/[ž]/g, "z")
+    .replace(/[ř]/g, "r")
+    .replace(/[ý]/g, "y");
 }
 
 async function syncScorers(supabase: ServiceClient, apiKey: string): Promise<number> {
@@ -240,36 +257,55 @@ async function syncScorers(supabase: ServiceClient, apiKey: string): Promise<num
     const apiScorers = json.scorers ?? [];
     if (!apiScorers.length) return 0;
 
+    // Load ALL existing rows (visible or not) to preserve player_name_zh
     const { data: dbRows } = await supabase
       .from("top_scorers")
-      .select("id, player_name, goals, assists, matches_played");
-    if (!dbRows?.length) return 0;
-
-    let synced = 0;
-    for (const row of dbRows as Array<{
-      id: number; player_name: string;
-      goals: number; assists: number; matches_played: number;
+      .select("id, player_name, player_name_zh, team, goals, assists, matches_played, is_visible");
+    const existingByName = new Map<string, { id: number; player_name_zh: string | null }>();
+    for (const row of (dbRows ?? []) as Array<{
+      id: number; player_name: string; player_name_zh: string | null;
     }>) {
-      // Match by exact or close name (Mbappé / Mbappe accent differences)
-      const apiMatch = apiScorers.find((s) =>
-        s.player.name.toLowerCase() === row.player_name.toLowerCase() ||
-        s.player.name.toLowerCase().replace(/[éèêë]/g, "e").replace(/[àâä]/g, "a")
-          === row.player_name.toLowerCase().replace(/[éèêë]/g, "e").replace(/[àâä]/g, "a")
-      );
-      if (!apiMatch) continue;
+      existingByName.set(normalizeName(row.player_name), { id: row.id, player_name_zh: row.player_name_zh });
+    }
 
-      const noChange =
-        row.goals           === apiMatch.goals &&
-        row.assists         === (apiMatch.assists ?? 0) &&
-        row.matches_played  === apiMatch.playedMatches;
-      if (noChange) continue;
+    // Step 1: Hide all existing visible rows — they'll be re-shown if still in the API list
+    await supabase.from("top_scorers").update({ is_visible: false }).eq("is_visible", true);
 
-      await supabase.from("top_scorers").update({
-        goals:          apiMatch.goals,
-        assists:        apiMatch.assists ?? 0,
-        matches_played: apiMatch.playedMatches,
-        updated_at:     new Date().toISOString(),
-      }).eq("id", row.id);
+    // Step 2: Upsert each API scorer
+    let synced = 0;
+    const now = new Date().toISOString();
+    for (let i = 0; i < apiScorers.length; i++) {
+      const s = apiScorers[i];
+      const team = normTeam(s.team.name);
+      const nameKey = normalizeName(s.player.name);
+      const existing = existingByName.get(nameKey);
+
+      if (existing) {
+        // Update existing row — preserve player_name_zh
+        await supabase.from("top_scorers").update({
+          player_name:    s.player.name,
+          team,
+          goals:          s.goals,
+          assists:        s.assists ?? 0,
+          matches_played: s.playedMatches,
+          sort_order:     i + 1,
+          is_visible:     true,
+          updated_at:     now,
+        }).eq("id", existing.id);
+      } else {
+        // Insert new scorer (player_name_zh = null — can be filled via admin)
+        await supabase.from("top_scorers").insert({
+          player_name:    s.player.name,
+          player_name_zh: null,
+          team,
+          goals:          s.goals,
+          assists:        s.assists ?? 0,
+          matches_played: s.playedMatches,
+          sort_order:     i + 1,
+          is_visible:     true,
+          updated_at:     now,
+        });
+      }
       synced++;
     }
     return synced;
