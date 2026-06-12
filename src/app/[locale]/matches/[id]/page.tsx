@@ -241,16 +241,15 @@ export default async function MatchPage({ params }: MatchPageProps) {
   const aiSuccessRates: AiSuccessRates = {};
   for (const row of aiHistoryRows) {
     if (!row.ai_predictions || row.home_score == null || row.away_score == null) continue;
-    const actualResult = row.home_score > row.away_score ? "home"
-                       : row.home_score < row.away_score ? "away"
-                       : "draw";
     for (const { key } of AI_MODELS) {
       const p = row.ai_predictions[key];
       if (!p) continue;
-      const predResult = p.home > p.away ? "home" : p.home < p.away ? "away" : "draw";
       if (!aiSuccessRates[key]) aiSuccessRates[key] = { correct: 0, total: 0 };
       aiSuccessRates[key]!.total++;
-      if (predResult === actualResult) aiSuccessRates[key]!.correct++;
+      // Exact score match: both home and away goals must match the actual result
+      if (p.home === row.home_score && p.away === row.away_score) {
+        aiSuccessRates[key]!.correct++;
+      }
     }
   }
 

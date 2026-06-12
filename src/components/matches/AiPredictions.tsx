@@ -153,7 +153,7 @@ export default function AiPredictions({
       {/* ── Footer ───────────────────────────────────────────────────────────── */}
       <div className="px-4 py-2 border-t border-[#1E3A5F]/50">
         <p className="text-[10px] text-gray-600 text-center">
-          {lc(locale, "准确率 = 预测胜负平与实际结果一致的比例", "Accuracy = correct winner/draw predictions over finished matches")}
+          {lc(locale, "准确率 = 预测比分与实际比分完全一致的比例", "Accuracy = exact score predictions matched over finished matches")}
         </p>
       </div>
     </div>
