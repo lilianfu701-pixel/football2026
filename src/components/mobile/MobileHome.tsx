@@ -567,9 +567,15 @@ function getLocation(match: MobileMatch, locale: string) {
   return city || match.venue || "-";
 }
 
+const BCP47: Record<string, string> = {
+  zh: "zh-CN", en: "en-US", es: "es-ES", fr: "fr-FR",
+  de: "de-DE", pt: "pt-PT", ru: "ru-RU", ar: "ar-SA",
+  ja: "ja-JP", ko: "ko-KR", vi: "vi-VN", id: "id-ID",
+};
+
 function formatKickoff(kickoffTime: string, locale: string) {
   const date = new Date(kickoffTime);
-  return date.toLocaleString(locale === "zh" ? "zh-CN" : "en-US", {
+  return date.toLocaleString(BCP47[locale] ?? "en-US", {
     month: "short",
     day: "numeric",
     hour: "2-digit",
@@ -577,7 +583,9 @@ function formatKickoff(kickoffTime: string, locale: string) {
   });
 }
 
-function formatCountdown(kickoffTime: string, locale: string) {
+function formatCountdown(kickoffTime: string, locale: string, status?: string | null) {
+  if (status === "live")     return lc(locale, "进行中", "LIVE");
+  if (status === "finished") return lc(locale, "已结束", "FT");
   const diffMs = new Date(kickoffTime).getTime() - Date.now();
   if (diffMs <= 0) return lc(locale, "即将开赛", "Soon");
   const days = Math.floor(diffMs / 86_400_000);
@@ -1330,14 +1338,17 @@ function MatchAlignedRow({ locale, match }: { locale: string; match: MobileMatch
     <span className="grid min-w-0 grid-cols-[2.85rem_minmax(0,0.86fr)_2.35rem_minmax(0,0.86fr)] items-center gap-1 text-[13px] font-black text-white">
       <span className="rounded-full bg-[#FFD700]/10 px-1 py-0.5 text-center text-[11px] text-[#FFD700]">{getStageLabel(match, locale)}</span>
       <span className="flex min-w-0 items-center gap-1"><img src={getFlagUrl(match.homeTeam, 20)} alt="" className="h-3 w-4 shrink-0 rounded-[2px] object-cover" /><span className="truncate">{getTeamName(match.homeTeam, locale)}</span></span>
-      <span className="text-center text-[11px] text-slate-500">VS</span>
+      {(match.status === "live" || match.status === "finished") && match.homeScore != null
+        ? <span className={`text-center text-[11px] font-bold tabular-nums ${match.status === "live" ? "text-green-400" : "text-slate-300"}`}>{match.homeScore}:{match.awayScore ?? 0}</span>
+        : <span className="text-center text-[11px] text-slate-500">VS</span>
+      }
       <span className="flex min-w-0 items-center justify-end gap-1"><img src={getFlagUrl(match.awayTeam, 20)} alt="" className="h-3 w-4 shrink-0 rounded-[2px] object-cover" /><span className="truncate text-right">{getTeamName(match.awayTeam, locale)}</span></span>
     </span>
   );
 }
 
 function MatchMetaLine({ locale, match, isLoggedIn, canPersistActions }: { locale: string; match: MobileMatch; isLoggedIn: boolean; canPersistActions: boolean }) {
-  return <span className="flex min-w-0 items-center gap-1.5 overflow-hidden text-[12px] leading-4 text-slate-500"><span className="shrink-0">{formatKickoff(match.kickoffTime, locale)}</span><span className="min-w-0 truncate">{getLocation(match, locale)}</span><span className="shrink-0">{formatCountdown(match.kickoffTime, locale)}</span><MobileFollowButton locale={locale} match={match} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} /></span>;
+  return <span className="flex min-w-0 items-center gap-1.5 overflow-hidden text-[12px] leading-4 text-slate-500"><span className="shrink-0">{formatKickoff(match.kickoffTime, locale)}</span><span className="min-w-0 truncate">{getLocation(match, locale)}</span><span className="shrink-0">{formatCountdown(match.kickoffTime, locale, match.status)}</span><MobileFollowButton locale={locale} match={match} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} /></span>;
 }
 
 function MobileFollowButton({ locale, match, isLoggedIn, canPersistActions }: { locale: string; match: MobileMatch; isLoggedIn: boolean; canPersistActions: boolean }) {
@@ -5246,7 +5257,7 @@ function MineFollowedMatchList({
           <span className="flex min-w-0 items-center gap-1.5 overflow-hidden text-[12px] leading-4 text-slate-500">
             <span className="shrink-0">{formatKickoff(match.kickoffTime, locale)}</span>
             <span className="min-w-0 truncate">{getLocation(match, locale)}</span>
-            <span className="shrink-0">{formatCountdown(match.kickoffTime, locale)}</span>
+            <span className="shrink-0">{formatCountdown(match.kickoffTime, locale, match.status)}</span>
           </span>
         </button>
       ))}
@@ -5511,7 +5522,7 @@ function MatchCard({
       <div className="grid grid-cols-3 gap-2">
         <InfoBox label={t.prizePool} value={formatPool(match)} />
         <InfoBox label={t.odds} value={formatOdds(match)} />
-        <InfoBox label={t.kickoff} value={formatCountdown(match.kickoffTime, locale)} />
+        <InfoBox label={t.kickoff} value={formatCountdown(match.kickoffTime, locale, match.status)} />
       </div>
 
       <button
