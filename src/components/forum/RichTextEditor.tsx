@@ -174,9 +174,12 @@ export default function RichTextEditor({ value, onChange, placeholder, zh, injec
     immediatelyRender: false,   // required for Next.js SSR in Tiptap v3
     extensions: [
       StarterKit.configure({
-        heading:   { levels: [2, 3] },
-        codeBlock: { HTMLAttributes: { class: "bg-[#0A1628] rounded-lg p-3 text-sm font-mono text-green-300 my-2 overflow-x-auto" } },
+        heading:    { levels: [2, 3] },
+        codeBlock:  { HTMLAttributes: { class: "bg-[#0A1628] rounded-lg p-3 text-sm font-mono text-green-300 my-2 overflow-x-auto" } },
         blockquote: { HTMLAttributes: { class: "border-l-4 border-[#FFD700]/50 pl-4 text-gray-400 italic my-2" } },
+        // Disable built-ins — we use standalone extensions with custom config
+        link:      false as any,
+        underline: false as any,
       }),
       TextStyle,
       FontSize,
