@@ -55,17 +55,23 @@ export async function GET() {
 }
 
 // ── PATCH /api/notifications ──────────────────────────────────────────────────
-// Mark all unread notifications as read.
-export async function PATCH() {
+// Mark notifications as read. Body: { id: string } for single, omit for all.
+export async function PATCH(req: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  await supabase
+  let body: { id?: string } = {};
+  try { body = await req.json(); } catch { /* no body = mark all */ }
+
+  const q = supabase
     .from("notifications")
     .update({ is_read: true })
     .eq("user_id", user.id)
     .eq("is_read", false);
 
+  if (body.id) q.eq("id", body.id);
+
+  await q;
   return NextResponse.json({ ok: true });
 }

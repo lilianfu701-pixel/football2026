@@ -248,6 +248,18 @@ export default function NotificationBell({ locale }: Props) {
     setNotifs((prev) => prev.map((n) => ({ ...n, is_read: true })));
   }
 
+  // Mark single notification as read
+  function markOneRead(n: NotifItem) {
+    if (n.is_read) return;
+    fetch("/api/notifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: n.id }),
+    });
+    setNotifs((prev) => prev.map((x) => x.id === n.id ? { ...x, is_read: true } : x));
+    setUnread((prev) => Math.max(0, prev - 1));
+  }
+
   function handleOpen() {
     setOpen((v) => !v);
     // Refetch on open to show latest
@@ -321,7 +333,7 @@ export default function NotificationBell({ locale }: Props) {
                 <Link
                   key={n.id}
                   href={notifHref(n)}
-                  onClick={() => setOpen(false)}
+                  onClick={() => { markOneRead(n); setOpen(false); }}
                   className={`flex items-start gap-3 px-4 py-3 border-b border-[#1E3A5F]/40 transition-colors hover:bg-[#1E3A5F]/30 ${
                     !n.is_read ? "bg-[#1E3A5F]/20" : ""
                   }`}
