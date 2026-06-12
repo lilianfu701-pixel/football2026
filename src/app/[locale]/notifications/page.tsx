@@ -7,17 +7,32 @@ import { lc } from "@/i18n/content";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+interface MatchEventDetail {
+  home_team:   string;
+  away_team:   string;
+  home_flag:   string;
+  away_flag:   string;
+  team?:       "home" | "away";
+  score_home?: number;
+  score_away?: number;
+  home_score?: number;
+  away_score?: number;
+  kickoff_time?: string;
+}
+
 interface NotifItem {
-  id:         number;
-  type:       string;
-  is_read:    boolean;
-  gc_amount:  number | null;
-  reason:     string | null;
-  created_at: string;
-  post_id:    number | null;
-  reply_id:   number | null;
-  actor:      { nickname: string; avatar_url: string | null } | null;
-  post_title: string | null;
+  id:           number;
+  type:         string;
+  is_read:      boolean;
+  gc_amount:    number | null;
+  reason:       string | null;
+  created_at:   string;
+  post_id:      number | null;
+  reply_id:     number | null;
+  match_id:     number | null;
+  event_detail: MatchEventDetail | null;
+  actor:        { nickname: string; avatar_url: string | null } | null;
+  post_title:   string | null;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -35,13 +50,84 @@ function timeAgo(dateStr: string, zh: boolean, locale: string): string {
 }
 
 function NotifIcon({ type, gc_amount }: { type: string; gc_amount: number | null }) {
-  if (type === "rating") return <span>{gc_amount && gc_amount > 0 ? "🎁" : "🔨"}</span>;
-  if (type === "reply")  return <span>💬</span>;
-  if (type === "bet_settled") return <span>{gc_amount && gc_amount > 0 ? "🎉" : "💔"}</span>;
+  if (type === "rating")          return <span>{gc_amount && gc_amount > 0 ? "🎁" : "🔨"}</span>;
+  if (type === "reply")           return <span>💬</span>;
+  if (type === "mention")         return <span>📣</span>;
+  if (type === "follow")          return <span>👤</span>;
+  if (type === "bet_settled")     return <span>{gc_amount && gc_amount > 0 ? "🎉" : "💔"}</span>;
+  if (type === "match_countdown") return <span>⏰</span>;
+  if (type === "match_kickoff")   return <span>🟢</span>;
+  if (type === "match_goal")      return <span>⚽</span>;
+  if (type === "match_red_card")  return <span>🟥</span>;
+  if (type === "match_final")     return <span>🏁</span>;
   return <span>🔔</span>;
 }
 
+function MatchNotifText({ n, zh }: { n: NotifItem; zh: boolean }) {
+  const d = n.event_detail;
+  if (!d) return <span className="text-sm text-gray-300">{zh ? "比赛通知" : "Match notification"}</span>;
+
+  const matchLabel = (
+    <span className="font-medium text-white">
+      {d.home_flag} {d.home_team} vs {d.away_flag} {d.away_team}
+    </span>
+  );
+
+  if (n.type === "match_countdown") {
+    return (
+      <span className="text-sm text-gray-300">
+        {zh ? "⏰ 即将开赛 · " : "⏰ Starting soon · "}{matchLabel}
+        {zh ? " · 10分钟后开赛" : " · kicks off in 10 min"}
+      </span>
+    );
+  }
+  if (n.type === "match_kickoff") {
+    return (
+      <span className="text-sm text-gray-300">
+        {zh ? "🟢 开赛 · " : "🟢 Kick off · "}{matchLabel}
+      </span>
+    );
+  }
+  if (n.type === "match_goal") {
+    const scoredBy   = d.team === "home" ? d.home_flag : d.away_flag;
+    const scoredTeam = d.team === "home" ? d.home_team : d.away_team;
+    const score      = `${d.score_home ?? 0}–${d.score_away ?? 0}`;
+    return (
+      <span className="text-sm text-gray-300">
+        {"⚽ "}<strong className="text-white">{scoredBy} {scoredTeam}</strong>
+        {" · "}<span className="text-[#FFD700] font-bold">{score}</span>
+        {" · "}{matchLabel}
+      </span>
+    );
+  }
+  if (n.type === "match_red_card") {
+    const team = d.team === "home" ? d.home_team : d.away_team;
+    return (
+      <span className="text-sm text-gray-300">
+        {"🟥 "}{zh ? "红牌 · " : "Red card · "}
+        <strong className="text-white">{team}</strong>{" · "}{matchLabel}
+      </span>
+    );
+  }
+  if (n.type === "match_final") {
+    const score = `${d.home_score ?? 0}–${d.away_score ?? 0}`;
+    return (
+      <span className="text-sm text-gray-300">
+        {"🏁 "}{zh ? "比赛结束 · " : "Full time · "}
+        {matchLabel}{" · "}
+        <span className="text-[#FFD700] font-bold">{score}</span>
+      </span>
+    );
+  }
+  return <span className="text-sm text-gray-300">{matchLabel}</span>;
+}
+
 function NotifText({ n, zh, locale }: { n: NotifItem; zh: boolean; locale: string }) {
+  // Match event notifications
+  if (n.type.startsWith("match_")) {
+    return <MatchNotifText n={n} zh={zh} />;
+  }
+
   const actor = n.actor?.nickname ?? (lc(locale, "系统", "System"));
   const title = n.post_title
     ? `「${n.post_title.slice(0, 24)}${n.post_title.length > 24 ? "…" : ""}」`
@@ -69,12 +155,23 @@ function NotifText({ n, zh, locale }: { n: NotifItem; zh: boolean; locale: strin
     );
   }
 
-  if (n.type === "reply") {
+  if (n.type === "reply" || n.type === "mention") {
     return (
       <span className="text-sm text-gray-300">
         <strong className="text-white">{actor}</strong>
-        {lc(locale, " 回复了你的帖子 ", " replied to your post ")}
+        {n.type === "mention"
+          ? lc(locale, " 在帖子中提到了你 ", " mentioned you in a post ")
+          : lc(locale, " 回复了你的帖子 ", " replied to your post ")}
         {title && <span className="text-gray-200">{title}</span>}
+      </span>
+    );
+  }
+
+  if (n.type === "follow") {
+    return (
+      <span className="text-sm text-gray-300">
+        <strong className="text-white">{actor}</strong>
+        {lc(locale, " 关注了你", " started following you")}
       </span>
     );
   }
@@ -200,8 +297,12 @@ export default function NotificationsPage() {
         {!loading && notifs.length > 0 && (
           <div className="space-y-2">
             {notifs.map((n) => {
-              const href = n.post_id
+              const href = n.type.startsWith("match_") && n.match_id
+                ? `/${locale}/matches/${n.match_id}`
+                : n.post_id
                 ? `/${locale}/forum/thread/${n.post_id}`
+                : n.type === "follow"
+                ? `/${locale}/forum`
                 : null;
 
               const inner = (

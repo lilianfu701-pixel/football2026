@@ -54,7 +54,9 @@ function timeAgo(dateStr: string, zh: boolean, locale: string): string {
 }
 
 function NotifIcon({ type, gc_amount }: { type: string; gc_amount: number | null }) {
-  if (type === "rating")         return gc_amount && gc_amount > 0 ? <span>🎁</span> : <span>🔨</span>;
+  if (type === "rating")          return gc_amount && gc_amount > 0 ? <span>🎁</span> : <span>🔨</span>;
+  if (type === "follow")          return <span>👤</span>;
+  if (type === "mention")         return <span>📣</span>;
   if (type === "match_countdown") return <span>⏰</span>;
   if (type === "match_kickoff")   return <span>🟢</span>;
   if (type === "match_goal")      return <span>⚽</span>;
@@ -65,7 +67,7 @@ function NotifIcon({ type, gc_amount }: { type: string; gc_amount: number | null
 
 function MatchNotifText({ n, zh }: { n: NotifItem; zh: boolean }) {
   const d = n.event_detail;
-  if (!d) return <span>{lc("zh", "比赛通知", "Match notification")}</span>;
+  if (!d) return <span>{zh ? "比赛通知" : "Match notification"}</span>;
 
   const matchLabel = (
     <span className="font-medium text-white">
@@ -173,20 +175,22 @@ function NotifText({ n, zh, locale }: { n: NotifItem; zh: boolean; locale: strin
     );
   }
 
-  // reply / mention / follow / other
-  if (zh) {
+  if (n.type === "follow") {
     return (
       <span>
         <strong className="text-white">{actor}</strong>
-        {" 回复了你的帖子 "}
-        {title && <span className="text-gray-300">{title}</span>}
+        {zh ? " 关注了你" : " started following you"}
       </span>
     );
   }
+
+  // reply / mention / other
   return (
     <span>
       <strong className="text-white">{actor}</strong>
-      {" replied to your post "}
+      {n.type === "mention"
+        ? (zh ? " 在帖子中提到了你 " : " mentioned you in a post ")
+        : (zh ? " 回复了你的帖子 " : " replied to your post ")}
       {title && <span className="text-gray-300">{title}</span>}
     </span>
   );
