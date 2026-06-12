@@ -123,7 +123,7 @@ export async function PATCH(
 
   const updates: Record<string, unknown> = {};
   if (body.status !== undefined) {
-    const validStatuses = ["scheduled", "live", "finished"];
+    const validStatuses = ["upcoming", "scheduled", "live", "finished"];
     if (!validStatuses.includes(body.status))
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     updates.status = body.status;

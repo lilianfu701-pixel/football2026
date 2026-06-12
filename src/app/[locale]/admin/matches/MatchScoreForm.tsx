@@ -12,7 +12,7 @@ interface Props {
 }
 
 const statusOptions = [
-  { value: "scheduled", labelZh: "未开始", labelEn: "Scheduled" },
+  { value: "upcoming",  labelZh: "未开赛", labelEn: "Upcoming" },
   { value: "live",      labelZh: "进行中", labelEn: "Live" },
   { value: "finished",  labelZh: "已结束", labelEn: "Finished" },
 ];

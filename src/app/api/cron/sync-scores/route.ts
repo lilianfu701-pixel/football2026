@@ -8,6 +8,7 @@ const FD_BASE = "https://api.football-data.org/v4";
 const COMPETITION_CODE = "WC";
 
 const TEAM_MAP: Record<string, string> = {
+  // football-data.org name → DB name
   "Korea Republic":     "South Korea",
   "United States":      "USA",
   "Côte d'Ivoire":      "Ivory Coast",
@@ -16,6 +17,18 @@ const TEAM_MAP: Record<string, string> = {
   "Bosnia-Herzegovina": "Bosnia & Herzegovina",
   "Cape Verde Islands": "Cape Verde",
   "Curaçao":            "Curacao",
+  // Czechia: official ISO name changed in 2016 but many APIs still use "Czech Republic"
+  "Czech Republic":     "Czechia",
+  // Iran: football-data uses "IR Iran"
+  "IR Iran":            "Iran",
+  // Saudi: sometimes "Saudi Arabia" or "KSA"
+  "Saudi Arabia":       "Saudi Arabia",
+  // Venezuela: football-data sometimes uses "Venezuela, RB"
+  "Venezuela, RB":      "Venezuela",
+  // Ivory Coast alternate
+  "Ivory Coast":        "Ivory Coast",
+  // USA alternate
+  "USA":                "USA",
 };
 
 function mapStatus(s: string): string {
