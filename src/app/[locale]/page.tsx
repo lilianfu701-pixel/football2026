@@ -12,6 +12,7 @@ import MatchFanSection from "@/components/matches/MatchFanSection";
 import { getTeamColor } from "@/lib/teamColors";
 import { lc } from "@/i18n/content";
 import LocalKickoffTime from "@/components/LocalKickoffTime";
+import CountryNameTag from "@/components/CountryNameTag";
 
 /* ─── Phase detection ────────────────────────────────────────────────────── */
 const WC_START = new Date("2026-06-11T20:00:00+00:00");
@@ -214,6 +215,52 @@ function DuringLeaderboard({
   );
 }
 
+function DuringCountryLeaderboard({
+  title, countries, locale,
+}: { title: string; countries: { cc: string; totalGc: number }[]; locale: string }) {
+  function formatGC(n: number) {
+    if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1) + "B";
+    if (n >= 1_000_000)     return (n / 1_000_000).toFixed(1) + "M";
+    if (n >= 1_000)         return (n / 1_000).toFixed(0) + "K";
+    return String(n);
+  }
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-[#0A1628] p-5">
+      <h3 className="text-base font-black text-white mb-4">{title}</h3>
+      <div className="space-y-2">
+        {countries.map((c, i) => (
+          <div key={c.cc} className="flex items-center gap-3">
+            <span className={`text-xs font-black w-5 text-center ${
+              i === 0 ? "text-[#FFD700]" : i === 1 ? "text-gray-400" : i === 2 ? "text-amber-600" : "text-gray-600"
+            }`}>{i + 1}</span>
+            <div className="w-7 h-5 rounded overflow-hidden flex-shrink-0">
+              <img
+                src={`https://flagcdn.com/w40/${c.cc.toLowerCase()}.png`}
+                alt={c.cc}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <span className="flex-1 text-xs font-semibold text-white truncate">
+              <CountryNameTag code={c.cc} locale={locale} />
+            </span>
+            <span className="text-xs font-black text-[#FFD700]">{formatGC(c.totalGc)} GC</span>
+          </div>
+        ))}
+        {countries.length === 0 && (
+          <p className="text-xs text-gray-600 text-center py-4">
+            {locale === "zh" ? "暂无数据" : "No data yet"}
+          </p>
+        )}
+      </div>
+      <Link href={`/${locale}/leaderboard`}
+        className="block text-center text-xs text-[#FFD700]/70 hover:text-[#FFD700] mt-4 transition-colors">
+        {locale === "zh" ? "查看完整排行榜 →" : "View full leaderboard →"}
+      </Link>
+    </div>
+  );
+}
+
 /* ─── Page ───────────────────────────────────────────────────────────────── */
 interface HomePageProps {
   params: Promise<{ locale: string }>;
@@ -235,6 +282,7 @@ export default async function HomePage({ params }: HomePageProps) {
     scorersResult,
     groupMatchesResult,
     wealthResult,
+    countryResult,
   ] = await Promise.all([
     // 1. Next upcoming matches (excluding live/paused — those come from query 2)
     supabase
@@ -281,6 +329,12 @@ export default async function HomePage({ params }: HomePageProps) {
       .order("gc_balance", { ascending: false })
       .limit(5),
 
+    // 6. Country leaderboard (aggregate GC by country)
+    supabase
+      .from("users")
+      .select("country_code,gc_balance")
+      .not("country_code", "is", null),
+
   ]);
 
   const allUpcoming: MatchRow[] = (allUpcomingResult.data ?? []) as MatchRow[];
@@ -303,8 +357,23 @@ export default async function HomePage({ params }: HomePageProps) {
     rank: i + 1,
   }));
 
-  // Hero featured match: only show when a match is currently live/paused
-  const featuredMatch: MatchRow | null = liveMatch;
+  // Country leaderboard: aggregate GC by country
+  const countryMap: Record<string, number> = {};
+  for (const row of (countryResult.data ?? []) as { country_code: string | null; gc_balance: number | null }[]) {
+    const cc = (row.country_code ?? "").toUpperCase();
+    if (!cc || cc === "UN") continue;
+    countryMap[cc] = (countryMap[cc] ?? 0) + (row.gc_balance ?? 0);
+  }
+  const topCountries = Object.entries(countryMap)
+    .map(([cc, totalGc]) => ({ cc, totalGc }))
+    .sort((a, b) => b.totalGc - a.totalGc)
+    .slice(0, 5);
+
+  // Hero featured match: show live/paused match, or next upcoming within 1 hour
+  const now = new Date();
+  const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+  const soonMatch = allUpcoming.find(m => new Date(m.kickoff_time) <= oneHourFromNow) ?? null;
+  const featuredMatch: MatchRow | null = liveMatch ?? soonMatch;
 
   // Fan vote counts for the featured match (sequential — depends on featuredMatch)
   const featuredFanCounts = { home: 0, neutral: 0, away: 0 };
@@ -433,9 +502,9 @@ export default async function HomePage({ params }: HomePageProps) {
               users={wealthUsers} // same data as fallback
               locale={locale}
             />
-            <DuringLeaderboard
+            <DuringCountryLeaderboard
               title={lc(locale, "🌍 国家榜 Top 5", "🌍 Country Top 5")}
-              users={wealthUsers} // same data as fallback
+              countries={topCountries}
               locale={locale}
             />
           </div>
