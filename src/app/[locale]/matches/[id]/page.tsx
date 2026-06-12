@@ -18,8 +18,8 @@ import type { AiPredictions as AiPredictionsType } from "@/lib/aiModels";
 import type { AiSuccessRates } from "@/components/matches/AiPredictions";
 import { lc } from "@/i18n/content";
 
-// ── Static generation: pre-render all 104 match pages × 2 locales ──────────────
-export const revalidate = 60; // ISR: re-generate in background every 60 seconds
+// ── Dynamic rendering: real-time match status ──────────────────────────────────
+export const dynamic = "force-dynamic";
 
 const ALL_LOCALES = ["en", "zh", "es", "fr", "de", "pt", "ru", "ar", "ja", "ko", "vi", "id"] as const;
 
