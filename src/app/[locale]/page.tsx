@@ -369,11 +369,9 @@ export default async function HomePage({ params }: HomePageProps) {
     .sort((a, b) => b.totalGc - a.totalGc)
     .slice(0, 5);
 
-  // Hero featured match: show live/paused match, or next upcoming within 1 hour
-  const now = new Date();
-  const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
-  const soonMatch = allUpcoming.find(m => new Date(m.kickoff_time) <= oneHourFromNow) ?? null;
-  const featuredMatch: MatchRow | null = liveMatch ?? soonMatch;
+  // Hero featured match: live match first, otherwise next upcoming match
+  const nextMatch = allUpcoming[0] ?? null;
+  const featuredMatch: MatchRow | null = liveMatch ?? nextMatch;
 
   // Fan vote counts for the featured match (sequential — depends on featuredMatch)
   const featuredFanCounts = { home: 0, neutral: 0, away: 0 };

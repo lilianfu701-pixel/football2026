@@ -1040,11 +1040,9 @@ function HomeView({
     else matchRefs.current.delete(matchId);
   }
 
-  // Upcoming match within 1 hour — show hero like PC homepage
+  // Next upcoming match — always show hero for the nearest fixture
   const wcStarted = new Date() >= new Date("2026-06-11T20:00:00+00:00");
-  const soonMatch = upcomingMatches.find(
-    (m) => new Date(m.kickoffTime).getTime() <= Date.now() + 3_600_000,
-  ) ?? null;
+  const soonMatch = upcomingMatches[0] ?? null;
 
   return (
     <div className="grid gap-3">
