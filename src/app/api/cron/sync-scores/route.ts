@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/service";
+
+const ALL_LOCALES = ["en","zh","es","fr","de","pt","ru","ar","ja","ko","vi","id"] as const;
 
 const FD_BASE = "https://api.football-data.org/v4";
 const COMPETITION_CODE = "WC";
@@ -357,6 +360,19 @@ export async function GET(req: Request) {
         .from("matches")
         .update({ status, home_score: mHs, away_score: mAs, red_cards_home: mRedHome, red_cards_away: mRedAway })
         .eq("id", db.id);
+
+      // Bust the ISR cache for this match page across all locales so the
+      // next visitor sees fresh scores and updated AI accuracy immediately.
+      for (const locale of ALL_LOCALES) {
+        const path = locale === "en"
+          ? `/matches/${db.id}`
+          : `/${locale}/matches/${db.id}`;
+        revalidatePath(path, "page");
+      }
+      // Also revalidate the matches list page (shows live scores)
+      for (const locale of ALL_LOCALES) {
+        revalidatePath(locale === "en" ? "/matches" : `/${locale}/matches`, "page");
+      }
 
       updated++;
     }
