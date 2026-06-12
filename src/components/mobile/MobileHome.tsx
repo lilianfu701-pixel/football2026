@@ -46,6 +46,7 @@ import { getMaxAmount, makePresets } from "@/lib/forum/ratingCap";
 import { needsTranslation } from "@/lib/languages";
 import { lc } from "@/i18n/content";
 import { MILESTONES, PER_INVITE_GC } from "@/lib/inviteMilestones";
+import { type GroupStanding } from "@/lib/groupStandings";
 import MobileInstallPrompt from "@/components/mobile/MobileInstallPrompt";
 import MobileScheduleDetails from "@/components/mobile/MobileScheduleDetails";
 import LiveMatchHero from "@/components/mobile/LiveMatchHero";
@@ -271,6 +272,7 @@ interface MobileHomeProps {
   inviteLeaderboard: MobileInviteLeaderboardEntry[];
   inviteSiteUrl: string;
   liveMatch?: MobileMatch | null;
+  groupStandings?: GroupStanding[];
 }
 
 type MobileView = "home" | "matches" | "predict" | "forum" | "mine" | "topup" | "invite" | "profile" | "settings" | "leaderboard" | "awards" | "checkin";
@@ -665,6 +667,7 @@ export default function MobileHome({
   inviteLeaderboard,
   inviteSiteUrl,
   liveMatch,
+  groupStandings = [],
 }: MobileHomeProps) {
   const t = getCopy(locale);
   const { balance, setBalance, refresh } = useGcBalance();
@@ -784,7 +787,7 @@ export default function MobileHome({
 
       <section className="mx-auto max-w-md px-3 py-3">
         {activeView === "home" && (
-          <HomeView locale={locale} t={t} daysLeft={daysLeft} upcomingMatches={upcomingMatches} featuredMatches={featuredMatches} topScorers={topScorers} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} liveMatch={liveMatch} />
+          <HomeView locale={locale} t={t} daysLeft={daysLeft} upcomingMatches={upcomingMatches} featuredMatches={featuredMatches} topScorers={topScorers} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} liveMatch={liveMatch} groupStandings={groupStandings} />
         )}
         {activeView === "matches" && (
           <MatchesView locale={locale} t={t} matches={scheduleMatches} isLoggedIn={isLoggedIn} canPersistActions={canPersistActions} onOpenView={openView} />
@@ -1005,6 +1008,7 @@ function HomeView({
   isLoggedIn,
   canPersistActions,
   liveMatch,
+  groupStandings,
 }: {
   locale: string;
   t: MobileCopy;
@@ -1015,6 +1019,7 @@ function HomeView({
   isLoggedIn: boolean;
   canPersistActions: boolean;
   liveMatch?: MobileMatch | null;
+  groupStandings?: GroupStanding[];
 }) {
   const [expandedMatchId, setExpandedMatchId] = useState<number | null>(null);
   const matchRefs = useRef(new Map<number, HTMLElement>());
@@ -1078,6 +1083,9 @@ function HomeView({
       />
 
       <TopScorersSection locale={locale} scorers={topScorers} />
+      {groupStandings && groupStandings.length > 0 && (
+        <GroupStandingsSection locale={locale} standings={groupStandings} />
+      )}
     </div>
   );
 }
@@ -1161,6 +1169,97 @@ function TopScorersSection({ locale, scorers }: { locale: string; scorers: Mobil
             </div>
           ))}
         </div>
+      )}
+    </section>
+  );
+}
+
+function GroupStandingsSection({ locale, standings }: { locale: string; standings: GroupStanding[] }) {
+  const [activeGroup, setActiveGroup] = useState(standings[0]?.group ?? "A");
+  const current = standings.find((s) => s.group === activeGroup) ?? standings[0];
+
+  return (
+    <section className="rounded-xl border border-white/10 bg-[#0d1a2b] overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-white/10">
+        <h2 className="text-[15px] font-black text-white">
+          {lc(locale, "📊 小组积分榜", "📊 Group Standings")}
+        </h2>
+        <span className="text-[12px] font-bold text-[#FFD700]">{standings.length} {lc(locale, "组", "groups")}</span>
+      </div>
+
+      {/* Group selector tabs — horizontal scroll */}
+      <div className="flex overflow-x-auto scrollbar-none border-b border-white/10 bg-white/[0.02]">
+        {standings.map(({ group }) => (
+          <button
+            key={group}
+            onClick={() => setActiveGroup(group)}
+            className={`flex-shrink-0 px-3 py-1.5 text-[13px] font-black transition-colors ${
+              activeGroup === group
+                ? "text-[#FFD700] border-b-2 border-[#FFD700]"
+                : "text-slate-500 hover:text-slate-300"
+            }`}
+          >
+            {lc(locale, `${group}组`, `G${group}`)}
+          </button>
+        ))}
+      </div>
+
+      {/* Column headers */}
+      {current && (
+        <>
+          <div className="grid grid-cols-[1fr_2.2rem_2.2rem_2.2rem] gap-1 px-3 py-1.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            <span>{lc(locale, "球队", "Team")}</span>
+            <span className="text-center">{lc(locale, "积", "Pts")}</span>
+            <span className="text-center">{lc(locale, "赛", "P")}</span>
+            <span className="text-center">{lc(locale, "差", "GD")}</span>
+          </div>
+
+          {/* Team rows */}
+          <div>
+            {current.teams.map((team, i) => (
+              <div
+                key={team.team}
+                className={`grid grid-cols-[1fr_2.2rem_2.2rem_2.2rem] items-center gap-1 px-3 py-2 border-t border-white/5 ${i < 2 ? "bg-[#FFD700]/[0.025]" : ""}`}
+              >
+                {/* Rank dot + flag + name */}
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                    i === 0 ? "bg-[#FFD700]" : i === 1 ? "bg-[#FFD700]/50" : "bg-gray-700"
+                  }`} />
+                  <img
+                    src={team.flag}
+                    alt={team.team}
+                    className="w-5 h-3.5 rounded-[2px] object-cover flex-shrink-0"
+                  />
+                  <span className="truncate text-[12px] font-semibold text-white">
+                    {getTeamName(team.team, locale)}
+                  </span>
+                </div>
+                {/* Stats */}
+                <span className="text-center text-[12px] font-black text-[#FFD700]">{team.pts}</span>
+                <span className="text-center text-[12px] text-slate-500">{team.played}</span>
+                <span className={`text-center text-[12px] font-bold ${
+                  team.gd > 0 ? "text-green-400" : team.gd < 0 ? "text-red-400" : "text-slate-500"
+                }`}>
+                  {team.gd > 0 ? `+${team.gd}` : team.gd}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Qualification legend */}
+          <div className="flex items-center gap-4 px-3 py-2 border-t border-white/5">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]" />
+              <span className="text-[10px] text-slate-500">{lc(locale, "晋级", "Qualify")}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-gray-700" />
+              <span className="text-[10px] text-slate-500">{lc(locale, "出局", "Eliminated")}</span>
+            </div>
+          </div>
+        </>
       )}
     </section>
   );

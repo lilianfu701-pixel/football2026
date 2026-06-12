@@ -18,6 +18,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { getBetPhase } from "@/lib/awardPhase";
 import sanitizeHtml from "sanitize-html";
 import MobileLocaleSwitcher from "@/components/locale-switcher/MobileLocaleSwitcher";
+import { computeGroupStandings, type GroupStanding } from "@/lib/groupStandings";
 
 export const revalidate = 30;
 const ALL_LOCALES = ["en","zh","es","fr","de","pt","ru","ar","ja","ko","vi","id"] as const;
@@ -177,6 +178,15 @@ type DbAwardBet = {
   result: string;
 };
 
+type DbGroupMatch = {
+  home_team: string;
+  away_team: string;
+  home_score: number | null;
+  away_score: number | null;
+  group_name: string | null;
+  status: string;
+};
+
 type DbCheckinRow = {
   date: string;
   streak: number;
@@ -216,6 +226,7 @@ const getCachedPublicData = unstable_cache(
       hotPostsRes,
       latestPostsRes,
       tagsRes,
+      groupMatchesRes,
     ] = await Promise.all([
       sb.from("matches").select(MATCH_COLUMNS).gte("kickoff_time", nowIso).order("kickoff_time", { ascending: true }).limit(12).returns<DbMatch[]>(),
       sb.from("matches").select(MATCH_COLUMNS).order("kickoff_time", { ascending: true }).returns<DbMatch[]>(),
@@ -225,6 +236,7 @@ const getCachedPublicData = unstable_cache(
       sb.from("forum_posts").select(FORUM_POST_COLUMNS).eq("is_deleted", false).gte("created_at", weekAgo).order("like_count", { ascending: false }).limit(5).returns<DbForumPost[]>(),
       sb.from("forum_posts").select(FORUM_POST_COLUMNS).eq("is_deleted", false).order("last_reply_at", { ascending: false }).limit(8).returns<DbForumPost[]>(),
       sb.from("forum_tags").select("id, name, name_zh, color, post_count").order("post_count", { ascending: false }).limit(10).returns<DbForumTag[]>(),
+      sb.from("matches").select("home_team, away_team, home_score, away_score, group_name, status").not("group_name", "is", null).returns<DbGroupMatch[]>(),
     ]);
 
     // If no upcoming matches, fall back to the nearest past/future matches from the full schedule
@@ -234,13 +246,14 @@ const getCachedPublicData = unstable_cache(
 
     return {
       upcomingRows,
-      scheduleRows:    scheduleRes.data    ?? [],
-      featuredRows:    featuredRes.data    ?? [],
-      topScorerRows:   topScorersRes.data  ?? [],
-      forumCategories: categoriesRes.data  ?? [],
-      hotPosts:        hotPostsRes.data    ?? [],
-      latestPosts:     latestPostsRes.data ?? [],
-      forumTags:       tagsRes.data        ?? [],
+      scheduleRows:    scheduleRes.data       ?? [],
+      featuredRows:    featuredRes.data       ?? [],
+      topScorerRows:   topScorersRes.data     ?? [],
+      forumCategories: categoriesRes.data     ?? [],
+      hotPosts:        hotPostsRes.data       ?? [],
+      latestPosts:     latestPostsRes.data    ?? [],
+      forumTags:       tagsRes.data           ?? [],
+      groupMatchRows:  groupMatchesRes.data   ?? [],
     };
   },
   ["mobile-public-data"],
@@ -533,7 +546,10 @@ export default async function MobileHomePage({ params, searchParams }: MobileHom
     hotPosts: hotPostData,
     latestPosts: latestPostData,
     forumTags: forumTagData,
+    groupMatchRows,
   } = await publicDataPromise;
+
+  const groupStandings: GroupStanding[] = computeGroupStandings(groupMatchRows, locale);
 
   const rows = upcomingRows;
 
@@ -741,6 +757,7 @@ export default async function MobileHomePage({ params, searchParams }: MobileHom
       inviteLeaderboard={inviteLeaderboard}
       inviteSiteUrl={process.env.NEXT_PUBLIC_SITE_URL ?? "https://football2026.net"}
       liveMatch={liveMatch}
+      groupStandings={groupStandings}
     />
     <MobileLocaleSwitcher locale={locale} />
     </>

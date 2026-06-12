@@ -323,21 +323,28 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "FOOTBALL_DATA_API_KEY not set" }, { status: 500 });
   }
 
+  const url = new URL(req.url);
+  // ?force=1 bypasses the active-match guard — useful for manual diagnosis
+  const forceSync = url.searchParams.get("force") === "1";
+
   try {
     // ── Guard: only call the external API when matches are active ─────────────
     // "Active" = live/paused now, OR upcoming within 15 min (for countdown)
     // This prevents wasting the 10 req/min quota during off-hours.
-    const supabaseGuard = createServiceClient();
-    const now15 = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-    const { count } = await supabaseGuard
-      .from("matches")
-      .select("id", { count: "exact", head: true })
-      .or(
-        `status.in.(live,paused),and(status.eq.upcoming,kickoff_time.lte.${now15})`,
-      );
+    // Pass ?force=1 in the URL to bypass this guard for debugging.
+    if (!forceSync) {
+      const supabaseGuard = createServiceClient();
+      const now15 = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+      const { count } = await supabaseGuard
+        .from("matches")
+        .select("id", { count: "exact", head: true })
+        .or(
+          `status.in.(live,paused),and(status.eq.upcoming,kickoff_time.lte.${now15})`,
+        );
 
-    if (!count) {
-      return NextResponse.json({ ok: true, skipped: true, reason: "no active matches" });
+      if (!count) {
+        return NextResponse.json({ ok: true, skipped: true, reason: "no active matches", hint: "Pass ?force=1 to override" });
+      }
     }
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -356,11 +363,11 @@ export async function GET(req: Request) {
     });
 
     if (fdRes.status === 404) {
-      return NextResponse.json({ ok: true, message: "Competition not started yet" });
+      return NextResponse.json({ ok: true, message: "Competition not found on football-data.org", hint: "Check COMPETITION_CODE or competition may not have started" });
     }
     if (!fdRes.ok) {
       const txt = await fdRes.text();
-      return NextResponse.json({ error: `football-data API: ${fdRes.status} ${txt}` }, { status: 502 });
+      return NextResponse.json({ error: `football-data API: ${fdRes.status} ${txt}`, hint: fdRes.status === 403 ? "Check FOOTBALL_DATA_API_KEY and plan tier" : undefined }, { status: 502 });
     }
 
     const { matches: apiMatches } = await fdRes.json() as { matches: unknown[] };
