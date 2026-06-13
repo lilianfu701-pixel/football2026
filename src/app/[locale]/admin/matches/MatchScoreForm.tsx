@@ -24,22 +24,34 @@ export default function MatchScoreForm({ matchId, initialHome, initialAway, init
   const [status, setStatus] = useState(initialStatus ?? "scheduled");
   const [saving, setSaving] = useState(false);
   const [saved,  setSaved]  = useState(false);
+  const [error,  setError]  = useState<string | null>(null);
 
   async function save() {
     setSaving(true);
     setSaved(false);
+    setError(null);
     const body: Record<string, unknown> = { status };
     if (home !== "") body.home_score = parseInt(home, 10);
     if (away !== "") body.away_score = parseInt(away, 10);
-    await fetch(`/api/admin/match/${matchId}`, {
-      method:  "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify(body),
-    });
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-    router.refresh();
+    try {
+      const res = await fetch(`/api/admin/match/${matchId}`, {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(body),
+      });
+      setSaving(false);
+      if (!res.ok) {
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        setError(j.error || `HTTP ${res.status}`);
+        return;
+      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+      router.refresh();
+    } catch (e) {
+      setSaving(false);
+      setError(e instanceof Error ? e.message : (zh ? "网络错误" : "Network error"));
+    }
   }
 
   return (
@@ -88,6 +100,12 @@ export default function MatchScoreForm({ matchId, initialHome, initialAway, init
       >
         {saving ? "…" : saved ? (zh ? "已保存 ✓" : "Saved ✓") : (zh ? "保存" : "Save")}
       </button>
+
+      {error && (
+        <span className="text-xs font-bold text-red-400">
+          {zh ? "保存失败：" : "Save failed: "}{error}
+        </span>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 const ALL_LOCALES = ["en","zh","es","fr","de","pt","ru","ar","ja","ko","vi","id"] as const;
 
@@ -110,6 +111,17 @@ export async function PATCH(
   const { data: me } = await supabase.from("users").select("is_admin").eq("id", user.id).single();
   if (!me?.is_admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+  // Admin identity verified above with the user-session client. Do the actual
+  // writes with the service client for two reasons:
+  //   1. Settlement updates OTHER users' balances/bets, which a user-session
+  //      client has no permission to touch.
+  //   2. If `matches` has RLS enabled in production (some tables were locked
+  //      down via the Supabase dashboard, not migrations), a user-session
+  //      UPDATE is silently dropped — PostgREST returns no error but changes
+  //      0 rows. That made manual status changes appear to "revert" to
+  //      upcoming because they were never persisted.
+  const db = createServiceClient();
+
   const { id } = await params;
   const matchId = parseInt(id, 10);
   if (isNaN(matchId)) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
@@ -141,7 +153,7 @@ export async function PATCH(
   if (Object.keys(updates).length === 0)
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
 
-  const { error } = await supabase.from("matches").update(updates).eq("id", matchId);
+  const { error } = await db.from("matches").update(updates).eq("id", matchId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Bust ISR cache so the public pages reflect the admin change immediately.
@@ -158,7 +170,7 @@ export async function PATCH(
     body.away_score !== undefined
   ) {
     try {
-      await settleMatch(supabase, matchId, body.home_score, body.away_score);
+      await settleMatch(db, matchId, body.home_score, body.away_score);
     } catch (settleErr) {
       console.error("Settlement error for match", matchId, settleErr);
       // Match update already succeeded — log error but don't fail the request
