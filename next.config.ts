@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**.fbcdn.net" },
       { protocol: "https", hostname: "flagcdn.com" },
       { protocol: "https", hostname: "api.qrserver.com" },
+      { protocol: "https", hostname: "upload.wikimedia.org" },
     ],
   },
 };
