@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { localeNames } from "@/i18n/routing";
+import { localeNames, routing } from "@/i18n/routing";
 import { lc } from "@/i18n/content";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -117,9 +117,14 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
     } else {
       parts.unshift(newLocale);
     }
-    const newPath = "/" + parts.join("/");
-    // For default locale (en), next-intl with as-needed removes the prefix
-    return newPath;
+    // The default locale (en) has no prefix under as-needed routing. Strip a
+    // leading "en" so we navigate straight to "/..." instead of "/en/...",
+    // which next-intl would 307-redirect to "/" — that round-trip re-triggers
+    // the cookie-based root redirect and its Accept-Language fallback.
+    if (parts[0] === routing.defaultLocale) {
+      parts.shift();
+    }
+    return "/" + parts.join("/");
   }
 
   // Core nav — always visible (5 items max)
@@ -227,17 +232,19 @@ export default function Navbar({ user, gcBalance: _gcBalanceProp, nickname, unre
                     <Link
                       key={code}
                       href={switchLocalePath(code)}
-                      onClick={() => {
+                      prefetch={false}
+                      onClick={(e) => {
+                        e.preventDefault();
                         setLangOpen(false);
-                        // Persist locale preference so the root URL redirect
-                        // and post-login redirect can pick it up on the next visit.
-                        // Always write the cookie (including "en") so we can
-                        // distinguish "user explicitly chose English" from
-                        // "brand-new visitor with no preference" — the latter
-                        // falls back to Accept-Language and might be redirected
-                        // to a non-English locale on the next visit.
+                        // Persist the choice, then HARD-navigate so the request
+                        // carries the cookie we just wrote. A soft <Link> nav
+                        // (or its prefetch) can race the cookie write: the proxy
+                        // then misses NEXT_LOCALE, falls back to Accept-Language,
+                        // and lands on the wrong locale (the "pick English, get
+                        // Spanish" bug).
                         const maxAge = 365 * 24 * 60 * 60;
                         document.cookie = `NEXT_LOCALE=${code}; path=/; max-age=${maxAge}; samesite=lax`;
+                        window.location.assign(switchLocalePath(code));
                       }}
                       className={`block px-4 py-2 text-sm transition-colors ${
                         code === locale
