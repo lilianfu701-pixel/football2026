@@ -463,8 +463,16 @@ export async function GET(req: Request) {
       }
       if (!db) continue;
 
+      // Never downgrade status: upcoming(0) < live(1) < finished(2).
+      // If admin manually set a match to "live" but the API still shows
+      // "SCHEDULED", keep the DB's more-advanced status rather than reverting.
+      const STATUS_ORDER: Record<string, number> = { upcoming: 0, live: 1, finished: 2 };
+      const dbOrder  = STATUS_ORDER[db.status]  ?? 0;
+      const apiOrder = STATUS_ORDER[status] ?? 0;
+      const effectiveStatus = apiOrder >= dbOrder ? status : db.status;
+
       const noChange =
-        db.status         === status &&
+        effectiveStatus    === db.status &&
         db.home_score     === mHs &&
         db.away_score     === mAs &&
         db.red_cards_home === mRedHome &&
@@ -472,12 +480,12 @@ export async function GET(req: Request) {
       if (noChange) continue;
 
       // Fire notifications for changed events (non-blocking on error)
-      const events = detectEvents(db, status, mHs, mAs, mRedHome, mRedAway);
+      const events = detectEvents(db, effectiveStatus, mHs, mAs, mRedHome, mRedAway);
       await fireNotifications(supabase, db.id, events).catch(() => {});
 
       await supabase
         .from("matches")
-        .update({ status, home_score: mHs, away_score: mAs, red_cards_home: mRedHome, red_cards_away: mRedAway })
+        .update({ status: effectiveStatus, home_score: mHs, away_score: mAs, red_cards_home: mRedHome, red_cards_away: mRedAway })
         .eq("id", db.id);
 
       // Bust the ISR cache for this match page across all locales so the
