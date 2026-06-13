@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+
+const ALL_LOCALES = ["en","zh","es","fr","de","pt","ru","ar","ja","ko","vi","id"] as const;
 
 // ── Parimutuel settlement ─────────────────────────────────────────────────────
 async function settleMatch(
@@ -141,6 +144,13 @@ export async function PATCH(
   const { error } = await supabase.from("matches").update(updates).eq("id", matchId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // Bust ISR cache so the public pages reflect the admin change immediately.
+  for (const locale of ALL_LOCALES) {
+    const matchPath = locale === "en" ? `/matches/${matchId}` : `/${locale}/matches/${matchId}`;
+    const listPath  = locale === "en" ? "/matches" : `/${locale}/matches`;
+    revalidatePath(matchPath, "page");
+    revalidatePath(listPath, "page");
+  }
   // ── Trigger parimutuel settlement when match is set to finished ───────────
   if (
     body.status === "finished" &&
