@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -20,7 +21,11 @@ export async function POST(req: NextRequest) {
     default: return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   }
 
-  const { error } = await supabase.from("users").update(updates).eq("id", user_id);
+  // Mutating ANOTHER user's row needs service-role: under RLS a user-session
+  // client can only change its own row, so ban/admin toggles would silently
+  // no-op. Admin identity is verified above.
+  const service = createServiceClient();
+  const { error } = await service.from("users").update(updates).eq("id", user_id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

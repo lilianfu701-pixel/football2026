@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export async function PATCH(
   req: NextRequest,
@@ -31,7 +32,11 @@ export async function PATCH(
   if (body.is_visible     !== undefined) updates.is_visible     = body.is_visible;
   if (body.sort_order     !== undefined) updates.sort_order     = body.sort_order;
 
-  const { error } = await supabase.from("top_scorers").update(updates).eq("id", scorerId);
+  // top_scorers has RLS enabled (migration 033). Write with the service client
+  // after the admin check above, otherwise a user-session UPDATE is silently
+  // dropped (no error, 0 rows) and the scoreboard never changes.
+  const service = createServiceClient();
+  const { error } = await service.from("top_scorers").update(updates).eq("id", scorerId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ ok: true });
